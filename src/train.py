@@ -15,6 +15,10 @@ from src.model import VGAE
 from src.data_format_definition import WSG, Metadata, NodeFeaturesEntry
 from torch_geometric.data import Data
 from tqdm import tqdm # Import tqdm if used inside train_model
+from datetime import datetime
+import os
+import torch
+from src.data_format_definition import WSG, Metadata, NodeFeaturesEntry
 
 
 # --- FUNÇÃO HELPER format_b ATUALIZADA ---
@@ -190,6 +194,80 @@ def save_results(
     with open(output_path, "w") as f:
         f.write(output_wsg.model_dump_json(indent=2))
     print(f"Arquivo de embeddings no formato WSG salvo em: '{output_path}'")
+
+
+
+#verificar se está tudo ok aqui
+def save_embeddings_to_wsg(
+    final_embeddings: torch.Tensor,
+    wsg_obj: WSG,
+    config,
+    save_path: str,
+    tz_info=None
+) -> str:
+    """
+    Salva os embeddings finais em um novo arquivo WSG.
+
+    Args:
+        final_embeddings (torch.Tensor): Tensor de embeddings finais (num_nodes x dim).
+        wsg_obj (WSG): Objeto WSG original (usado para copiar metadados e estrutura do grafo).
+        config (Config): Configuração com parâmetros do modelo.
+        save_path (str): Caminho onde o arquivo será salvo.
+        tz_info (timezone, opcional): Informação de fuso horário para timestamp.
+
+    Returns:
+        str: Caminho completo do arquivo salvo.
+    """
+    final_embeddings = final_embeddings.cpu()
+
+    if tz_info is None:
+        from zoneinfo import ZoneInfo
+        tz_info = ZoneInfo("America/Sao_Paulo")
+
+    output_metadata = Metadata(
+        dataset_name=f"{wsg_obj.metadata.dataset_name}-Embeddings",
+        feature_type="dense_continuous",
+        num_nodes=wsg_obj.metadata.num_nodes,
+        num_edges=wsg_obj.metadata.num_edges,
+        num_total_features=config.OUT_EMBEDDING_DIM,
+        processed_at=datetime.now(tz_info).isoformat(),
+        directed=wsg_obj.metadata.directed,
+    )
+
+    output_node_features = {}
+    embedding_indices = list(range(config.OUT_EMBEDDING_DIM))
+
+    for i in range(wsg_obj.metadata.num_nodes):
+        node_embedding = final_embeddings[i].tolist()
+        output_node_features[str(i)] = NodeFeaturesEntry(
+            indices=embedding_indices,
+            weights=node_embedding,
+        )
+
+    output_wsg = WSG(
+        metadata=output_metadata,
+        graph_structure=wsg_obj.graph_structure,
+        node_features=output_node_features,
+    )
+
+    dataset_name = wsg_obj.metadata.dataset_name
+    filename = f"{dataset_name}_({config.OUT_EMBEDDING_DIM})_embeddings_epoch_{config.EPOCHS}.wsg.json"
+    output_path = os.path.join(save_path, filename)
+
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write(output_wsg.model_dump_json(indent=2))
+
+    print(f"✅ Embeddings salvos em: '{output_path}'")
+    return output_path
+
+
+
+
+
+
+
+
+
 
 
 

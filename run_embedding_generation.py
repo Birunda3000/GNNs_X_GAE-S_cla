@@ -17,6 +17,9 @@ import src.data_loaders as data_loaders
 
 from src.train import save_results, save_report, format_b
 from src.directory_manager import DirectoryManager
+from src.report_manager import ReportManager
+from src.classifiers import salvar_modelo_pytorch
+from src.train import save_embeddings_to_wsg
 
 
 WSG_DATASET = data_loaders.MusaeGithubLoader()  # Ou MusaeFacebookLoader()
@@ -80,8 +83,11 @@ def main():
 
     directory_manager = DirectoryManager(
         timestamp=config.TIMESTAMP,
-        run_folder_name=f"EMBEDDING_RUNS_epochs({config.EPOCHS})", 
+        run_folder_name=f"EMBEDDING_RUNS({config.EPOCHS})", 
     )
+    report_manager = ReportManager(directory_manager)
+
+
 
 
     # --- Instanciação do Modelo ---
@@ -92,6 +98,7 @@ def main():
         hidden_dim=config.HIDDEN_DIM,
         out_embedding_dim=config.OUT_EMBEDDING_DIM,
     ).to(device)
+
     mem_after_model = process.memory_info().rss
     peak_ram_overall_bytes = max(
         peak_ram_overall_bytes, mem_after_model
@@ -191,11 +198,29 @@ def main():
     }
 
     # Salvar os artefatos
+    # --- VERIFICAÇÃO E SALVAMENTO DO RELATÓRIO ---
+    report = {
+        "Timestamp": config.TIMESTAMP,
+        "dataset_name": WSG_DATASET.dataset_name,
+        "Seed": config.RANDOM_SEED,
+        "Model": model.__class__.__name__,
+        "Embedding_Dim": config.OUT_EMBEDDING_DIM,
+        "Training_Report": training_report,
+    }
+    report_manager.create_report(report)
+    report_manager.add_report_section("Memory_Metrics", memory_metrics)
+    report_manager.add_report_section("Inference_Duration_Seconds", {"inference_time": inference_duration})
+    report_manager.save_report()
+
+    salvar_modelo_pytorch(model=model, dataset_name=WSG_DATASET.dataset_name, timestamp=config.TIMESTAMP, save_dir=directory_manager.get_run_path())
+
+    save_embeddings_to_wsg(final_embeddings, wsg_obj, config, save_path=run_path)
+    
+    #--- SALVAMENTO DOS RESULTADOS ---
+
+    '''
     save_results(model, final_embeddings, wsg_obj, config, save_path=run_path)
     dataset_name = WSG_DATASET.dataset_name
-
-
-
 
     save_report(
         config,
@@ -206,6 +231,7 @@ def main():
         save_path=run_path,
         memory_metrics=memory_metrics,
     )
+    '''
 
 
     final_metrics = training_report["training_history"][-1]
@@ -216,6 +242,7 @@ def main():
     final_path = directory_manager.finalize_run_directory(
         dataset_name=WSG_DATASET.dataset_name, metrics=run_metrics
     )
+
     print("\n" + "=" * 50)
     print("PROCESSO CONCLUÍDO COM SUCESSO!")
     print(f"Resultados salvos em: '{final_path}'")
