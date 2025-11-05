@@ -1,0 +1,23 @@
+# .devcontainer/docker-compose.gpu.yml
+services:
+  gnn_tcc_dev:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile.gpu
+      # Passa o argumento com a tag da imagem de GPU para o Dockerfile
+      args:
+        BASE_IMAGE_TAG: "25.08-py3"
+    container_name: gnn_tcc_container_gpu
+    # --- Configurações Específicas de GPU ---
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    volumes:
+      - ..:/app/gnn_tcc
+    working_dir: /app/gnn_tcc
+    command: ["/bin/bash", "-c", "while true; do sleep infinity; done"]

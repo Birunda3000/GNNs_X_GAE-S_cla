@@ -1,0 +1,43 @@
+// .devcontainer/devcontainer.json
+
+{
+    "name": "TCC GNN PyTorch (NVIDIA Optimized)",
+    // Descomente uma linha dependendo do seu ambiente
+    "dockerComposeFile": "docker-compose.cpu.yml",
+    //"dockerComposeFile": "docker-compose.gpu.yml",
+    "service": "gnn_tcc_dev",
+    "workspaceFolder": "/app/gnn_tcc",
+    "shutdownAction": "stopCompose",
+    "remoteUser": "root",
+
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                // --- Essenciais para Python & Machine Learning ---
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "ms-toolsai.jupyter",
+                // --- Qualidade de Código e Produtividade ---
+                "ms-python.black-formatter",
+                "github.copilot",
+                "github.copilot-chat",
+                // --- Utilitário para Dados ---
+                "mechatroner.rainbow-csv"
+            ],
+            "settings": {
+                "editor.wordWrap": "on",
+                "jupyter.jupyterServerType": "local",
+                "jupyter.enableNotebookAutoSave": true,
+                "jupyter.sendSelectionToInteractiveWindow": true,
+                "jupyter.interactiveWindowMode": "perFile",
+                "editor.formatOnSave": true,
+                "[python]": {
+                "editor.defaultFormatter": "ms-python.black-formatter"
+                },
+                "python.linting.enabled": true,
+                "python.linting.flake8Enabled": true,
+                "python.linting.lintOnSave": true
+            }
+        }
+    }
+}

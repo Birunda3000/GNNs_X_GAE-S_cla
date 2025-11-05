@@ -1,0 +1,11 @@
+# .devcontainer/docker-compose.cpu.yml
+services:
+  gnn_tcc_dev:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile.cpu
+    container_name: gnn_tcc_container_cpu
+    volumes:
+      - ..:/app/gnn_tcc
+    working_dir: /app/gnn_tcc
+    command: ["/bin/bash", "-c", "while true; do sleep infinity; done"]

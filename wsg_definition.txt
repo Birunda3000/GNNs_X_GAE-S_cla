@@ -1,0 +1,125 @@
+---
+
+### **Especificação Técnica do Formato `Weighted Sparse Graph` (WSG) v1.0**
+
+#### **1. Visão Geral**
+
+O formato `Weighted Sparse Graph` (WSG) é uma especificação para a serialização de dados de grafos, projetada para ser universalmente aplicável a diversos tipos de features de nós (densas, esparsas, binárias) em pipelines de Machine Learning, especialmente para Redes Neurais de Grafos (GNNs).
+
+O objetivo principal é desacoplar a etapa de preparação de dados da etapa de modelagem, fornecendo uma representação de dados canônica, eficiente em memória e computacionalmente tratável.
+
+* **Formato de Serialização:** JSON (JavaScript Object Notation)
+* **Codificação de Caracteres:** UTF-8
+* **Estrutura Raiz:** O documento consiste em um único Objeto JSON.
+* **Componentes Principais:** O objeto raiz é composto por três chaves obrigatórias: `metadata`, `graph_structure` e `node_features`.
+
+---
+
+#### **2. Dicionário de Chaves de Nível Superior**
+
+| Chave             | Tipo   | Obrigatoriedade | Descrição                                                                                   |
+| :---------------- | :----- | :-------------- | :------------------------------------------------------------------------------------------ |
+| `metadata`        | Object | Obrigatório     | Contém metadados descritivos sobre o grafo, sua origem e o processo de transformação.       |
+| `graph_structure` | Object | Obrigatório     | Descreve a topologia do grafo (arestas), os labels (alvos) e os nomes associados a cada nó. |
+| `node_features`   | Object | Obrigatório     | Descreve as features de cada nó no formato universal de "lista de índices ponderada".       |
+
+---
+
+#### **3. Detalhamento dos Objetos Aninhados**
+
+##### **3.1. O Objeto `metadata`**
+
+| Chave                | Tipo    | Obrigatoriedade | Descrição                                                                                                                                                                      |
+| :------------------- | :------ | :-------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dataset_name`       | String  | Obrigatório     | Nome do dataset original. Ex: `"Musae-Github"`.                                                                                                                                |
+| `feature_type`       | String  | Obrigatório     | Descreve o tipo original das features antes do processamento. Valores recomendados: `"sparse_binary"`, `"dense_continuous"`, `"dense_binary"`, `"none"`.                       |
+| `num_nodes`          | Integer | Obrigatório     | O número total de nós no grafo. Define a cardinalidade do conjunto de nós, indexados de `0` a `num_nodes - 1`.                                                                 |
+| `num_edges`          | Integer | Obrigatório     | O número total de arestas no grafo.                                                                                                                                            |
+| `num_total_features` | Integer | Obrigatório     | O tamanho do vocabulário global de features. Define a cardinalidade do conjunto de features, indexadas de `0` a `num_total_features - 1`. Essencial para camadas de embedding. |
+| `processed_at`       | String  | Obrigatório     | Timestamp da data e hora em que o arquivo foi gerado, no formato **ISO 8601** com fuso horário. Ex: `"2025-09-17T12:55:00-03:00"`.                                             |
+| `directed`           | Boolean | Obrigatório     | Indica se o grafo é **direcionado (`true`)** ou **não direcionado (`false`)**.                                                                                                 |
+
+---
+
+##### **3.2. O Objeto `graph_structure`**
+
+Este objeto define a topologia do grafo e atributos de alto nível dos nós.
+
+* **`edge_index`**:
+
+  * **Tipo:** `Array<Array<Integer>>`
+  * **Descrição:** Uma lista contendo exatamente duas listas de inteiros. A primeira lista contém os IDs dos nós de origem (`source`) de cada aresta, e a segunda lista contém os IDs dos nós de destino (`target`). Ambas as listas devem ter um comprimento igual a `metadata.num_edges`. Todos os IDs de nós devem ser inteiros no intervalo `[0, metadata.num_nodes - 1]`.
+  * **Consistência com `directed`:**
+
+    * Se `directed = true`, cada par `(source, target)` representa uma aresta orientada.
+    * Se `directed = false`, o par deve ser interpretado como uma aresta **não orientada**; duplicação de arestas em direções opostas deve ser evitada.
+
+* **`y`**:
+
+  * **Tipo:** `Array<Integer | null>`
+  * **Descrição:** Uma lista de labels dos nós. A lista deve ter um comprimento exatamente igual a `metadata.num_nodes`, onde o valor no índice `i` corresponde ao label do nó `i`. O valor `null` deve ser usado para nós que não possuem um label conhecido.
+
+* **`node_names`**:
+
+  * **Tipo:** `Array<String | null>`
+  * **Descrição:** Uma lista de nomes (ou identificadores externos) dos nós. O comprimento deve ser exatamente igual a `metadata.num_nodes`. O valor `null` pode ser usado quando o nó não possui nome conhecido.
+
+---
+
+##### **3.3. O Objeto `node_features`**
+
+(sem mudanças)
+
+---
+
+#### **4. Exemplo Completo de um Arquivo `.wsg.json`**
+
+```json
+{
+    "metadata": {
+        "dataset_name": "SyntheticGraph-v1",
+        "feature_type": "dense_continuous",
+        "num_nodes": 4,
+        "num_edges": 3,
+        "num_total_features": 5,
+        "processed_at": "2025-09-17T13:30:00-03:00",
+        "directed": true
+    },
+    "graph_structure": {
+        "edge_index": [
+            [0, 1, 2],
+            [1, 2, 3]
+        ],
+        "y": [0, 1, 0, null],
+        "node_names": ["Alice", "Bob", "Carol", null]
+    },
+    "node_features": {
+        "0": {
+            "indices": [0, 2, 4],
+            "weights": [0.98, 0.15, 1.0]
+        },
+        "1": {
+            "indices": [1, 2, 3],
+            "weights": [-0.5, 0.77, 0.2]
+        },
+        "2": {
+            "indices": [0, 1, 2, 3, 4],
+            "weights": [0.1, 0.2, 0.3, 0.4, 0.5]
+        },
+        "3": {
+            "indices": [],
+            "weights": []
+        }
+    }
+}
+```
+
+---
+
+#### **5. Considerações de Implementação**
+
+* **Validação adicional:** o parser deve verificar que `len(node_names) == num_nodes`.
+* **Uso recomendado:** `node_names` pode ser útil para mapear IDs internos (inteiros) a nomes externos (strings).
+* **Nullables:** caso não haja nomes conhecidos, recomenda-se preencher com `null` em vez de omitir a lista.
+
+---

@@ -1,0 +1,260 @@
+gnn_tcc/
+├── .devcontainer
+│   ├── Dockerfile.cpu
+│   ├── Dockerfile.gpu
+│   ├── devcontainer.json
+│   ├── docker-compose.cpu.yml
+│   └── docker-compose.gpu.yml
+├── data
+│   ├── datasets
+│   │   ├── cora
+│   │   │   ├── README
+│   │   │   ├── cora.cites
+│   │   │   ├── cora.content
+│   │   │   └── cora_visualization.html
+│   │   ├── musae-facebook
+│   │   │   ├── README.txt
+│   │   │   ├── citing.txt
+│   │   │   ├── musae_facebook_edges.csv
+│   │   │   ├── musae_facebook_features.json
+│   │   │   └── musae_facebook_target.csv
+│   │   └── musae-github
+│   │       ├── README.txt
+│   │       ├── citing.txt
+│   │       ├── json_lengh.py
+│   │       ├── musae_git_edges.csv
+│   │       ├── musae_git_features.json
+│   │       └── musae_git_target.csv
+│   ├── hist_data
+│   │   ├── Musae-Facebook-Embeddings__best_acc_0_8629__model_kneighbors__31-10-2025_10-08-43
+│   │   │   ├── classification_summary.json
+│   │   │   └── result.csv
+│   │   ├── Musae-Facebook-Embeddings__best_acc_0_8807__model_randomforest__31-10-2025_10-08-43
+│   │   │   ├── classification_summary.json
+│   │   │   └── result.csv
+│   │   ├── Musae-Facebook-Embeddings__best_acc_0_8827__model_kneighbors__31-10-2025_10-08-43
+│   │   │   ├── classification_summary.json
+│   │   │   └── result.csv
+│   │   ├── Musae-Facebook-Embeddings__best_acc_0_9010__model_kneighbors__31-10-2025_10-08-43
+│   │   │   ├── classification_summary.json
+│   │   │   └── result.csv
+│   │   ├── Musae-Facebook-Embeddings__best_acc_0_9034__model_kneighbors__31-10-2025_10-08-43
+│   │   │   ├── classification_summary.json
+│   │   │   └── result.csv
+│   │   ├── Musae-Facebook-Embeddings__best_acc_0_9065__model_kneighbors__31-10-2025_10-08-43
+│   │   │   ├── classification_summary.json
+│   │   │   └── result.csv
+│   │   ├── Musae-Github-Embeddings__best_acc_0_8354__model_xgboost__31-10-2025_10-08-43
+│   │   │   ├── classification_summary.json
+│   │   │   └── result.csv
+│   │   ├── Musae-Github-Embeddings__best_acc_0_8389__model_xgboost__31-10-2025_10-08-43
+│   │   │   ├── classification_summary.json
+│   │   │   └── result.csv
+│   │   ├── Musae-Github-Embeddings__best_acc_0_8423__model_xgboost__31-10-2025_10-08-43
+│   │   │   ├── classification_summary.json
+│   │   │   └── result.csv
+│   │   ├── Musae-Github-Embeddings__best_acc_0_8475__model_xgboost__31-10-2025_10-08-43
+│   │   │   ├── classification_summary.json
+│   │   │   └── result.csv
+│   │   ├── Musae-Github-Embeddings__best_acc_0_8495__model_xgboost__31-10-2025_10-08-43
+│   │   │   ├── classification_summary.json
+│   │   │   └── result.csv
+│   │   └── Musae-Github-Embeddings__best_acc_0_8533__model_xgboost__31-10-2025_10-08-43
+│   │       ├── classification_summary.json
+│   │       └── result.csv
+│   ├── output
+│   │   ├── CLASSIFICATION_RUNS
+│   │   │   ├── Musae-Facebook-Embeddings__best_acc_0_9034__model_kneighbors__01-11-2025_16-50-10
+│   │   │   │   └── classification_summary.json
+│   │   │   ├── Musae-Facebook-Embeddings__best_acc_0_9034__model_kneighbors__01-11-2025_17-06-16
+│   │   │   │   └── classification_summary.json
+│   │   │   ├── Musae-Facebook-Embeddings__best_acc_0_9034__model_kneighbors__01-11-2025_17-08-18
+│   │   │   │   └── classification_summary.json
+│   │   │   ├── Musae-Facebook-Embeddings__best_acc_0_9034__model_kneighbors__01-11-2025_17-13-02
+│   │   │   │   └── classification_summary.json
+│   │   │   ├── Musae-Github-Embeddings__best_acc_0_8505__model_xgboost__01-11-2025_16-51-20
+│   │   │   │   └── classification_summary.json
+│   │   │   ├── Musae-Github-Embeddings__best_acc_0_8513__model_xgboost__01-11-2025_17-04-22
+│   │   │   │   └── classification_summary.json
+│   │   │   ├── Musae-Github-Embeddings__best_acc_0_8516__model_xgboost__01-11-2025_16-52-58
+│   │   │   │   └── classification_summary.json
+│   │   │   └── Musae-Github-Embeddings__best_acc_0_8532__model_xgboost__01-11-2025_17-03-11
+│   │   │       └── classification_summary.json
+│   │   ├── EMBEDDING_RUNS
+│   │   │   ├── musae-facebook__loss_2_2581__emb_dim_32__30-10-2025_19-32-36
+│   │   │   │   ├── musae-facebook_(32)_embeddings_epoch_200.wsg.json
+│   │   │   │   ├── run_summary.txt
+│   │   │   │   └── vgae_model.pt
+│   │   │   ├── musae-facebook__loss_2_9193__emb_dim_64__30-10-2025_19-35-38
+│   │   │   │   ├── musae-facebook_(64)_embeddings_epoch_200.wsg.json
+│   │   │   │   ├── run_summary.txt
+│   │   │   │   └── vgae_model.pt
+│   │   │   ├── musae-facebook__loss_3_5429__emb_dim_128__30-10-2025_19-38-39
+│   │   │   │   ├── musae-facebook_(128)_embeddings_epoch_200.wsg.json
+│   │   │   │   ├── run_summary.txt
+│   │   │   │   └── vgae_model.pt
+│   │   │   ├── musae-github__loss_2_0401__emb_dim_32__30-10-2025_19-16-19
+│   │   │   │   ├── musae-github_(32)_embeddings_epoch_200.wsg.json
+│   │   │   │   ├── run_summary.txt
+│   │   │   │   └── vgae_model.pt
+│   │   │   ├── musae-github__loss_2_5249__emb_dim_64__30-10-2025_19-20-01
+│   │   │   │   ├── musae-github_(64)_embeddings_epoch_200.wsg.json
+│   │   │   │   ├── run_summary.txt
+│   │   │   │   └── vgae_model.pt
+│   │   │   └── musae-github__loss_3_1906__emb_dim_128__30-10-2025_19-24-58
+│   │   │       ├── musae-github_(128)_embeddings_epoch_200.wsg.json
+│   │   │       ├── run_summary.txt
+│   │   │       └── vgae_model.pt
+│   │   ├── EMBEDDING_RUNS_epochs(1)
+│   │   │   ├── musae-facebook__loss_4_7117__emb_dim_32__30-10-2025_19-51-46
+│   │   │   │   ├── musae-facebook_(32)_embeddings_epoch_1.wsg.json
+│   │   │   │   ├── run_summary.txt
+│   │   │   │   └── vgae_model.pt
+│   │   │   ├── musae-facebook__loss_6_5256__emb_dim_64__30-10-2025_19-51-26
+│   │   │   │   ├── musae-facebook_(64)_embeddings_epoch_1.wsg.json
+│   │   │   │   ├── run_summary.txt
+│   │   │   │   └── vgae_model.pt
+│   │   │   ├── musae-facebook__loss_9_0788__emb_dim_128__30-10-2025_19-50-50
+│   │   │   │   ├── musae-facebook_(128)_embeddings_epoch_1.wsg.json
+│   │   │   │   ├── run_summary.txt
+│   │   │   │   └── vgae_model.pt
+│   │   │   ├── musae-github__loss_4_8850__emb_dim_32__30-10-2025_20-01-32
+│   │   │   │   ├── musae-github_(32)_embeddings_epoch_1.wsg.json
+│   │   │   │   ├── run_summary.txt
+│   │   │   │   └── vgae_model.pt
+│   │   │   ├── musae-github__loss_6_4336__emb_dim_64__30-10-2025_20-01-51
+│   │   │   │   ├── musae-github_(64)_embeddings_epoch_1.wsg.json
+│   │   │   │   ├── run_summary.txt
+│   │   │   │   └── vgae_model.pt
+│   │   │   └── musae-github__loss_9_1204__emb_dim_128__30-10-2025_20-07-04
+│   │   │       ├── musae-github_(128)_embeddings_epoch_1.wsg.json
+│   │   │       ├── run_summary.txt
+│   │   │       └── vgae_model.pt
+│   │   ├── GRAPH_CLASSIFICATION_RUNS
+│   │   │   ├── Musae-Facebook__best_acc_0_9473__model_gcn__30-10-2025_16-09-59
+│   │   │   │   └── classification_summary.json
+│   │   │   ├── Musae-Facebook__best_acc_0_9477__model_gcn__30-10-2025_15-54-08
+│   │   │   │   └── classification_summary.json
+│   │   │   ├── Musae-Facebook__best_acc_0_9493__model_gcn__30-10-2025_15-33-58
+│   │   │   │   ├── classification_summary.json
+│   │   │   │   └── result.csv
+│   │   │   ├── Musae-Github__best_acc_0_8357__model_gcn__01-11-2025_19-17-51
+│   │   │   │   └── classification_summary.json
+│   │   │   ├── Musae-Github__best_acc_0_8588__model_gcn__01-11-2025_19-16-47
+│   │   │   │   └── classification_summary.json
+│   │   │   ├── Musae-Github__best_acc_0_8643__model_gcn__30-10-2025_14-18-58
+│   │   │   │   └── classification_summary.json
+│   │   │   ├── Musae-Github__best_acc_0_8656__model_gcn__30-10-2025_16-58-37
+│   │   │   │   └── classification_summary.json
+│   │   │   └── Musae-Github__best_acc_0_8667__model_gcn__30-10-2025_16-29-35
+│   │   │       ├── classification_summary.json
+│   │   │       └── result.csv
+│   │   ├── t_CLASSIFICATION_RUNS
+│   │   │   ├── Musae-Facebook-Embeddings__best_acc_0_8654__model_randomforest__01-11-2025_16-14-39
+│   │   │   │   └── classification_summary.json
+│   │   │   ├── Musae-Facebook-Embeddings__best_acc_0_8825__model_randomforest__01-11-2025_16-14-39
+│   │   │   │   └── classification_summary.json
+│   │   │   ├── Musae-Facebook-Embeddings__best_acc_0_9034__model_kneighbors__01-11-2025_16-14-39
+│   │   │   │   └── classification_summary.json
+│   │   │   ├── Musae-Github-Embeddings__best_acc_0_8385__model_xgboost__01-11-2025_16-14-39
+│   │   │   │   └── classification_summary.json
+│   │   │   ├── Musae-Github-Embeddings__best_acc_0_8420__model_mlp__01-11-2025_16-14-39
+│   │   │   │   └── classification_summary.json
+│   │   │   ├── Musae-Github-Embeddings__best_acc_0_8432__model_xgboost__31-10-2025_10-27-27
+│   │   │   │   ├── classification_summary.json
+│   │   │   │   └── result.csv
+│   │   │   ├── Musae-Github-Embeddings__best_acc_0_8440__model_xgboost__31-10-2025_10-27-27
+│   │   │   │   ├── classification_summary.json
+│   │   │   │   └── result.csv
+│   │   │   ├── Musae-Github-Embeddings__best_acc_0_8468__model_xgboost__31-10-2025_10-27-27
+│   │   │   │   ├── classification_summary.json
+│   │   │   │   └── result.csv
+│   │   │   └── Musae-Github-Embeddings__best_acc_0_8515__model_xgboost__01-11-2025_16-14-39
+│   │   │       └── classification_summary.json
+│   │   ├── t_EMBEDDING_RUNS_epochs(1)
+│   │   │   ├── musae-github__loss_9_1893__emb_dim_128__31-10-2025_07-49-49
+│   │   │   │   ├── musae-github_(128)_embeddings_epoch_1.wsg.json
+│   │   │   │   ├── run_summary.txt
+│   │   │   │   └── vgae_model.pt
+│   │   │   └── musae-github__loss_9_2224__emb_dim_128__31-10-2025_07-52-44
+│   │   │       ├── musae-github_(128)_embeddings_epoch_1.wsg.json
+│   │   │       ├── run_summary.txt
+│   │   │       └── vgae_model.pt
+│   │   ├── t_EMBEDDING_RUNS_epochs(10)
+│   │   │   ├── musae-github__loss_2_5052__emb_dim_8__03-11-2025_11-27-24
+│   │   │   │   ├── musae-github_(8)_embeddings_epoch_10.wsg.json
+│   │   │   │   ├── run_summary.txt
+│   │   │   │   └── vgae_model.pt
+│   │   │   └── musae-github__loss_2_6970__emb_dim_8__03-11-2025_11-28-53
+│   │   │       ├── musae-github_(8)_embeddings_epoch_10.wsg.json
+│   │   │       ├── run_summary.txt
+│   │   │       └── vgae_model.pt
+│   │   ├── t_EMBEDDING_RUNS_epochs(200)
+│   │   │   └── musae-github__loss_5_8560__emb_dim_128__31-10-2025_07-37-46
+│   │   │       ├── musae-github_(128)_embeddings_epoch_200.wsg.json
+│   │   │       ├── run_summary.txt
+│   │   │       └── vgae_model.pt
+│   │   └── tmp-emdruns
+│   │       ├── musae-facebook__loss_2_2581__emb_dim_32__30-10-2025_19-32-36
+│   │       │   ├── musae-facebook_(32)_embeddings_epoch_200.wsg.json
+│   │       │   ├── run_summary.txt
+│   │       │   └── vgae_model.pt
+│   │       ├── musae-facebook__loss_2_9193__emb_dim_64__30-10-2025_19-35-38
+│   │       │   ├── musae-facebook_(64)_embeddings_epoch_200.wsg.json
+│   │       │   ├── run_summary.txt
+│   │       │   └── vgae_model.pt
+│   │       ├── musae-facebook__loss_3_5429__emb_dim_128__30-10-2025_19-38-39
+│   │       │   ├── musae-facebook_(128)_embeddings_epoch_200.wsg.json
+│   │       │   ├── run_summary.txt
+│   │       │   └── vgae_model.pt
+│   │       ├── musae-github__loss_2_0401__emb_dim_32__30-10-2025_19-16-19
+│   │       │   ├── musae-github_(32)_embeddings_epoch_200.wsg.json
+│   │       │   ├── run_summary.txt
+│   │       │   └── vgae_model.pt
+│   │       ├── musae-github__loss_2_5249__emb_dim_64__30-10-2025_19-20-01
+│   │       │   ├── musae-github_(64)_embeddings_epoch_200.wsg.json
+│   │       │   ├── run_summary.txt
+│   │       │   └── vgae_model.pt
+│   │       └── musae-github__loss_3_1906__emb_dim_128__30-10-2025_19-24-58
+│   │           ├── musae-github_(128)_embeddings_epoch_200.wsg.json
+│   │           ├── run_summary.txt
+│   │           └── vgae_model.pt
+│   └── processed
+│       └── cora
+│           ├── cora_cites.csv
+│           └── cora_content.csv
+├── src
+│   ├── paths
+│   │   ├── __init__.py
+│   │   └── paths.py
+│   ├── __init__.py
+│   ├── classifiers.py
+│   ├── config.py
+│   ├── data_converter.py
+│   ├── data_format_definition.py
+│   ├── data_loader.py
+│   ├── directory_manager.py
+│   ├── graph_classifiers.py
+│   ├── model.py
+│   ├── runner.py
+│   ├── train.py
+│   └── visualization.py
+├── .gitattributes
+├── .gitignore
+├── README.md
+├── analise.py
+├── create_table_results.py
+├── distribuicao_classes.png
+├── distribuicao_embeddings.png
+├── distribuicao_graus.png
+├── exemplo.py
+├── github_embeddings_visualization_final.png
+├── github_embeddings_visualization_final_2d.png
+├── memory_use.py
+├── requirements.txt
+├── run_embedding_generation.py
+├── run_feature_classification.py
+├── run_graph_classification.py
+├── vgae_mem.py
+├── vgae_mem2.py
+└── wsg_definition.txt

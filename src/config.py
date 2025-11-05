@@ -1,0 +1,41 @@
+# src/config.py (versão atualizada)
+import os
+from datetime import datetime
+from zoneinfo import ZoneInfo
+import time
+
+
+
+
+class Config:
+    """
+    Classe centralizada para todas as configurações do projeto.
+    """
+
+    # --- Timestamp da Execução ---
+    # Gera um timestamp único no momento da inicialização para identificar a execução.
+    # Usa o fuso horário de São Paulo para consistência.
+    TIMESTAMP = datetime.now(ZoneInfo("America/Sao_Paulo")).strftime(
+        "%d-%m-%Y_%H-%M-%S"
+    )
+    # --- Configurações do Ambiente ---
+    DEVICE = "cuda" if os.environ.get("NVIDIA_VISIBLE_DEVICES") else "cpu"
+    RANDOM_SEED = int(time.time())
+
+
+
+    # --- Hiperparâmetros do Modelo VGAE ---
+    EMBEDDING_DIM = 128  # Dimensão do embedding das features de entrada
+    HIDDEN_DIM = 256  # Dimensão da camada GCN oculta
+
+    OUT_EMBEDDING_DIM = 8 # Dimensão do embedding final do nó variar [8,32,64,128]
+
+    # --- Configurações de Treinamento ---
+    EPOCHS = 10
+    LEARNING_RATE = 0.0001
+
+    # --- Configurações de Visualização ---
+    VIS_SAMPLES = 1500  # Número máximo de nós para incluir na visualização
+
+
+print(f"Configurações carregadas. Usando dispositivo: {Config.DEVICE}")

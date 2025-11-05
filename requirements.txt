@@ -1,0 +1,29 @@
+# requirements.txt
+
+# A linha --index-url da NVIDIA não é mais necessária aqui
+# torch, torchvision, e torchaudio foram removidos
+
+# Bibliotecas essenciais para manipulação de dados em grafos
+torch_geometric
+torch-scatter
+torch-sparse
+torch-cluster
+torch-spline-conv
+
+# Análise de Dados e Utilitários
+pandas
+numpy
+matplotlib
+seaborn
+tqdm
+ipykernel
+pydantic
+scikit-learn
+xgboost
+
+# Visualização
+pyvis
+beautifulsoup4
+
+# Telemetria e Monitoramento
+memory_profiler

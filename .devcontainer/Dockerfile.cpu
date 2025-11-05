@@ -1,0 +1,30 @@
+# .devcontainer/Dockerfile.cpu
+
+# 1. IMAGEM BASE OFICIAL DO PYTHON
+# Partimos de uma imagem leve e universal do Python. Garantido que funciona em amd64.
+FROM python:3.11-slim-bookworm
+
+# 2. INSTALAÇÃO DE DEPENDÊNCIAS DO SISTEMA
+# As mesmas que precisávamos antes.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    git \
+    cmake \
+    libgl1 \
+    libglib2.0-0 && \
+    rm -rf /var/lib/apt/lists/*
+
+# 3. INSTALAÇÃO DO PYTORCH (VERSÃO CPU)
+# O pip instalará a versão correta para CPU automaticamente.
+# Usamos o repositório oficial do PyTorch para isso.
+RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+
+# 4. DIRETÓRIO DE TRABALHO E CÓPIA DOS REQUISITOS
+WORKDIR /app/gnn_tcc
+COPY requirements.txt .
+
+# 5. INSTALAÇÃO DAS OUTRAS BIBLIOTECAS
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 6. COMANDO FINAL
+CMD ["/bin/bash", "-c", "while true; do sleep infinity; done"]

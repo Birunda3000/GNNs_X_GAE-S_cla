@@ -1,0 +1,27 @@
+# .devcontainer/Dockerfile
+
+# 1. ACEITA UM ARGUMENTO PARA A TAG DA IMAGEM
+# Por padrão, usaremos a imagem de GPU completa.
+# nvcr.io/nvidia/pytorch:25.08-py3-igpu
+ARG BASE_IMAGE_TAG="25.08-py3"
+FROM nvcr.io/nvidia/pytorch:${BASE_IMAGE_TAG}
+
+# O resto do arquivo permanece exatamente o mesmo...
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    git \
+    cmake \
+    libgl1 \
+    libglib2.0-0 && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app/gnn_tcc
+
+COPY requirements.txt .
+
+# O requirements.txt será copiado da raiz do projeto, conforme definido no 'context' do docker-compose
+RUN pip install --no-cache-dir -r requirements.txt
+
+ENV PATH="/usr/local/bin:${PATH}"
+
+CMD ["/bin/bash", "-c", "while true; do sleep infinity; done"]
