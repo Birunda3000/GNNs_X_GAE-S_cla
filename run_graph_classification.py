@@ -45,6 +45,7 @@ def main():
         run_folder_name="GRAPH_CLASSIFICATION_RUNS",
         wsg_obj=wsg_obj,
         data_source_name=os.path.basename(WSG_DATASET.file_path),
+        
     )
     runner.run(models_to_run, for_embedding_bag=False)
 

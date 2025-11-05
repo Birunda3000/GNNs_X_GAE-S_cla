@@ -2,7 +2,7 @@ import os
 import shutil
 from typing import Dict, Optional, List, Union, Any
 import json
-
+import src.paths as paths
 from src.config import Config
 
 
@@ -29,7 +29,7 @@ class DirectoryManager:
                                        Se None, o padrão é 'data/output/'.
         """
         if base_path is None:
-            base_path = Config.OUTPUT_PATH
+            base_path = paths.OUTPUT_PATH
 
         self.base_path = os.path.join(base_path, run_folder_name)
 

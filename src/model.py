@@ -1,14 +1,36 @@
 # src/model.py
-
+from sklearn.naive_bayes import abstractmethod
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import Module, Linear
 from torch_geometric.nn import GCNConv
+from abc import ABC, abstractmethod
 from torch_geometric.data import Data
+from typing import Tuple, Dict, List, Optional, Any
+import torch.optim as optim
+import time
+
+class BaseModel(ABC):
+    """Classe base abstrata para modelos de ML."""
+
+    @abstractmethod
+    def train_model(self, input_data, y: Optional[Any] = None, train_split: Optional[Any] = None):
+        """Train the model."""
+        pass
+    
+    @abstractmethod
+    def evaluate(self, input_data, y: Optional[Any] = None) -> Any:
+        """Evaluate the model."""
+        pass
+
+    @abstractmethod
+    def inference(self, input_data):
+        """Run inference with the model."""
+        pass
 
 
-class VGAE(nn.Module):
+class VGAE(BaseModel, nn.Module):
     """
     Implementação de um Autoencoder Variacional de Grafo (VGAE).
 
@@ -150,20 +172,92 @@ class VGAE(nn.Module):
 
         return pos_loss + neg_loss
 
-    def get_embeddings(self, data: Data) -> torch.Tensor:
+    def inference(self, input_data: Data) -> torch.Tensor:
         """
         Após o treinamento, gera os embeddings finais e estáveis dos nós.
         Usa apenas a média (mu) da distribuição, ignorando a variância.
         """
         with torch.no_grad():
             x = self.feature_embedder(
-                data.feature_indices,
-                data.feature_offsets,
-                per_sample_weights=data.feature_weights,
+                input_data.feature_indices,
+                input_data.feature_offsets,
+                per_sample_weights=input_data.feature_weights,
             )
 
             x = F.normalize(x, p=2, dim=-1)
 
-            x = F.relu(self.conv1(x, data.edge_index))
-            mu = self.conv_mu(x, data.edge_index)
+            x = F.relu(self.conv1(x, input_data.edge_index))
+            mu = self.conv_mu(x, input_data.edge_index)
         return mu
+    
+    def train_model(
+        self,
+        input_data: Data,
+        learning_rate: float,
+        optimizer: optim.Optimizer,
+        weight_decay: float,
+        epochs: int,
+        train_split: Optional[Any] = None,
+    ) -> List[Dict[str, float]]:
+        """
+        Treina o modelo VGAE no conjunto de dados fornecido.
+
+        Args:
+            data (Data): Objeto de dados do PyTorch Geometric.
+            learning_rate (float): Taxa de aprendizado para o otimizador.
+            weight_decay (float): Decaimento de peso (L2 regularization).
+            epochs (int): Número de épocas para treinar.
+
+        Returns:
+            List[Dict[str, float]]: Histórico de métricas por época.
+        """
+        training_history = []
+
+        start_time = time.time() # CUIDADO: time.process_time() USADO NÃO time.process_time()
+
+        for epoch in range(1, epochs + 1):
+            self.train()
+            optimizer.zero_grad()
+            z = self.encode(input_data)
+            recon_loss = self.reconstruction_loss(z, input_data.edge_index)
+            kl_loss = (1 / input_data.num_nodes) * self.kl_loss()
+            total_loss = recon_loss + kl_loss
+            total_loss.backward()
+            optimizer.step()
+
+            epoch_metrics = {
+                "epoch": epoch,
+                "train_total_loss": total_loss.item(),
+                "train_recon_loss": recon_loss.item(),
+                "train_kl_loss": kl_loss.item(),
+                "test_total_loss": None,
+                "test_recon_loss": None,
+                "test_kl_loss": None,
+            }
+            training_history.append(epoch_metrics)
+
+        total_time = time.time() - start_time # CUIDADO: time.process_time() USADO NÃO time.process_time()
+
+        train_report = {
+            "total_training_time": total_time,
+            "training_history": training_history
+        }
+        return train_report
+
+    def evaluate(
+        self,
+        data: Data,
+    ) -> Any:
+        """
+        Avalia o modelo no conjunto de dados fornecido.
+
+        Args:
+            data (Data): Objeto de dados do PyTorch Geometric.
+
+        Returns:
+            Any: Resultados da avaliação (a definir conforme necessidade).
+        """
+        raise NotImplementedError("Função de avaliação não implementada para VGAE.")
+
+
+

@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from collections import Counter
 from src.data_loaders import DirectWSGLoader
-from src.data_converter import DataConverter
+from src.data_converters import DataConverter
 
 
 def analisar_dados(wsg_file_path):

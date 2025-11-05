@@ -1,5 +1,6 @@
 # src/train.py (CORRIGIDO save_report)
 
+from multiprocessing.util import DEBUG
 import torch
 import torch.optim as optim
 import os
@@ -44,65 +45,24 @@ def format_b(b):
         return "N/A (error)"
 # --- FIM FUNÇÃO HELPER ---
 
-
-# train_model (versão simplificada sem psutil interno)
-def train_model(
-    model: VGAE,
-    data: Data,
-    optimizer: optim.Optimizer,
-    epochs: int,
-) -> Tuple[VGAE, List[Dict[str, float]]]:
-    """
-    Executa o loop de treinamento para o modelo VGAE.
-    """
-    training_history = []
-    pbar = tqdm(range(1, epochs + 1), desc="Treinando VGAE")
-
-    for epoch in pbar:
-        model.train()
-        optimizer.zero_grad()
-        z = model.encode(data)
-        recon_loss = model.reconstruction_loss(z, data.edge_index)
-        kl_loss = (1 / data.num_nodes) * model.kl_loss()
-        total_loss = recon_loss + kl_loss
-        total_loss.backward()
-        optimizer.step()
-
-        epoch_metrics = {
-            "epoch": epoch,
-            "total_loss": total_loss.item(),
-            "recon_loss": recon_loss.item(),
-            "kl_loss": kl_loss.item(),
-        }
-        training_history.append(epoch_metrics)
-
-        pbar.set_postfix({
-            "Loss": f"{total_loss:.4f}",
-            "Recon": f"{recon_loss:.4f}",
-            "KL": f"{kl_loss:.4f}"
-        })
-
-    if training_history:
-        print(f"Métricas finais do treinamento: {training_history[-1]}")
-    else:
-        print("Treinamento concluído sem histórico.")
-    return model, training_history
+def fmt(val, precision=6):
+    """Formata floats de forma segura; se None ou inválido, retorna 'N/A'."""
+    return f"{val:.{precision}f}" if isinstance(val, (int, float)) else "N/A"
 
 
-# save_report (CORRIGIDO para usar as chaves corretas)
 def save_report(
     config: Config,
     training_history: List[Dict[str, float]],
     training_duration: float,
     inference_duration: float,
+    dataset_name: str,
     save_path: str,
     memory_metrics: Optional[Dict[str, Any]] = None,
 ):
     """
     Salva um relatório de texto com o resumo da execução.
-    (CORRIGIDO para usar as chaves de memória corretas)
     """
-    final_metrics = training_history[-1] if training_history else {}
+    final_metrics = training_history[-1]
     report_path = os.path.join(save_path, "run_summary.txt")
 
     # --- SEÇÃO DE MEMÓRIA CORRIGIDA ---
@@ -123,6 +83,10 @@ def save_report(
         memory_report += "- Monitoramento de memória não foi fornecido.\n"
     # --- FIM DA SEÇÃO ---
 
+
+    print("DEBUG final_metrics:", final_metrics)
+
+
     content = f"""
 =================================================
           RESUMO DA EXECUÇÃO DO MODELO (VGAE)
@@ -130,7 +94,7 @@ def save_report(
 
 INFORMAÇÕES GERAIS
 ------------------
-- Dataset: {config.DATASET_NAME}
+- Dataset: {dataset_name}
 - Modelo: VGAE
 - Timestamp: {config.TIMESTAMP}
 
@@ -148,11 +112,16 @@ HIPERPARÂMETROS
 
 RESULTADOS FINAIS
 -----------------
-- Tempo Total de Treinamento: {training_duration:.2f} segundos
-- Tempo de Inferência (gerar embeddings): {inference_duration:.4f} segundos
-- Loss Total Final: {final_metrics.get('total_loss', 'N/A'):.6f}
-- Loss Reconstrução Final: {final_metrics.get('recon_loss', 'N/A'):.6f}
-- Loss KL Final: {final_metrics.get('kl_loss', 'N/A'):.6f}
+- Tempo Total de Treinamento: {fmt(training_duration, 2)} segundos
+- Tempo de Inferência (gerar embeddings): {fmt(inference_duration, 4)} segundos
+
+- Loss Total Final (treino): {fmt(final_metrics.get('train_total_loss'))}
+- Loss Reconstrução Final (treino): {fmt(final_metrics.get('train_recon_loss'))}
+- Loss KL Final (treino): {fmt(final_metrics.get('train_kl_loss'))}
+
+- Loss Total Final (teste): {fmt(final_metrics.get('test_total_loss'))}
+- Loss Reconstrução Final (teste): {fmt(final_metrics.get('test_recon_loss'))}
+- Loss KL Final (teste): {fmt(final_metrics.get('test_kl_loss'))}
 
 {memory_report}
 =================================================
@@ -163,7 +132,7 @@ RESULTADOS FINAIS
     print(f"Relatório de execução salvo em: '{report_path}'")
 
 
-# ... (save_results permanece o mesmo) ...
+
 def save_results(
     model: VGAE,
     final_embeddings: torch.Tensor,
@@ -214,10 +183,58 @@ def save_results(
         node_features=output_node_features,
     )
 
-    output_filename = f"{config.DATASET_NAME}_({config.OUT_EMBEDDING_DIM})_embeddings_epoch_{config.EPOCHS}.wsg.json"
+    dataset_name = wsg_obj.metadata.dataset_name
+    output_filename = f"{dataset_name}_({config.OUT_EMBEDDING_DIM})_embeddings_epoch_{config.EPOCHS}.wsg.json"
+
     output_path = os.path.join(save_path, output_filename)
     with open(output_path, "w") as f:
         f.write(output_wsg.model_dump_json(indent=2))
     print(f"Arquivo de embeddings no formato WSG salvo em: '{output_path}'")
 
-# Função main obsoleta omitida para clareza
+
+
+
+
+# --- DEPRECATED: mover train_model para dentro da classe VGAE ---
+'''# train_model (versão simplificada sem psutil interno)
+def train_model(
+    model: VGAE,
+    data: Data,
+    optimizer: optim.Optimizer,
+    epochs: int,
+) -> Tuple[VGAE, List[Dict[str, float]]]:
+    """
+    Executa o loop de treinamento para o modelo VGAE.
+    """
+    training_history = []
+    pbar = tqdm(range(1, epochs + 1), desc="Treinando VGAE")
+
+    for epoch in pbar:
+        model.train()
+        optimizer.zero_grad()
+        z = model.encode(data)
+        recon_loss = model.reconstruction_loss(z, data.edge_index)
+        kl_loss = (1 / data.num_nodes) * model.kl_loss()
+        total_loss = recon_loss + kl_loss
+        total_loss.backward()
+        optimizer.step()
+
+        epoch_metrics = {
+            "epoch": epoch,
+            "total_loss": total_loss.item(),
+            "recon_loss": recon_loss.item(),
+            "kl_loss": kl_loss.item(),
+        }
+        training_history.append(epoch_metrics)
+
+        pbar.set_postfix({
+            "Loss": f"{total_loss:.4f}",
+            "Recon": f"{recon_loss:.4f}",
+            "KL": f"{kl_loss:.4f}"
+        })
+
+    if training_history:
+        print(f"Métricas finais do treinamento: {training_history[-1]}")
+    else:
+        print("Treinamento concluído sem histórico.")
+    return model, training_history'''

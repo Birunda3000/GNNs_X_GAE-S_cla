@@ -2,7 +2,7 @@ import os
 import io
 import torch
 import numpy as np
-from src.data_converter import DataConverter
+from src.data_converters import DataConverter
 from src.data_loaders import DirectWSGLoader, get_loader
 import torch.nn as nn
 import torch.nn.functional as F

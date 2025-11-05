@@ -11,11 +11,11 @@ from functools import partial
 from memory_profiler import memory_usage
 
 from src.config import Config
-from src.data_converter import DataConverter
+import src.data_converters as data_converters
 from src.model import VGAE
 import src.data_loaders as data_loaders
 
-from src.train import train_model, save_results, save_report, format_b
+from src.train import save_results, save_report, format_b
 from src.directory_manager import DirectoryManager
 
 
@@ -54,14 +54,20 @@ def main():
     # --- Pipeline de Dados ---
     print("\n[FASE 1/2] Executando pipeline de dados...")
 
+
     wsg_obj = WSG_DATASET.load()
+
+
     mem_after_load = process.memory_info().rss
     peak_ram_overall_bytes = max(
         peak_ram_overall_bytes, mem_after_load
     )  # Atualiza pico
     print(f"RAM após carregar wsg_obj: {format_b(mem_after_load)}")
 
-    pyg_data = DataConverter.to_pyg_data(wsg_obj, for_embedding_bag=True).to(device)
+
+    pyg_data = data_converters.wsg_for_vgae(wsg_obj)
+
+
     mem_after_convert = process.memory_info().rss
     peak_ram_overall_bytes = max(
         peak_ram_overall_bytes, mem_after_convert
@@ -71,10 +77,12 @@ def main():
     )
     print("Pipeline de dados concluído.")
 
+
     directory_manager = DirectoryManager(
         timestamp=config.TIMESTAMP,
         run_folder_name=f"EMBEDDING_RUNS_epochs({config.EPOCHS})", 
     )
+
 
     # --- Instanciação do Modelo ---
     print("\n[FASE 3] Construindo o modelo VGAE...")
@@ -95,19 +103,19 @@ def main():
 
     # --- Loop de Treinamento ---
     print("\n[FASE 4] Iniciando treinamento do modelo...")
-    start_time = time.process_time()
 
     peak_ram_train_func_mib = 0.0  # Pico durante a função train_model (MiB)
 
 
     func_to_profile = partial(
-        train_model,
-        model=model,
-        data=pyg_data,
+        model.train_model,
+        input_data=pyg_data,
+        learning_rate=config.LEARNING_RATE,
         optimizer=optimizer,
+        weight_decay=getattr(config, "WEIGHT_DECAY", 0.0),
         epochs=config.EPOCHS,
     )
-    mem_usage_result, (trained_model, training_history) = memory_usage(
+    mem_usage_result, (training_report) = memory_usage(
         func_to_profile, max_usage=True, retval=True, interval=0.1
     )
     peak_ram_train_func_mib = mem_usage_result or 0.0  # Garante float
@@ -116,9 +124,6 @@ def main():
         peak_ram_overall_bytes, int(peak_ram_train_func_mib * 1024 * 1024)
     )
 
-
-    end_time = time.process_time()
-    training_duration = end_time - start_time
     # --- FIM TREINO ---
 
     # --- Coleta de Métricas Finais ---
@@ -134,14 +139,14 @@ def main():
         peak_vram_bytes = torch.cuda.max_memory_allocated(device)
         print(f"PICO VRAM (GPU) durante treino: {format_b(peak_vram_bytes)}")
 
-    print(f"Treinamento finalizado em {training_duration:.2f} segundos.")
+    print(f"Treinamento finalizado em {training_report['total_training_time']:.2f} segundos.")
 
     # --- Inferência e Salvamento ---
     print("\n[FASE FINAL] Gerando e salvando resultados...")
     run_path = directory_manager.get_run_path()
 
     inference_start_time = time.process_time()
-    final_embeddings = trained_model.get_embeddings(pyg_data)
+    final_embeddings = model.inference(pyg_data)
     inference_end_time = time.process_time()
     inference_duration = inference_end_time - inference_start_time
     print(
@@ -186,20 +191,26 @@ def main():
     }
 
     # Salvar os artefatos
-    save_results(trained_model, final_embeddings, wsg_obj, config, save_path=run_path)
-    save_report(  # Passa o dict corrigido
+    save_results(model, final_embeddings, wsg_obj, config, save_path=run_path)
+    dataset_name = WSG_DATASET.dataset_name
+
+
+
+
+    save_report(
         config,
-        training_history,
-        training_duration,
+        training_report["training_history"],
+        training_report["total_training_time"],
         inference_duration,
+        dataset_name,
         save_path=run_path,
         memory_metrics=memory_metrics,
     )
 
-    # ... (Resto do script) ...
-    final_metrics = training_history[-1] if training_history else {}
+
+    final_metrics = training_report["training_history"][-1]
     run_metrics = {
-        "loss": final_metrics.get("total_loss", 0.0),
+        "train_loss": final_metrics.get("train_total_loss", 0.0),
         "emb_dim": config.OUT_EMBEDDING_DIM,
     }
     final_path = directory_manager.finalize_run_directory(

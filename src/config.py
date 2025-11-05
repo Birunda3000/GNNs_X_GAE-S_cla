@@ -22,7 +22,7 @@ class Config:
     DEVICE = "cuda" if os.environ.get("NVIDIA_VISIBLE_DEVICES") else "cpu"
     RANDOM_SEED = int(time.time())
 
-
+    TRAIN_SPLIT_RATIO = 0.8  # Proporção de dados para treino vs teste/validação
 
     # --- Hiperparâmetros do Modelo VGAE ---
     EMBEDDING_DIM = 128  # Dimensão do embedding das features de entrada
@@ -31,7 +31,7 @@ class Config:
     OUT_EMBEDDING_DIM = 8 # Dimensão do embedding final do nó variar [8,32,64,128]
 
     # --- Configurações de Treinamento ---
-    EPOCHS = 10
+    EPOCHS = 3
     LEARNING_RATE = 0.0001
 
     # --- Configurações de Visualização ---
