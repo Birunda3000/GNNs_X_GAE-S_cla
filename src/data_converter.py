@@ -1,14 +1,11 @@
 # src/data_converter.py
 
+# third-party
 import torch
 from torch_geometric.data import Data
 from sklearn.model_selection import train_test_split
-from src.data_format_definition import WSG
 
-
-import torch
-from torch_geometric.data import Data
-from sklearn.model_selection import train_test_split
+# local
 from src.data_format_definition import WSG
 from src.config import Config
 
@@ -158,15 +155,13 @@ def wsg_for_vgae(wsg: WSG) -> Data:
 def wsg_for_gcn_gat_multi_hot(wsg: WSG, config: Config, train_size: float = 0.8) -> Data:
     """Converte um objeto WSG para um objeto torch_geometric.data.Data para uso com GCN/GAT."""
     print("Convertendo objeto WSG para formato PyTorch Geometric (GCN/GAT)...")
+    if not wsg.metadata.feature_type == "sparse_binary":
+        print(f"WARNING: As features passadas para wsg_for_gcn_gat não são do tipo 'sparse_binary' são '{wsg.metadata.feature_type}'.")
 
     edge_index = wsg_to_edge_index(wsg)
-    num_nodes = wsg.metadata.num_nodes #verificar
-    num_total_features = wsg.metadata.num_total_features #verificar
+    num_nodes = wsg.metadata.num_nodes #verificar se precisa
+    num_total_features = wsg.metadata.num_total_features #verificar se precisa
     y = wsg_to_labels(wsg)
-
-
-    if not wsg.metadata.feature_type == "sparse_binary":
-        print("WARNING: As features passadas para wsg_for_gcn_gat não são do tipo 'sparse_binary'.")
     
     x = wsg_to_multi_hot_features(wsg)
 
@@ -174,8 +169,8 @@ def wsg_for_gcn_gat_multi_hot(wsg: WSG, config: Config, train_size: float = 0.8)
 
     pyg_data = Data(
         edge_index=edge_index,
-        #num_nodes=num_nodes,#verificar
-        #num_total_features=num_total_features,#verificar
+        #num_nodes=num_nodes, #verificar se precisa
+        #num_total_features=num_total_features, #verificar se precisa
         x=x,
         y=y,
         train_mask=train_mask,
@@ -186,10 +181,48 @@ def wsg_for_gcn_gat_multi_hot(wsg: WSG, config: Config, train_size: float = 0.8)
     return pyg_data
 
 
+def wsg_for_dense_classifier(wsg: WSG, config: Config, train_size: float = 0.8) -> Data:
+    """Converte um objeto WSG para uso com classificadores densos (MLP, etc.)."""
+    print("Convertendo objeto WSG para formato PyTorch Geometric (Classificador Denso)...")
+
+    y = wsg_to_labels(wsg)
+
+    x = wsg_to_dense_features(wsg)
+
+    train_mask, test_mask = create_train_test_masks(y, wsg.graph_structure.y, wsg.metadata.num_nodes, train_size, config)
+
+    pyg_data = Data(
+        x=x,
+        y=y,
+        train_mask=train_mask,
+        test_mask=test_mask,
+    )
+
+    print(f"Conversão \"wsg_for_dense_classifier\" concluída com sucesso.")
+    return pyg_data
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # --- DEPRECATED ---
-
+'''
 class DataConverter:
     """
     Converte um objeto WSG validado para um objeto torch_geometric.data.Data,
@@ -318,4 +351,4 @@ class DataConverter:
 
         print("Conversão concluída com sucesso.")
         return pyg_data
-
+'''
