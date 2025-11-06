@@ -1,13 +1,15 @@
-import torch
-import random
-import numpy as np
 import os
-from src.config import Config
-import src.data_loaders as data_loaders
-import src.data_converters as data_converters
-from src.models.torch_classifiers import GCNClassifier, GATClassifier
-from src.experiment_runner import ExperimentRunner
+import random
+
+import numpy as np
 import psutil
+import torch
+
+import src.data_converters as data_converters
+import src.data_loaders as data_loaders
+from src.config import Config
+from src.experiment_runner import ExperimentRunner
+from src.models.torch_classifiers import GATClassifier, GCNClassifier
 
 
 WSG_DATASET = data_loaders.MusaeFacebookLoader()# Ou MusaeGithubLoader()

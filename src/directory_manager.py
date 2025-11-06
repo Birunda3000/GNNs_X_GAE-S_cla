@@ -1,9 +1,9 @@
+import json
 import os
 import shutil
-from typing import Dict, Optional, List, Union, Any
-import json
+from typing import Any, Dict, List, Optional, Union
+
 import src.paths as paths
-from src.config import Config
 
 
 class DirectoryManager:
@@ -46,8 +46,7 @@ class DirectoryManager:
         """Retorna o caminho do diretório da execução atual (seja temporário ou final)."""
         return self.final_dir_path if self.final_dir_path else self.run_dir_path
 
-
-    #VAI SAIR
+    # VAI SAIR
     def print_summary_table(
         self, results: Dict[str, Any], input_file_path: str, feature_type: str
     ):

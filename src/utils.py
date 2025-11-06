@@ -1,17 +1,9 @@
-# src/train.py (CORRIGIDO save_report)
-
-from multiprocessing.util import DEBUG
-import torch
 import os
+from datetime import datetime
 from typing import Any
 
-from datetime import datetime
-
-# --- Importa nossos módulos customizados ---
-from src.data_format_definition import WSG, Metadata, NodeFeaturesEntry
-from datetime import datetime
-import os
 import torch
+
 from src.data_format_definition import WSG, Metadata, NodeFeaturesEntry
 
 

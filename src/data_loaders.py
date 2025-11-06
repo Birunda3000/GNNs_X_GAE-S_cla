@@ -1,13 +1,17 @@
 # src/data_loader.py
 
-from abc import ABC, abstractmethod
-from typing import List, Dict, Any
-import pandas as pd
+# Standard library
 import json
-from datetime import datetime, timezone, timedelta
-from src.config import Config
-from src.data_format_definition import WSG, Metadata, GraphStructure, NodeFeaturesEntry
-from src.paths import musae_github_paths, musae_facebook_paths
+from abc import ABC, abstractmethod
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, List
+
+# Third-party
+import pandas as pd
+
+# Local application
+from src.data_format_definition import GraphStructure, Metadata, NodeFeaturesEntry, WSG
+from src.paths import musae_facebook_paths, musae_github_paths
 
 
 class BaseDatasetLoader(ABC):

@@ -1,4 +1,3 @@
-
 import json
 import os
 import src.directory_manager as directory_manager
