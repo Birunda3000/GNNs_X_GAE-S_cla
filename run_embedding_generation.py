@@ -1,25 +1,26 @@
 # run_embedding_generation.py
 
-import torch
-import torch.optim as optim
+# Standard library
 import os
-import time
 import random
+import time
+from typing import Any, cast
+
+# Third-party
+from memory_profiler import memory_usage
 import numpy as np
 import psutil
-from functools import partial
-from memory_profiler import memory_usage
+import torch
+import torch.optim as optim
 
+# Local application
 from src.config import Config
 import src.data_converters as data_converters
-from src.model import VGAE
 import src.data_loaders as data_loaders
-
-from src.train import save_results, save_report, format_b
 from src.directory_manager import DirectoryManager
+from src.model import VGAE
 from src.report_manager import ReportManager
-from src.classifiers import salvar_modelo_completo
-from src.train import save_embeddings_to_wsg
+from src.utils import format_b, save_embeddings_to_wsg, salvar_modelo_pytorch_completo
 
 
 WSG_DATASET = data_loaders.MusaeGithubLoader()  # Ou MusaeFacebookLoader()
@@ -105,18 +106,24 @@ def main():
 
     peak_ram_train_func_mib = 0.0  # Pico durante a função train_model (MiB)
 
-    func_to_profile = partial(
-        model.train_model,
-        input_data=pyg_data,
-        learning_rate=config.LEARNING_RATE,
-        optimizer=optimizer,
-        weight_decay=getattr(config, "WEIGHT_DECAY", 0.0),
-        epochs=config.EPOCHS,
+    # memory_usage espera (func, args, kwargs) para perfilar uma função
+    func = model.train_model
+    func_args = []
+    func_kwargs = {
+        "input_data": pyg_data,
+        "learning_rate": config.LEARNING_RATE,
+        "optimizer": optimizer,
+        "weight_decay": getattr(config, "WEIGHT_DECAY", 0.0),
+        "epochs": config.EPOCHS,
+    }
+    proc_tuple = (func, func_args, func_kwargs)
+    mem_usage_result, training_report = memory_usage(
+        proc=cast(Any, proc_tuple),  # satisfaz o stub; runtime aceita a tupla
+        max_usage=True,
+        retval=True,
+        interval=0.1,
     )
-    mem_usage_result, (training_report) = memory_usage(
-        func_to_profile, max_usage=True, retval=True, interval=0.1
-    )
-    peak_ram_train_func_mib = mem_usage_result or 0.0  # Garante float
+    peak_ram_train_func_mib = mem_usage_result or 0.0
     # Atualiza pico GERAL com o pico do treino (convertido para Bytes)
     peak_ram_overall_bytes = max(
         peak_ram_overall_bytes, int(peak_ram_train_func_mib * 1024 * 1024)
@@ -130,7 +137,9 @@ def main():
     peak_ram_overall_bytes = max(peak_ram_overall_bytes, mem_after_train)
 
     print(f"\nRAM após treinamento (imediatamente após): {format_b(mem_after_train)}")
-    print(f"RAM PICO durante a função treino: {format_b(peak_ram_train_func_mib)}")
+    print(
+        f"RAM PICO durante a função treino: {format_b(int(peak_ram_train_func_mib * 1024 * 1024))}"
+    )
 
     peak_vram_bytes = 0
     if "cuda" in device.type and torch.cuda.is_available():
@@ -209,7 +218,7 @@ def main():
     )
     report_manager.save_report()
 
-    salvar_modelo_completo(
+    salvar_modelo_pytorch_completo(
         model=model,
         dataset_name=WSG_DATASET.dataset_name,
         timestamp=config.TIMESTAMP,

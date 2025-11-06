@@ -63,18 +63,12 @@ class SklearnClassifier(BaseClassifier):
     ) -> Tuple[float, float, float, Dict]:  # <-- MUDANÇA 2: Assinatura
         print(f"\n--- Avaliando (Sklearn): {self.model_name} ---")
 
-        # --- REMOVIDO ---
-        # pyg_data = DataConverter.to_pyg_data(wsg_obj=wsg_obj, for_embedding_bag=False)
-        # ---
+        X = data.x.cpu().numpy()
+        y = data.y.cpu().numpy()
 
-        # Usa 'data' que veio como argumento
-        pyg_data = data
-        X = pyg_data.x.cpu().numpy()
-        y = pyg_data.y.cpu().numpy()
-
-        # Usar as máscaras de treino/teste já definidas no objeto pyg_data
-        X_train, y_train = X[pyg_data.train_mask], y[pyg_data.train_mask]
-        X_test, y_test = X[pyg_data.test_mask], y[pyg_data.test_mask]
+        # Usar as máscaras de treino/teste já definidas no objeto data
+        X_train, y_train = X[data.train_mask], y[data.train_mask]
+        X_test, y_test = X[data.test_mask], y[data.test_mask]
 
         start_time = time.process_time()
         self.model.fit(X_train, y_train)
@@ -316,35 +310,6 @@ class XGBoostClassifier(BaseClassifier):
 
         return acc, f1, train_time, report
 
-
-def salvar_modelo_completo(model, dataset_name: str, timestamp: str, save_dir: str = "models"):
-    """
-    Salva o modelo PyTorch completo (arquitetura + pesos + buffers).
-    ⚠️ Requer que o código da classe do modelo exista no mesmo caminho
-       ao carregar (ex: models.vgae.VGAE).
-    """
-    os.makedirs(save_dir, exist_ok=True)
-
-    model_name = getattr(model, "model_name", model.__class__.__name__)
-    base_name = f"{dataset_name}__{model_name}__{timestamp}"
-
-    save_path = os.path.join(save_dir, f"{base_name}.pt")
-
-    torch.save(model, save_path)
-
-    print(f"✅ Modelo completo salvo em: {save_path}")
-    return save_path
-
-
-def carregar_modelo_completo(save_path: str, device: str = "cpu"):
-    """
-    Carrega um modelo PyTorch completo salvo com torch.save(model).
-    Requer que o código original (classe do modelo) exista.
-    """
-    model = torch.load(save_path, map_location=device)
-    model.eval()  # modo avaliação (sem dropout/batchnorm training)
-    print(f"🔁 Modelo carregado de: {save_path}")
-    return model
 
 
 
