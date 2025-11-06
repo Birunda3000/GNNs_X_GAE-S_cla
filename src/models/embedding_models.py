@@ -170,9 +170,17 @@ class VGAE(basemodel.BaseModel, nn.Module):
             mu = self.conv_mu(x, input_data.edge_index)
         return mu
     
+
+    def verify_train_input_data(self, data: Data):
+        assert data.x is not None, "Os dados de entrada devem conter atributos de nó (data.x)."
+        assert data.edge_index is not None, "Os dados de entrada devem conter edge_index (data.edge_index)."
+        assert data.train_mask is not None, "Os dados de entrada devem conter uma máscara de treino (data.train_mask)."
+        assert data.test_mask is not None, "Os dados de entrada devem conter uma máscara de teste (data.test_mask)."
+
+    
     def train_model(
         self,
-        input_data: Data,
+        data: Data,
         optimizer: optim.Optimizer,
         epochs: int,
     ) -> List[Dict[str, float]]:
@@ -188,6 +196,8 @@ class VGAE(basemodel.BaseModel, nn.Module):
         Returns:
             List[Dict[str, float]]: Histórico de métricas por época.
         """
+        self.verify_train_input_data(data)
+        
         training_history = []
 
         start_time = time.time() # CUIDADO: time.process_time() USADO NÃO time.process_time()
@@ -195,9 +205,9 @@ class VGAE(basemodel.BaseModel, nn.Module):
         for epoch in range(1, epochs + 1):
             self.train()
             optimizer.zero_grad()
-            z = self.encode(input_data)
-            recon_loss = self.reconstruction_loss(z, input_data.edge_index)
-            kl_loss = (1 / input_data.num_nodes) * self.kl_loss()
+            z = self.encode(data)
+            recon_loss = self.reconstruction_loss(z, data.edge_index)
+            kl_loss = (1 / data.num_nodes) * self.kl_loss()
             total_loss = recon_loss + kl_loss
             total_loss.backward()
             optimizer.step()

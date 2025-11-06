@@ -9,8 +9,6 @@ import torch
 import time
 
 
-
-
 class BaseModel(ABC):
     """Classe base abstrata para modelos de ML."""
 
@@ -20,17 +18,22 @@ class BaseModel(ABC):
         self.model_name = self.__class__.__name__
 
     @abstractmethod
-    def train_model(self, input_data, y: Optional[Any] = None, train_split: Optional[Any] = None):
+    def verify_train_input_data(self, data: Data):
+        """Verifica se os dados de entrada para treino estão corretos."""
+        pass
+
+    @abstractmethod
+    def train_model(self, data, train_split: Optional[Any] = None):
         """Train the model."""
         pass
     
     @abstractmethod
-    def evaluate(self, input_data, y: Optional[Any] = None) -> Any:
+    def evaluate(self, x, y: Optional[Any] = None) -> Any:
         """Evaluate the model."""
         pass
 
     @abstractmethod
-    def inference(self, input_data):
+    def inference(self, x):
         """Run inference with the model."""
         pass
 

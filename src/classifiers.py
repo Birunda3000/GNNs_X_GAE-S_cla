@@ -3,8 +3,6 @@ Importa as bibliotecas necessárias para a construção de modelos de classifica
 """
 # Standard library imports
 import time
-from abc import ABC, abstractmethod
-from typing import Any, Dict, Tuple, cast
 
 # Third-party imports
 import numpy as np
@@ -20,10 +18,10 @@ import xgboost as xgb
 
 # Local imports
 from src.config import Config
+from src.models.torch_gnn_classifiers import PyTorchClassifier 
 
 
-
-class BaseClassifier(ABC):
+'''class BaseClassifier(ABC):
     """
     Classe base abstrata. Define que todo classificador deve saber
     como treinar e se avaliar a partir de um objeto WSG.
@@ -171,7 +169,7 @@ class PyTorchClassifier(BaseClassifier, nn.Module):
         train_time = time.process_time() - start_time
 
         acc, f1, report = self._test_step(data, use_gnn)
-        return acc, f1, train_time, report
+        return acc, f1, train_time, report'''
 
 
 # --- Implementações Específicas ---

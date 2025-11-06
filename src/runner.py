@@ -77,10 +77,12 @@ class ExperimentRunner:
 
             # --- 4. MEDIÇÃO DE PICO COM memory_profiler ---
             # Forma recomendada: tupla (func, args, kwargs) + cast para agradar o type checker
-            func = model.train_and_evaluate
+
+            func = model.train_model
             args = []
             kwargs = {"data": data}
             # Executa a função e mede o pico (max_usage=True). Retorna (pico_em_MiB, retval)
+            
             mem_usage_result, (acc, f1, train_time, model_report) = memory_usage(
                 proc=cast(Any, (func, args, kwargs)),
                 max_usage=True,   # retorna apenas o pico
