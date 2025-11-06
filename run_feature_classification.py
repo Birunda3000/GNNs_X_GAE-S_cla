@@ -46,6 +46,7 @@ def main(wsg_file_path: str):
     # --- 3. Definir Modelos ---
     input_dim = len(wsg_obj.node_features["0"].weights)
     output_dim = len(set(y for y in wsg_obj.graph_structure.y if y is not None))
+    
     models_to_run = [
         SklearnClassifier(
             config,

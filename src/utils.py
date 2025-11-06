@@ -42,6 +42,22 @@ def format_b(b):
         return "N/A (error)"
 
 
+# --- 3. AJUSTAR format_bytes ---
+def format_bytes(b):
+    """Converte bytes ou MiB para um formato legível (MB ou GB)."""
+    # Converte de MiB (memory_profiler) para Bytes antes de formatar, se necessário
+    if isinstance(b, float): # memory_profiler retorna MiB (float)
+        b = int(b * 1024 * 1024) # Converte MiB para Bytes
+
+    # Converte Bytes para MB/GB
+    if isinstance(b, int):
+        if b < 1024**3:
+            return f"{b / 1024**2:.2f} MB"
+        return f"{b / 1024**3:.2f} GB"
+    return "N/A" # Caso receba algo inesperado
+# --- FIM DO AJUSTE ---
+
+
 def fmt(val, precision=6):
     """Formata floats de forma segura; se None ou inválido, retorna 'N/A'."""
     return f"{val:.{precision}f}" if isinstance(val, (int, float)) else "N/A"

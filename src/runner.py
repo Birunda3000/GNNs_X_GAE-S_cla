@@ -12,23 +12,9 @@ from src.directory_manager import DirectoryManager
 from src.data_format_definition import WSG
 
 from src.classifiers import BaseClassifier
-from src.data_converters import DataConverter
+from src.utils import format_bytes
 
 
-# --- 3. AJUSTAR format_bytes ---
-def format_bytes(b):
-    """Converte bytes ou MiB para um formato legível (MB ou GB)."""
-    # Converte de MiB (memory_profiler) para Bytes antes de formatar, se necessário
-    if isinstance(b, float): # memory_profiler retorna MiB (float)
-        b = int(b * 1024 * 1024) # Converte MiB para Bytes
-
-    # Converte Bytes para MB/GB
-    if isinstance(b, int):
-        if b < 1024**3:
-            return f"{b / 1024**2:.2f} MB"
-        return f"{b / 1024**3:.2f} GB"
-    return "N/A" # Caso receba algo inesperado
-# --- FIM DO AJUSTE ---
 
 
 class ExperimentRunner:
@@ -87,6 +73,9 @@ class ExperimentRunner:
         for model in models_to_run:
             print(f"\n--- 📊 Executando: {model.model_name} ---")
 
+
+            
+
             # --- 4. MEDIÇÃO DE PICO COM memory_profiler ---
             
             func_to_profile = partial(model.train_and_evaluate, data=data)
@@ -128,6 +117,12 @@ class ExperimentRunner:
             }
             if report:
                 self.reports[f"{model.model_name}_classification_report"] = report
+
+
+
+
+
+
 
         # --- 5. Relatório Final Atualizado ---
         mem_end_run = self.process.memory_info().rss
