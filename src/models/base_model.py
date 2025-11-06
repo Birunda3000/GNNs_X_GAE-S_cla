@@ -23,7 +23,7 @@ class BaseModel(ABC):
         pass
 
     @abstractmethod
-    def train_model(self, data, train_split: Optional[Any] = None):
+    def train_model(self, data, train_split: Optional[Any] = None) -> Any:
         """Train the model."""
         pass
     

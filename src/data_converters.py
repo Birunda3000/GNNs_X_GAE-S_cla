@@ -218,6 +218,10 @@ def wsg_for_gcn_gat_multi_hot(wsg: WSG, config: Config, train_size_ratio: float 
         labels, wsg.graph_structure.y, num_nodes, train_size_ratio, config
     )
 
+
+    print(f"[DEBUG] edge_index shape: {edge_index.shape}, dtype: {edge_index.dtype}")
+    print(f"[DEBUG] node_features shape: {node_features.shape}, dtype: {node_features.dtype}")
+
     data = Data(
         edge_index=edge_index,
         x=node_features,

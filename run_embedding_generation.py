@@ -18,8 +18,8 @@ from src.config import Config
 import src.data_converters as data_converters
 import src.data_loaders as data_loaders
 from src.directory_manager import DirectoryManager
-from src.model import VGAE
 from src.report_manager import ReportManager
+from src.models.embedding_models import VGAE
 from src.utils import format_b, save_embeddings_to_wsg, salvar_modelo_pytorch_completo
 
 
@@ -86,6 +86,7 @@ def main():
     # --- Instanciação do Modelo ---
     print("\n[FASE 3] Construindo o modelo VGAE...")
     model = VGAE(
+        config=config,
         num_total_features=pyg_data.num_total_features,
         embedding_dim=config.EMBEDDING_DIM,
         hidden_dim=config.HIDDEN_DIM,
@@ -110,10 +111,8 @@ def main():
     func = model.train_model
     func_args = []
     func_kwargs = {
-        "input_data": pyg_data,
-        "learning_rate": config.LEARNING_RATE,
+        "data": pyg_data,
         "optimizer": optimizer,
-        "weight_decay": getattr(config, "WEIGHT_DECAY", 0.0),
         "epochs": config.EPOCHS,
     }
     proc_tuple = (func, func_args, func_kwargs)
@@ -202,9 +201,10 @@ def main():
     # Salvar os artefatos
     # --- VERIFICAÇÃO E SALVAMENTO DO RELATÓRIO ---
     report = {
-        "Timestamp": config.TIMESTAMP,
         "dataset_name": WSG_DATASET.dataset_name,
-        "Seed": config.RANDOM_SEED,
+        "Random_Seed": config.RANDOM_SEED,
+        "Timestamp": config.TIMESTAMP,
+        "Train_Split_Ratio": config.TRAIN_SPLIT_RATIO,
         "Model": model.__class__.__name__,
         "Embedding_Dim": config.OUT_EMBEDDING_DIM,
         "Learning_Rate": config.LEARNING_RATE,
@@ -233,7 +233,7 @@ def main():
     )
 
     # --- SALVAMENTO DOS RESULTADOS ---
-
+    print(f"[DEBUG]: {training_report}")
     final_metrics = training_report["training_history"][-1]
     metrics_to_name = {
         "train_loss": final_metrics["train_total_loss"],

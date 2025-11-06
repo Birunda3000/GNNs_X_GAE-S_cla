@@ -5,8 +5,8 @@ import os
 from src.config import Config
 import src.data_loaders as data_loaders
 import src.data_converters as data_converters
-from src.classifiers import GCNClassifier, GATClassifier
-from src.runner import ExperimentRunner
+from src.models.torch_classifiers import GCNClassifier, GATClassifier
+from src.experiment_runner import ExperimentRunner
 import psutil
 
 

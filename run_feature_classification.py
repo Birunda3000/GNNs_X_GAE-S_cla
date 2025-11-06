@@ -20,8 +20,10 @@ import psutil
 from src.config import Config
 import src.data_loaders as data_loaders
 import src.data_converters as data_converters
-from src.classifiers import SklearnClassifier, MLPClassifier, XGBoostClassifier
-from src.runner import ExperimentRunner
+from src.models.sklearn_model import SklearnClassifier
+from src.models.torch_classifiers import MLPClassifier
+from src.models.xgboost_classifier import XGBoostClassifier
+from src.experiment_runner import ExperimentRunner
 
 wsg_file_paths = [
     "/app/gnn_tcc/data/output/EMBEDDING_RUNS/musae-facebook__loss_2_2581__emb_dim_32__30-10-2025_19-32-36/musae-facebook_(32)_embeddings_epoch_200.wsg.json"

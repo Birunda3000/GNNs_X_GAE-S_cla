@@ -12,7 +12,8 @@ from src.directory_manager import DirectoryManager
 from src.report_manager import ReportManager
 from src.data_format_definition import WSG
 
-from src.classifiers import BaseClassifier
+from src.models.base_model import BaseModel#criar base classifier?
+
 from src.utils import format_bytes
 
 
@@ -41,12 +42,17 @@ class ExperimentRunner:
             print("VRAM (GPU) Peak Stats zeradas.")
 
 
-    def run(self, models_to_run: List[BaseClassifier], process: psutil.Process, mem_start: int):
+    def run(self, models_to_run: List[BaseModel], process: psutil.Process, mem_start: int):
         """Executa o pipeline."""
         report_manager = ReportManager(self.directory_manager)
 
         report = {}
         report["input_wsg_file"] = self.data_source_name
+        report["Random_Seed"] = self.config.RANDOM_SEED
+        report["Timestamp"] = self.config.TIMESTAMP
+        report["Train_Split_Ratio"] = self.config.TRAIN_SPLIT_RATIO
+        report["Device"] = self.config.DEVICE
+
         report["results_summary_per_model"] = {}
         report["detailed_results_per_model"] = {}
 

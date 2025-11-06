@@ -4,10 +4,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.nn import GCNConv
 from torch_geometric.data import Data
-from typing import Dict, List, Optional, Any
+from typing import List, Dict, Any
 import torch.optim as optim
 import time
 import src.models.base_model as basemodel
+from src.config import Config
 
 
 class VGAE(basemodel.BaseModel, nn.Module):
@@ -25,6 +26,7 @@ class VGAE(basemodel.BaseModel, nn.Module):
 
     def __init__(
         self,
+        config: Config,
         num_total_features: int,
         embedding_dim: int,
         hidden_dim: int,
@@ -39,7 +41,8 @@ class VGAE(basemodel.BaseModel, nn.Module):
             hidden_dim (int): Dimensão da camada GCN intermediária.
             out_embedding_dim (int): Dimensão final dos embeddings dos nós.
         """
-        super().__init__()
+        basemodel.BaseModel.__init__(self, config)
+        nn.Module.__init__(self)
 
         # Camada de entrada: processa os índices/pesos e cria um vetor denso inicial
         self.feature_embedder = nn.EmbeddingBag(
@@ -172,10 +175,14 @@ class VGAE(basemodel.BaseModel, nn.Module):
     
 
     def verify_train_input_data(self, data: Data):
-        assert data.x is not None, "Os dados de entrada devem conter atributos de nó (data.x)."
-        assert data.edge_index is not None, "Os dados de entrada devem conter edge_index (data.edge_index)."
-        assert data.train_mask is not None, "Os dados de entrada devem conter uma máscara de treino (data.train_mask)."
-        assert data.test_mask is not None, "Os dados de entrada devem conter uma máscara de teste (data.test_mask)."
+            # VGAE não recebe data.x (ele o cria) e não precisa de máscaras
+            # para o treino não-supervisionado.
+            assert data.edge_index is not None, "Os dados de entrada devem conter edge_index (data.edge_index)."
+            assert data.feature_indices is not None, "Os dados de entrada devem conter feature_indices."
+            assert data.feature_offsets is not None, "Os dados de entrada devem conter feature_offsets."
+            assert data.feature_weights is not None, "Os dados de entrada devem conter feature_weights."
+            assert data.num_nodes is not None, "Os dados de entrada devem conter num_nodes."
+            assert data.num_nodes > 0, "O número de nós (data.num_nodes) deve ser maior que zero."
 
     
     def train_model(
@@ -183,58 +190,55 @@ class VGAE(basemodel.BaseModel, nn.Module):
         data: Data,
         optimizer: optim.Optimizer,
         epochs: int,
-    ) -> List[Dict[str, float]]:
-        """
-        Treina o modelo VGAE no conjunto de dados fornecido.
+    ) -> Dict[str, Any]:
+            """
+            Treina o modelo VGAE no conjunto de dados fornecido.
 
-        Args:
-            data (Data): Objeto de dados do PyTorch Geometric.
-            learning_rate (float): Taxa de aprendizado para o otimizador.
-            weight_decay (float): Decaimento de peso (L2 regularization).
-            epochs (int): Número de épocas para treinar.
+            Args:
+                data (Data): Objeto de dados do PyTorch Geometric.
+                epochs (int): Número de épocas para treinar.
 
-        Returns:
-            List[Dict[str, float]]: Histórico de métricas por época.
-        """
-        self.verify_train_input_data(data)
-        
-        training_history = []
+            Returns:
+            Dict[str, Any]: Relatório com histórico e tempo total.
+            """
+            self.verify_train_input_data(data)
 
-        start_time = time.time() # CUIDADO: time.process_time() USADO NÃO time.process_time()
+            training_history: List[Dict[str, float]] = []
 
-        for epoch in range(1, epochs + 1):
-            self.train()
-            optimizer.zero_grad()
-            z = self.encode(data)
-            recon_loss = self.reconstruction_loss(z, data.edge_index)
-            kl_loss = (1 / data.num_nodes) * self.kl_loss()
-            total_loss = recon_loss + kl_loss
-            total_loss.backward()
-            optimizer.step()
+            start_time = time.time()
 
-            epoch_metrics = {
-                "epoch": epoch,
-                "train_total_loss": total_loss.item(),
-                "train_recon_loss": recon_loss.item(),
-                "train_kl_loss": kl_loss.item(),
-                "test_total_loss": None,
-                "test_recon_loss": None,
-                "test_kl_loss": None,
+            for epoch in range(1, epochs + 1):
+                self.train()
+                optimizer.zero_grad()
+                z = self.encode(data)
+                recon_loss = self.reconstruction_loss(z, data.edge_index)
+
+                
+                kl_loss = (1.0 / float(data.num_nodes)) * self.kl_loss()
+                total_loss = recon_loss + kl_loss
+                total_loss.backward()
+                optimizer.step()
+    
+                epoch_metrics = {
+                    "epoch": epoch,
+                    "train_total_loss": total_loss.item(),
+                    "train_recon_loss": recon_loss.item(),
+                    "train_kl_loss": kl_loss.item(),
+                    "test_total_loss": None,
+                    "test_recon_loss": None,
+                    "test_kl_loss": None,
+                }
+                training_history.append(epoch_metrics)
+    
+            total_time = time.time() - start_time
+            return {
+                "total_training_time": float(total_time),
+                "epochs": epochs,
+                "final_train_loss": total_loss.item(),
+                "training_history": training_history,
             }
-            training_history.append(epoch_metrics)
 
-        total_time = time.time() - start_time # CUIDADO: time.process_time() USADO NÃO time.process_time()
-
-        train_report = {
-            "total_training_time": total_time,
-            "training_history": training_history
-        }
-        return train_report
-
-    def evaluate(
-        self,
-        data: Data,
-    ) -> Any:
+    def evaluate(self, data: Data) -> Any:
         """
         Avalia o modelo no conjunto de dados fornecido.
 
