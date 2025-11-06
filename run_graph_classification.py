@@ -4,8 +4,11 @@ import numpy as np
 import os
 from src.config import Config
 import src.data_loaders as data_loaders
+import src.data_converters as data_converters
 from src.classifiers import GCNClassifier, GATClassifier
-from src.runner import ExperimentRunner  # <-- Importa a nova classe
+from src.runner import ExperimentRunner
+
+
 
 wsg_file_paths = ["/app/gnn_tcc/data/output/EMBEDDING_RUNS/musae-facebook__loss_2_2581__emb_dim_32__30-10-2025_19-32-36/musae-facebook_(32)_embeddings_epoch_200.wsg.json"]
 
@@ -45,9 +48,9 @@ def main():
         run_folder_name="GRAPH_CLASSIFICATION_RUNS",
         wsg_obj=wsg_obj,
         data_source_name=os.path.basename(WSG_DATASET.file_path),
-        
+        data_converter=data_converters.wsg_for_gcn_gat_multi_hot
     )
-    runner.run(models_to_run, for_embedding_bag=False)
+    runner.run(models_to_run)
 
 
 if __name__ == "__main__":

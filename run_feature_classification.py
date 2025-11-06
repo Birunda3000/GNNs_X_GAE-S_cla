@@ -69,14 +69,14 @@ def main(wsg_file_path: str):
         run_folder_name="CLASSIFICATION_RUNS",
         wsg_obj=wsg_obj,
         data_source_name=os.path.basename(WSG_DATASET.file_path),
-        data_converter=data_converters.wsg_for_dense_classification
+        data_converter=data_converters.wsg_for_dense_classifier
     )
     runner.run(models_to_run)
 
 
 if __name__ == "__main__":
 
-    main()
+    main(wsg_file_paths[0])
 
     """
     base_dirs = [

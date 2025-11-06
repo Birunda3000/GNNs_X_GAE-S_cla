@@ -1,4 +1,4 @@
-# run_embedding_generation.py (CORRIGIDO - Cálculo Pico Geral e Chaves)
+# run_embedding_generation.py
 
 import torch
 import torch.optim as optim
@@ -18,7 +18,7 @@ import src.data_loaders as data_loaders
 from src.train import save_results, save_report, format_b
 from src.directory_manager import DirectoryManager
 from src.report_manager import ReportManager
-from src.classifiers import salvar_modelo_pytorch
+from src.classifiers import salvar_modelo_completo
 from src.train import save_embeddings_to_wsg
 
 
@@ -57,9 +57,7 @@ def main():
     # --- Pipeline de Dados ---
     print("\n[FASE 1/2] Executando pipeline de dados...")
 
-
     wsg_obj = WSG_DATASET.load()
-
 
     mem_after_load = process.memory_info().rss
     peak_ram_overall_bytes = max(
@@ -67,9 +65,7 @@ def main():
     )  # Atualiza pico
     print(f"RAM após carregar wsg_obj: {format_b(mem_after_load)}")
 
-
     pyg_data = data_converters.wsg_for_vgae(wsg_obj)
-
 
     mem_after_convert = process.memory_info().rss
     peak_ram_overall_bytes = max(
@@ -80,15 +76,11 @@ def main():
     )
     print("Pipeline de dados concluído.")
 
-
     directory_manager = DirectoryManager(
         timestamp=config.TIMESTAMP,
-        run_folder_name=f"EMBEDDING_RUNS({config.EPOCHS})", 
+        run_folder_name=f"EMBEDDING_RUNS",
     )
     report_manager = ReportManager(directory_manager)
-
-
-
 
     # --- Instanciação do Modelo ---
     print("\n[FASE 3] Construindo o modelo VGAE...")
@@ -112,7 +104,6 @@ def main():
     print("\n[FASE 4] Iniciando treinamento do modelo...")
 
     peak_ram_train_func_mib = 0.0  # Pico durante a função train_model (MiB)
-
 
     func_to_profile = partial(
         model.train_model,
@@ -146,11 +137,13 @@ def main():
         peak_vram_bytes = torch.cuda.max_memory_allocated(device)
         print(f"PICO VRAM (GPU) durante treino: {format_b(peak_vram_bytes)}")
 
-    print(f"Treinamento finalizado em {training_report['total_training_time']:.2f} segundos.")
+    print(
+        f"Treinamento finalizado em {training_report['total_training_time']:.2f} segundos."
+    )
 
     # --- Inferência e Salvamento ---
     print("\n[FASE FINAL] Gerando e salvando resultados...")
-    run_path = directory_manager.get_run_path()
+    # run_path = directory_manager.get_run_path()
 
     inference_start_time = time.process_time()
     final_embeddings = model.inference(pyg_data)
@@ -205,42 +198,40 @@ def main():
         "Seed": config.RANDOM_SEED,
         "Model": model.__class__.__name__,
         "Embedding_Dim": config.OUT_EMBEDDING_DIM,
+        "Learning_Rate": config.LEARNING_RATE,
+        "Device": config.DEVICE,
         "Training_Report": training_report,
     }
     report_manager.create_report(report)
     report_manager.add_report_section("Memory_Metrics", memory_metrics)
-    report_manager.add_report_section("Inference_Duration_Seconds", {"inference_time": inference_duration})
+    report_manager.add_report_section(
+        "Inference_Duration_Seconds", {"inference_time": inference_duration}
+    )
     report_manager.save_report()
 
-    salvar_modelo_pytorch(model=model, dataset_name=WSG_DATASET.dataset_name, timestamp=config.TIMESTAMP, save_dir=directory_manager.get_run_path())
-
-    save_embeddings_to_wsg(final_embeddings, wsg_obj, config, save_path=run_path)
-    
-    #--- SALVAMENTO DOS RESULTADOS ---
-
-    '''
-    save_results(model, final_embeddings, wsg_obj, config, save_path=run_path)
-    dataset_name = WSG_DATASET.dataset_name
-
-    save_report(
-        config,
-        training_report["training_history"],
-        training_report["total_training_time"],
-        inference_duration,
-        dataset_name,
-        save_path=run_path,
-        memory_metrics=memory_metrics,
+    salvar_modelo_completo(
+        model=model,
+        dataset_name=WSG_DATASET.dataset_name,
+        timestamp=config.TIMESTAMP,
+        save_dir=directory_manager.get_run_path(),
     )
-    '''
 
+    save_embeddings_to_wsg(
+        final_embeddings=final_embeddings,
+        wsg_obj=wsg_obj,
+        config=config,
+        save_path=directory_manager.get_run_path(),
+    )
+
+    # --- SALVAMENTO DOS RESULTADOS ---
 
     final_metrics = training_report["training_history"][-1]
-    run_metrics = {
-        "train_loss": final_metrics.get("train_total_loss", 0.0),
+    metrics_to_name = {
+        "train_loss": final_metrics["train_total_loss"],
         "emb_dim": config.OUT_EMBEDDING_DIM,
     }
     final_path = directory_manager.finalize_run_directory(
-        dataset_name=WSG_DATASET.dataset_name, metrics=run_metrics
+        dataset_name=WSG_DATASET.dataset_name, metrics=metrics_to_name
     )
 
     print("\n" + "=" * 50)

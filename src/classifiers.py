@@ -317,91 +317,34 @@ class XGBoostClassifier(BaseClassifier):
         return acc, f1, train_time, report
 
 
-
-def salvar_modelo_pytorch(model, dataset_name: str, timestamp: str, save_dir: str = "models") -> Tuple[str, str]:
+def salvar_modelo_completo(model, dataset_name: str, timestamp: str, save_dir: str = "models"):
     """
-    Salva qualquer modelo PyTorch com metadados estruturais e pesos.
-    Inclui:
-    - Arquitetura (camadas, parâmetros customizados)
-    - Tipo do modelo
-    - Pesos (state_dict)
-    - Timestamp e dataset
+    Salva o modelo PyTorch completo (arquitetura + pesos + buffers).
+    ⚠️ Requer que o código da classe do modelo exista no mesmo caminho
+       ao carregar (ex: models.vgae.VGAE).
     """
     os.makedirs(save_dir, exist_ok=True)
+
     model_name = getattr(model, "model_name", model.__class__.__name__)
     base_name = f"{dataset_name}__{model_name}__{timestamp}"
 
-    weights_path = os.path.join(save_dir, f"{base_name}.pth")
-    meta_path = os.path.join(save_dir, f"{base_name}_meta.json")
+    save_path = os.path.join(save_dir, f"{base_name}.pt")
 
-    # --- 1. Salvar pesos ---
-    torch.save(model.state_dict(), weights_path)
+    torch.save(model, save_path)
 
-    # --- 2. Extrair metadados da arquitetura ---
-    meta = {
-        "model_type": model.__class__.__name__,
-        "dataset": dataset_name,
-        "timestamp": timestamp,
-        "parameters": {
-            k: v
-            for k, v in model.__dict__.items()
-            if isinstance(v, (int, float, str, bool, list, tuple, dict))
-        },
-    }
-
-    with open(meta_path, "w") as f:
-        json.dump(meta, f, indent=4)
-
-    print(f"✅ Modelo salvo em: {weights_path}")
-    print(f"🧩 Metadados em: {meta_path}")
-    return weights_path, meta_path
+    print(f"✅ Modelo completo salvo em: {save_path}")
+    return save_path
 
 
-def carregar_modelo_pytorch(meta_path: str, weights_path: str, available_models: dict, device: str = "cpu"):
+def carregar_modelo_completo(save_path: str, device: str = "cpu"):
     """
-    Carrega um modelo PyTorch salvo com salvar_modelo_pytorch().
-    
-    Args:
-        meta_path (str): Caminho para o arquivo JSON com os metadados.
-        weights_path (str): Caminho para o arquivo .pth com os pesos.
-        available_models (dict): Dicionário com classes de modelos disponíveis, ex:
-            {
-                "MLPClassifier": MLPClassifier,
-                "GCNClassifier": GCNClassifier,
-                "GATClassifier": GATClassifier,
-                ...
-            }
-        device (str): 'cpu' ou 'cuda'.
-
-    Returns:
-        model (nn.Module): Modelo PyTorch reconstruído com pesos carregados.
-        meta (dict): Metadados do modelo.
+    Carrega um modelo PyTorch completo salvo com torch.save(model).
+    Requer que o código original (classe do modelo) exista.
     """
-    # --- 1. Ler os metadados ---
-    with open(meta_path, "r") as f:
-        meta = json.load(f)
-
-    model_type = meta["model_type"]
-    params = meta.get("parameters", {})
-
-    # --- 2. Verificar se a classe do modelo está disponível ---
-    if model_type not in available_models:
-        raise ValueError(f"Modelo '{model_type}' não encontrado em available_models. Forneça a classe correspondente.")
-
-    model_class = available_models[model_type]
-
-    # --- 3. Recriar a instância com os mesmos parâmetros ---
-    
-    model = model_class(**{k: v for k, v in params.items() if not k.startswith('_')})
-
-
-    # --- 4. Carregar pesos ---
-    model.load_state_dict(torch.load(weights_path, map_location=device))
-    model.to(device)
-    model.eval()
-
-    print(f"✅ Modelo '{model_type}' carregado com sucesso do dataset '{meta['dataset']}'.")
-    return model, meta
+    model = torch.load(save_path, map_location=device)
+    model.eval()  # modo avaliação (sem dropout/batchnorm training)
+    print(f"🔁 Modelo carregado de: {save_path}")
+    return model
 
 
 
