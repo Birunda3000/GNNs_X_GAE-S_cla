@@ -188,7 +188,7 @@ def wsg_for_vgae(wsg: WSG) -> Data:
     return data
 
 
-def wsg_for_gcn_gat_multi_hot(wsg: WSG, config: Config, train_size: float = 0.8) -> Data:
+def wsg_for_gcn_gat_multi_hot(wsg: WSG, config: Config, train_size_ratio: float = 0.8) -> Data:
     """
     Converts a WSG object into a torch_geometric.data.Data object
     suitable for GCN or GAT models using multi-hot node features.
@@ -215,7 +215,7 @@ def wsg_for_gcn_gat_multi_hot(wsg: WSG, config: Config, train_size: float = 0.8)
     node_features = wsg_to_multi_hot_features(wsg)
 
     train_mask, test_mask = create_train_test_masks(
-        labels, wsg.graph_structure.y, num_nodes, train_size, config
+        labels, wsg.graph_structure.y, num_nodes, train_size_ratio, config
     )
 
     data = Data(
@@ -230,7 +230,7 @@ def wsg_for_gcn_gat_multi_hot(wsg: WSG, config: Config, train_size: float = 0.8)
     return data
 
 
-def wsg_for_dense_classifier(wsg: WSG, config: Config, train_size: float = 0.8) -> Data:
+def wsg_for_dense_classifier(wsg: WSG, config: Config, train_size_ratio: float = 0.8) -> Data:
     """
     Converts a WSG object into a PyTorch Geometric Data object
     suitable for dense classifiers (e.g., MLP).
@@ -257,7 +257,7 @@ def wsg_for_dense_classifier(wsg: WSG, config: Config, train_size: float = 0.8) 
     node_features = wsg_to_dense_features(wsg)
 
     train_mask, test_mask = create_train_test_masks(
-        labels, wsg.graph_structure.y, wsg.metadata.num_nodes, train_size, config
+        labels, wsg.graph_structure.y, wsg.metadata.num_nodes, train_size_ratio, config
     )
 
     data = Data(

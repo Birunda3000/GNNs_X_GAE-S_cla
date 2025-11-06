@@ -2,11 +2,9 @@
 Importa as bibliotecas necessárias para a construção de modelos de classificação. Para os embeddings.
 """
 # Standard library imports
-import os
-import json
 import time
 from abc import ABC, abstractmethod
-from typing import Tuple, Dict
+from typing import Any, Dict, Tuple, cast
 
 # Third-party imports
 import numpy as np
@@ -60,8 +58,11 @@ class SklearnClassifier(BaseClassifier):
 
     def train_and_evaluate(
         self, data: Data
-    ) -> Tuple[float, float, float, Dict]:  # <-- MUDANÇA 2: Assinatura
+    ) -> Tuple[float, float, float, Dict[str, Any]]:
         print(f"\n--- Avaliando (Sklearn): {self.model_name} ---")
+
+        assert isinstance(data.x, torch.Tensor), f"Esperado torch.Tensor, obtido {type(data.x)}"
+        assert isinstance(data.y, torch.Tensor), f"Esperado torch.Tensor, obtido {type(data.y)}"
 
         X = data.x.cpu().numpy()
         y = data.y.cpu().numpy()
@@ -74,15 +75,28 @@ class SklearnClassifier(BaseClassifier):
         self.model.fit(X_train, y_train)
         train_time = time.process_time() - start_time
 
-        y_pred = self.model.predict(X_test)
+        y_test_pred = self.model.predict(X_test)
 
-        acc = accuracy_score(y_test, y_pred)
-        f1 = f1_score(y_test, y_pred, average="weighted")
-        report = classification_report(
-            y_test, y_pred, output_dict=True, zero_division=0
+        test_acc = float(accuracy_score(y_test, y_test_pred))
+        test_f1 = float(f1_score(y_test, y_test_pred, average="weighted"))
+
+
+        test_report = cast(
+            Dict[str, Any],
+            classification_report(y_test, y_test_pred, output_dict=True, zero_division=0),
+        )
+        train_report = cast(
+            Dict[str, Any],
+            classification_report(y_train, self.model.predict(X_train), output_dict=True, zero_division=0),
         )
 
-        return acc, f1, train_time, report
+        report = {
+            "total_training_time": train_time,
+            "test_report": test_report,
+            "train_report": train_report
+        }
+
+        return float(test_acc), float(test_f1), float(train_time), report
 
 
 class PyTorchClassifier(BaseClassifier, nn.Module):
@@ -199,7 +213,7 @@ class GCNClassifier(PyTorchClassifier):
 class GATClassifier(PyTorchClassifier):
     """Classificador GAT que utiliza mecanismos de atenção."""
 
-    def __init__(self, config, input_dim, hidden_dim, output_dim, heads=8):
+    def __init__(self, config, input_dim, hidden_dim, output_dim, heads=2):
         super().__init__(config, input_dim, hidden_dim, output_dim)
         self.conv1 = GATConv(input_dim, hidden_dim, heads=heads, dropout=0.6)
         self.conv2 = GATConv(
@@ -212,7 +226,7 @@ class GATClassifier(PyTorchClassifier):
         x = F.dropout(x, p=0.6, training=self.training)
         return self.conv2(x, edge_index)
 
-    def train_and_evaluate(self, data: Data):  # <-- MUDANÇA 6: Assinatura
+    def train_and_evaluate(self, data: Data):
         return self._train_and_evaluate_internal(data, use_gnn=True)
 
 
@@ -250,18 +264,15 @@ class XGBoostClassifier(BaseClassifier):
             "Este modelo pode levar mais tempo para treinar, mas geralmente oferece excelente desempenho."
         )
 
-        # --- REMOVIDO ---
-        # pyg_data = DataConverter.to_pyg_data(wsg_obj=wsg_obj, for_embedding_bag=False)
-        # ---
+        assert isinstance(data.x, torch.Tensor), f"Esperado torch.Tensor, obtido {type(data.x)}"
+        assert isinstance(data.y, torch.Tensor), f"Esperado torch.Tensor, obtido {type(data.y)}"
+        
+        X = data.x.cpu().numpy()
+        y = data.y.cpu().numpy()
 
-        # Usa 'data' que veio como argumento
-        pyg_data = data
-        X = pyg_data.x.cpu().numpy()
-        y = pyg_data.y.cpu().numpy()
-
-        # Usar as máscaras de treino/teste já definidas no objeto pyg_data
-        X_train, y_train = X[pyg_data.train_mask], y[pyg_data.train_mask]
-        X_test, y_test = X[pyg_data.test_mask], y[pyg_data.test_mask]
+        # Usar as máscaras de treino/teste já definidas no objeto data
+        X_train, y_train = X[data.train_mask], y[data.train_mask]
+        X_test, y_test = X[data.test_mask], y[data.test_mask]
 
         # Obter o número de classes
         num_classes = len(set(y))

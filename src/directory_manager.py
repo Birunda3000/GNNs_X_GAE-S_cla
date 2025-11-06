@@ -45,22 +45,6 @@ class DirectoryManager:
     def get_run_path(self) -> str:
         """Retorna o caminho do diretório da execução atual (seja temporário ou final)."""
         return self.final_dir_path if self.final_dir_path else self.run_dir_path
-    
-    
-    #VAI SAIR
-    def save_classification_report(
-        self, input_file: str, results: Dict[str, Any], reports: Dict[str, Any]
-    ):
-        """Salva um relatório consolidado em formato JSON dentro do diretório da execução."""
-        summary = {
-            "input_wsg_file": input_file,
-            "classification_results": results,
-            "detailed_reports": reports,
-        }
-        report_path = os.path.join(self.get_run_path(), "classification_summary.json")
-        with open(report_path, "w") as f:
-            json.dump(summary, f, indent=4)
-        print(f"\nRelatório de classificação salvo em: '{report_path}'")
 
 
     #VAI SAIR

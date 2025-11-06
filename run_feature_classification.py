@@ -5,7 +5,6 @@ Executa múltiplos classificadores (Sklearn, MLP, XGBoost) sobre embeddings salv
 
 # === IMPORTS PADRÃO ===
 import os
-import glob
 import random
 
 # === IMPORTS DE TERCEIROS ===
@@ -14,6 +13,8 @@ import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
+import psutil
+
 
 # === IMPORTS INTERNOS DO PROJETO ===
 from src.config import Config
@@ -72,7 +73,11 @@ def main(wsg_file_path: str):
         data_source_name=os.path.basename(WSG_DATASET.file_path),
         data_converter=data_converters.wsg_for_dense_classifier
     )
-    runner.run(models_to_run)
+
+    process = psutil.Process(os.getpid())
+    mem_start = process.memory_info().rss
+
+    runner.run(models_to_run, process=process, mem_start=mem_start)
 
 
 if __name__ == "__main__":

@@ -23,7 +23,7 @@ from src.report_manager import ReportManager
 from src.utils import format_b, save_embeddings_to_wsg, salvar_modelo_pytorch_completo
 
 
-WSG_DATASET = data_loaders.MusaeGithubLoader()  # Ou MusaeFacebookLoader()
+WSG_DATASET = data_loaders.MusaeGithubLoader()# Ou MusaeFacebookLoader()
 
 
 def main():

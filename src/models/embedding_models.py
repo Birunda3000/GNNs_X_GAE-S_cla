@@ -1,36 +1,16 @@
 # src/model.py
-from sklearn.naive_bayes import abstractmethod
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn import Module, Linear
 from torch_geometric.nn import GCNConv
-from abc import ABC, abstractmethod
 from torch_geometric.data import Data
-from typing import Tuple, Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any
 import torch.optim as optim
 import time
-
-class BaseModel(ABC):
-    """Classe base abstrata para modelos de ML."""
-
-    @abstractmethod
-    def train_model(self, input_data, y: Optional[Any] = None, train_split: Optional[Any] = None):
-        """Train the model."""
-        pass
-    
-    @abstractmethod
-    def evaluate(self, input_data, y: Optional[Any] = None) -> Any:
-        """Evaluate the model."""
-        pass
-
-    @abstractmethod
-    def inference(self, input_data):
-        """Run inference with the model."""
-        pass
+import src.models.base_model as basemodel
 
 
-class VGAE(BaseModel, nn.Module):
+class VGAE(basemodel.BaseModel, nn.Module):
     """
     Implementação de um Autoencoder Variacional de Grafo (VGAE).
 
@@ -193,11 +173,8 @@ class VGAE(BaseModel, nn.Module):
     def train_model(
         self,
         input_data: Data,
-        learning_rate: float,
         optimizer: optim.Optimizer,
-        weight_decay: float,
         epochs: int,
-        train_split: Optional[Any] = None,
     ) -> List[Dict[str, float]]:
         """
         Treina o modelo VGAE no conjunto de dados fornecido.
@@ -258,6 +235,3 @@ class VGAE(BaseModel, nn.Module):
             Any: Resultados da avaliação (a definir conforme necessidade).
         """
         raise NotImplementedError("Função de avaliação não implementada para VGAE.")
-
-
-

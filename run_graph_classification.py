@@ -7,12 +7,10 @@ import src.data_loaders as data_loaders
 import src.data_converters as data_converters
 from src.classifiers import GCNClassifier, GATClassifier
 from src.runner import ExperimentRunner
+import psutil
 
 
-
-wsg_file_paths = ["/app/gnn_tcc/data/output/EMBEDDING_RUNS/musae-facebook__loss_2_2581__emb_dim_32__30-10-2025_19-32-36/musae-facebook_(32)_embeddings_epoch_200.wsg.json"]
-
-WSG_DATASET = data_loaders.DirectWSGLoader(file_path=wsg_file_paths[0])
+WSG_DATASET = data_loaders.MusaeFacebookLoader()# Ou MusaeGithubLoader()
 
 
 
@@ -47,10 +45,13 @@ def main():
         config=config,
         run_folder_name="GRAPH_CLASSIFICATION_RUNS",
         wsg_obj=wsg_obj,
-        data_source_name=os.path.basename(WSG_DATASET.file_path),
+        data_source_name=os.path.basename(WSG_DATASET.dataset_name),
         data_converter=data_converters.wsg_for_gcn_gat_multi_hot
     )
-    runner.run(models_to_run)
+
+    process = psutil.Process(os.getpid())
+    mem_start = process.memory_info().rss
+    runner.run(models_to_run, process=process, mem_start=mem_start)
 
 
 if __name__ == "__main__":

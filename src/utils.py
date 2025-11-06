@@ -3,6 +3,7 @@
 from multiprocessing.util import DEBUG
 import torch
 import os
+from typing import Any
 
 from datetime import datetime
 
@@ -154,3 +155,22 @@ def carregar_modelo_pytorch_completo(save_path: str, device: str = "cpu"):
     model.eval()  # modo avaliação (sem dropout/batchnorm training)
     print(f"🔁 Modelo carregado de: {save_path}")
     return model
+
+
+def print_summary_table(results: dict[str, Any], input_file_path: str, feature_type: str):
+    """Imprime a tabela de resumo dos resultados no console."""
+    print("\n" + "=" * 65)
+    print("RELATÓRIO DE COMPARAÇÃO FINAL".center(65))
+    print("-" * 65)
+    print(f"Fonte dos Dados: {os.path.basename(input_file_path)}")
+    print(f"Tipo de Feature: {feature_type}")
+    print("-" * 65)
+    print(
+        f"{'Modelo':<25} | {'Acurácia':<12} | {'F1-Score':<12} | {'Tempo (s)':<10}"
+    )
+    print("=" * 65)
+    for name, metrics in results.items():
+        print(
+            f"{name:<25} | {metrics['accuracy']:<12.4f} | {metrics['f1_score_weighted']:<12.4f} | {metrics['training_time_seconds']:<10.2f}"
+        )
+    print("=" * 65)
