@@ -20,6 +20,8 @@ import src.data_loaders as data_loaders
 from src.directory_manager import DirectoryManager
 from src.report_manager import ReportManager
 from src.models.embedding_models import VGAE
+from src.early_stopper import EarlyStopper
+from src.embeddings_eval import evaluate_embeddings
 from src.utils import format_b, save_embeddings_to_wsg, salvar_modelo_pytorch_completo
 
 
@@ -66,7 +68,7 @@ def main():
     )  # Atualiza pico
     print(f"RAM após carregar wsg_obj: {format_b(mem_after_load)}")
 
-    pyg_data = data_converters.wsg_for_vgae(wsg_obj)
+    pyg_data = data_converters.wsg_for_vgae(wsg_obj, config)
 
     mem_after_convert = process.memory_info().rss
     peak_ram_overall_bytes = max(
@@ -83,6 +85,14 @@ def main():
     )
     report_manager = ReportManager(directory_manager)
 
+    early_stopper = EarlyStopper(
+        patience=config.EARLY_STOPPING_PATIENCE,
+        min_delta=config.EARLY_STOPPING_MIN_DELTA,
+        mode="max",
+        metric_name="avg_f1_knn_logreg",
+        custom_eval=lambda model: evaluate_embeddings(model, pyg_data, device)
+    )
+
     # --- Instanciação do Modelo ---
     print("\n[FASE 3] Construindo o modelo VGAE...")
     model = VGAE(
@@ -91,6 +101,7 @@ def main():
         embedding_dim=config.EMBEDDING_DIM,
         hidden_dim=config.HIDDEN_DIM,
         out_embedding_dim=config.OUT_EMBEDDING_DIM,
+        early_stopper=early_stopper,
     ).to(device)
 
     mem_after_model = process.memory_info().rss
@@ -155,6 +166,7 @@ def main():
 
     inference_start_time = time.process_time()
     final_embeddings = model.inference(pyg_data)
+    print(f"[DEBUG] Final embeddings shape: {final_embeddings.shape }")
     inference_end_time = time.process_time()
     inference_duration = inference_end_time - inference_start_time
     print(
@@ -218,6 +230,8 @@ def main():
     )
     report_manager.save_report()
 
+
+    model.early_stopper = None  # Remove referência para salvar o modelo
     salvar_modelo_pytorch_completo(
         model=model,
         dataset_name=WSG_DATASET.dataset_name,

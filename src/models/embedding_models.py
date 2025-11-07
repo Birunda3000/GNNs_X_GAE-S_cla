@@ -9,6 +9,8 @@ import torch.optim as optim
 import time
 import src.models.base_model as basemodel
 from src.config import Config
+from src.early_stopper import EarlyStopper
+from tqdm import tqdm
 
 
 
@@ -32,6 +34,7 @@ class VGAE(basemodel.BaseModel, nn.Module):
         embedding_dim: int,
         hidden_dim: int,
         out_embedding_dim: int,
+        early_stopper: EarlyStopper
     ):
         """
         Inicializador do modelo VGAE.
@@ -45,6 +48,7 @@ class VGAE(basemodel.BaseModel, nn.Module):
         basemodel.BaseModel.__init__(self, config)
         nn.Module.__init__(self)
 
+        self.early_stopper = early_stopper
         # Camada de entrada: processa os índices/pesos e cria um vetor denso inicial
         self.feature_embedder = nn.EmbeddingBag(
             num_embeddings=num_total_features,
@@ -174,6 +178,7 @@ class VGAE(basemodel.BaseModel, nn.Module):
 
             x = F.relu(self.conv1(x, input_data.edge_index))
             mu = self.conv_mu(x, input_data.edge_index)
+
         return mu
 
     def verify_train_input_data(self, data: Data):
@@ -226,18 +231,27 @@ class VGAE(basemodel.BaseModel, nn.Module):
 
         training_history: List[Dict[str, float]] = []
 
+        pbar = tqdm(
+            range(1, epochs + 1),
+            desc=f"Treinando {self.model_name}",
+            leave=False,
+        )
+        score = None
         start_time = time.process_time()
 
-        for epoch in range(1, epochs + 1):
+        for epoch in pbar:
             self.train()
             optimizer.zero_grad()
             z = self.encode(data)
             recon_loss = self.reconstruction_loss(z, edge_index)
-
             kl_loss = (1.0 / float(num_nodes)) * self.kl_loss()
             total_loss = recon_loss + kl_loss
             total_loss.backward()
             optimizer.step()
+
+            # Early stopping check
+            if self.early_stopper is not None:
+                stop_now, score, best_epoch, report = self.early_stopper.check(self, epoch=epoch)
 
             epoch_metrics = {
                 "epoch": epoch,
@@ -247,13 +261,28 @@ class VGAE(basemodel.BaseModel, nn.Module):
                 "test_total_loss": None,
                 "test_recon_loss": None,
                 "test_kl_loss": None,
+                "early_stopping_score": score if self.early_stopper is not None else None,
+                "early_stopping_report": report if self.early_stopper is not None else None,
             }
             training_history.append(epoch_metrics)
+            
+            pbar.set_postfix(
+                {
+                    "e_s_score": f"{score:.4f}" if self.early_stopper is not None else "N/A",
+                    "total_loss": f"{total_loss.item():.4f}",
+                }
+            )
+
+            if stop_now:
+                print(f"[EARLY STOPPING] Parando no epoch {epoch}")
+                self.early_stopper.restore_best_state(self)
+                break
 
         total_time = time.process_time() - start_time
         return {
             "total_training_time": float(total_time),
-            "epochs": epochs,
+            "best_epoch": best_epoch,
+            "final_early_stopping_score": score if self.early_stopper is not None else None,
             "final_train_loss": total_loss.item(),
             "training_history": training_history,
         }

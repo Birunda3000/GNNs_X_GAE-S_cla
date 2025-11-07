@@ -1,60 +1,66 @@
+import json
 import os
-from datetime import datetime
-from typing import Any
+from datetime import datetime, timezone
+from typing import Any, Optional
 
 import torch
-
 from src.data_format_definition import WSG, Metadata, NodeFeaturesEntry
 
 
-# --- FUNÇÃO HELPER format_b ATUALIZADA ---
-def format_b(b):
-    """Converte bytes ou MiB para um formato legível (MB ou GB). Mais robusta."""
-    if b is None or b == 0 or b == 0.0:
-        # Retorna 0.00 MB para valores nulos ou zero
-        return "0.00 MB"
+# ==========================================================
+# 💡 FUNÇÕES AUXILIARES DE MEMÓRIA (corrigidas e seguras)
+# ==========================================================
 
-    try:
-        if isinstance(b, float): # memory_profiler retorna MiB (float)
-            # Converte MiB para Bytes
-            b_bytes = int(b * 1024 * 1024)
-        elif isinstance(b, int):
-            # Já está em bytes
-            b_bytes = b
-        else:
-            # Tipo inesperado
-            return "N/A (type)"
-
-        # Formata Bytes para MB/GB
-        if b_bytes < 1024**3:
-            return f"{b_bytes / 1024**2:.2f} MB"
-        else:
-            return f"{b_bytes / 1024**3:.2f} GB"
-    except Exception:
-        # Captura qualquer erro de conversão/formatação
-        return "N/A (error)"
+def _coerce_to_bytes(value: Any) -> Optional[float]:
+    """Converte um valor em bytes, aceitando int, float (MiB) ou string numérica."""
+    if value is None or isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return float(value)
+    if isinstance(value, float):
+        # Considera float vindo do memory_profiler (MiB)
+        return float(value) * 1024 * 1024
+    if isinstance(value, str):
+        try:
+            numeric = float(value)
+        except ValueError:
+            return None
+        return numeric * 1024 * 1024
+    return None
 
 
-# --- 3. AJUSTAR format_bytes ---
-def format_bytes(b):
-    """Converte bytes ou MiB para um formato legível (MB ou GB)."""
-    # Converte de MiB (memory_profiler) para Bytes antes de formatar, se necessário
-    if isinstance(b, float): # memory_profiler retorna MiB (float)
-        b = int(b * 1024 * 1024) # Converte MiB para Bytes
+def _format_memory_value(value: Any) -> str:
+    """Formata bytes para MB ou GB, retornando 'N/A' em casos inválidos."""
+    bytes_value = _coerce_to_bytes(value)
+    if bytes_value is None or bytes_value < 0:
+        return "N/A"
 
-    # Converte Bytes para MB/GB
-    if isinstance(b, int):
-        if b < 1024**3:
-            return f"{b / 1024**2:.2f} MB"
-        return f"{b / 1024**3:.2f} GB"
-    return "N/A" # Caso receba algo inesperado
-# --- FIM DO AJUSTE ---
+    gigabytes = bytes_value / (1024 ** 3)
+    if gigabytes >= 1:
+        return f"{gigabytes:.2f} GB"
+
+    megabytes = bytes_value / (1024 ** 2)
+    return f"{megabytes:.2f} MB"
+
+
+def format_b(b: Any) -> str:
+    """Alias para compatibilidade retroativa com a versão antiga."""
+    return _format_memory_value(b)
+
+
+def format_bytes(b: Any) -> str:
+    """Mantido para compatibilidade com versões antigas do código."""
+    return _format_memory_value(b)
 
 
 def fmt(val, precision=6):
     """Formata floats de forma segura; se None ou inválido, retorna 'N/A'."""
     return f"{val:.{precision}f}" if isinstance(val, (int, float)) else "N/A"
 
+
+# ==========================================================
+# 💾 SALVAR EMBEDDINGS EM FORMATO WSG (corrigido)
+# ==========================================================
 
 def save_embeddings_to_wsg(
     final_embeddings: torch.Tensor,
@@ -67,21 +73,25 @@ def save_embeddings_to_wsg(
     Salva os embeddings finais em um novo arquivo WSG.
 
     Args:
-        final_embeddings (torch.Tensor): Tensor de embeddings finais (num_nodes x dim).
-        wsg_obj (WSG): Objeto WSG original (usado para copiar metadados e estrutura do grafo).
-        config (Config): Configuração com parâmetros do modelo.
-        save_path (str): Caminho onde o arquivo será salvo.
-        tz_info (timezone, opcional): Informação de fuso horário para timestamp.
+        final_embeddings (torch.Tensor): Tensor de embeddings (num_nodes x dim)
+        wsg_obj (WSG): Objeto WSG original (metadados + estrutura do grafo)
+        config: Objeto de configuração (precisa ter OUT_EMBEDDING_DIM e EPOCHS)
+        save_path (str): Caminho onde o arquivo será salvo
+        tz_info (timezone, opcional): Fuso horário para timestamps
 
     Returns:
-        str: Caminho completo do arquivo salvo.
+        str: Caminho completo do arquivo salvo
     """
-    final_embeddings = final_embeddings.cpu()
+    # Garante que os embeddings estão no CPU
+    final_embeddings = final_embeddings.detach().cpu()
 
+    # Fuso horário padrão
     if tz_info is None:
-        from zoneinfo import ZoneInfo
-        tz_info = ZoneInfo("America/Sao_Paulo")
+        tz_info = datetime.now().astimezone().tzinfo or timezone.utc
 
+    os.makedirs(save_path, exist_ok=True)
+
+    # --- METADADOS ---
     output_metadata = Metadata(
         dataset_name=f"{wsg_obj.metadata.dataset_name}-Embeddings",
         feature_type="dense_continuous",
@@ -92,39 +102,56 @@ def save_embeddings_to_wsg(
         directed=wsg_obj.metadata.directed,
     )
 
-    output_node_features = {}
+    # --- EMBEDDINGS ---
     embedding_indices = list(range(config.OUT_EMBEDDING_DIM))
 
-    for i in range(wsg_obj.metadata.num_nodes):
-        node_embedding = final_embeddings[i].tolist()
-        output_node_features[str(i)] = NodeFeaturesEntry(
+    # ✅ Corrigido: campos de NodeFeaturesEntry agora estão corretos
+    output_node_features = {
+        str(node_id): NodeFeaturesEntry(
             indices=embedding_indices,
-            weights=node_embedding,
+            weights=[float(value) for value in final_embeddings[node_id].tolist()],
         )
+        for node_id in range(wsg_obj.metadata.num_nodes)
+    }
 
+    # --- CRIA O NOVO WSG ---
     output_wsg = WSG(
         metadata=output_metadata,
         graph_structure=wsg_obj.graph_structure,
         node_features=output_node_features,
     )
 
+    # --- SALVAMENTO ---
     dataset_name = wsg_obj.metadata.dataset_name
-    filename = f"{dataset_name}_({config.OUT_EMBEDDING_DIM})_embeddings_epoch_{config.EPOCHS}.wsg.json"
+    filename = (
+        f"{dataset_name}_({config.OUT_EMBEDDING_DIM})_embeddings_epoch_{config.EPOCHS}.wsg.json"
+    )
     output_path = os.path.join(save_path, filename)
 
+    # Usa método compatível com Pydantic v2+
+    try:
+        payload = output_wsg.model_dump()
+    except AttributeError:
+        payload = output_wsg.dict()
+
     with open(output_path, "w", encoding="utf-8") as f:
-        f.write(output_wsg.model_dump_json(indent=2))
+        json.dump(payload, f, ensure_ascii=False, indent=2)
 
     print(f"✅ Embeddings salvos em: '{output_path}'")
     return output_path
 
 
-def salvar_modelo_pytorch_completo(model, dataset_name: str, timestamp: str, save_dir: str = "models"):
-    """
-    Salva o modelo PyTorch completo (arquitetura + pesos + buffers).
-    ⚠️ Requer que o código da classe do modelo exista no mesmo caminho
-       ao carregar (ex: models.vgae.VGAE).
-    """
+# ==========================================================
+# 🧠 FUNÇÕES DE MODELO PYTORCH
+# ==========================================================
+
+def salvar_modelo_pytorch_completo(
+    model,
+    dataset_name: str,
+    timestamp: str,
+    save_dir: str = "models"
+):
+    """Salva o modelo PyTorch completo (arquitetura + pesos + buffers)."""
     os.makedirs(save_dir, exist_ok=True)
 
     model_name = getattr(model, "model_name", model.__class__.__name__)
@@ -133,36 +160,13 @@ def salvar_modelo_pytorch_completo(model, dataset_name: str, timestamp: str, sav
     save_path = os.path.join(save_dir, f"{base_name}.pt")
 
     torch.save(model, save_path)
-
     print(f"✅ Modelo completo salvo em: {save_path}")
     return save_path
 
 
 def carregar_modelo_pytorch_completo(save_path: str, device: str = "cpu"):
-    """
-    Carrega um modelo PyTorch completo salvo com torch.save(model).
-    Requer que o código original (classe do modelo) exista.
-    """
+    """Carrega um modelo completo salvo com torch.save(model)."""
     model = torch.load(save_path, map_location=device)
-    model.eval()  # modo avaliação (sem dropout/batchnorm training)
+    model.eval()
     print(f"🔁 Modelo carregado de: {save_path}")
     return model
-
-
-def print_summary_table(results: dict[str, Any], input_file_path: str, feature_type: str):
-    """Imprime a tabela de resumo dos resultados no console."""
-    print("\n" + "=" * 65)
-    print("RELATÓRIO DE COMPARAÇÃO FINAL".center(65))
-    print("-" * 65)
-    print(f"Fonte dos Dados: {os.path.basename(input_file_path)}")
-    print(f"Tipo de Feature: {feature_type}")
-    print("-" * 65)
-    print(
-        f"{'Modelo':<25} | {'Acurácia':<12} | {'F1-Score':<12} | {'Tempo (s)':<10}"
-    )
-    print("=" * 65)
-    for name, metrics in results.items():
-        print(
-            f"{name:<25} | {metrics['accuracy']:<12.4f} | {metrics['f1_score_weighted']:<12.4f} | {metrics['training_time_seconds']:<10.2f}"
-        )
-    print("=" * 65)

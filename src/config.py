@@ -31,8 +31,10 @@ class Config:
     OUT_EMBEDDING_DIM = 8 # Dimensão do embedding final do nó variar [8,32,64,128]
 
     # --- Configurações de Treinamento ---
-    EPOCHS = 3
+    EPOCHS = 500
     LEARNING_RATE = 0.0001
+    EARLY_STOPPING_PATIENCE = 10  # Épocas sem melhora antes de parar
+    EARLY_STOPPING_MIN_DELTA = 1e-4  # Melhora mínima para considerar como progresso
 
     # --- Configurações de Visualização ---
     VIS_SAMPLES = 1500  # Número máximo de nós para incluir na visualização

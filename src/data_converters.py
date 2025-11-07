@@ -147,31 +147,31 @@ def create_train_test_masks(y: torch.Tensor, labels_list: List, num_nodes: int, 
 
 # --- Conversion Functions for Different Models ---
 
-def wsg_for_vgae(wsg: WSG) -> Data:
+def wsg_for_vgae(wsg: WSG, config: Config, train_size_ratio: float = 0.8) -> Data:
     """
     Converts a WSG object into a torch_geometric.data.Data object
     suitable for VGAE models.
 
     This includes sparse feature tensors (feature_indices, feature_weights, feature_offsets)
-    required by models using nn.EmbeddingBag.
-
-    Args:
-        wsg (WSG): The input weighted structured graph object.
-
-    Returns:
-        Data: A PyTorch Geometric Data object with edge_index and sparse features.
+    required by models using nn.EmbeddingBag, plus labels and train/test masks for evaluation.
     """
     print("Converting WSG object to PyTorch Geometric format (VGAE)...")
 
     if wsg.metadata.feature_type != "sparse_binary":
         print(
-            f"WARNING: Features for wsg_for_vgae are not 'sparse_binary', "
+            f"[WARNING]: Features for wsg_for_vgae are not 'sparse_binary', "
             f"but '{wsg.metadata.feature_type}'."
         )
 
     edge_index = wsg_to_edge_index(wsg)
     num_nodes = wsg.metadata.num_nodes
     num_total_features = wsg.metadata.num_total_features
+
+    # Labels and masks (úteis para avaliação posterior)
+    labels = wsg_to_labels(wsg)
+    train_mask, test_mask = create_train_test_masks(
+        labels, wsg.graph_structure.y, num_nodes, train_size_ratio, config
+    )
 
     feature_indices, feature_weights, feature_offsets = wsg_to_embeddingbag_features(wsg)
 
@@ -182,6 +182,10 @@ def wsg_for_vgae(wsg: WSG) -> Data:
         feature_indices=feature_indices,
         feature_weights=feature_weights,
         feature_offsets=feature_offsets,
+
+        y=labels,
+        train_mask=train_mask,
+        test_mask=test_mask,
     )
 
     print("wsg_for_vgae conversion completed successfully.")
@@ -217,10 +221,6 @@ def wsg_for_gcn_gat_multi_hot(wsg: WSG, config: Config, train_size_ratio: float 
     train_mask, test_mask = create_train_test_masks(
         labels, wsg.graph_structure.y, num_nodes, train_size_ratio, config
     )
-
-
-    print(f"[DEBUG] edge_index shape: {edge_index.shape}, dtype: {edge_index.dtype}")
-    print(f"[DEBUG] node_features shape: {node_features.shape}, dtype: {node_features.dtype}")
 
     data = Data(
         edge_index=edge_index,
