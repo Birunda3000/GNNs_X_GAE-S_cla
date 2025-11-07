@@ -4,11 +4,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.nn import GCNConv
 from torch_geometric.data import Data
-from typing import List, Dict, Any
+from typing import List, Dict, Any, cast
 import torch.optim as optim
 import time
 import src.models.base_model as basemodel
 from src.config import Config
+
 
 
 class VGAE(basemodel.BaseModel, nn.Module):
@@ -59,6 +60,8 @@ class VGAE(basemodel.BaseModel, nn.Module):
         self.conv_logstd = GCNConv(
             hidden_dim, out_embedding_dim
         )  # Cabeça para o log da variância
+
+
 
         # Variáveis para armazenar os parâmetros da última chamada do encode
         self.__mu__ = self.__logstd__ = None
@@ -172,71 +175,88 @@ class VGAE(basemodel.BaseModel, nn.Module):
             x = F.relu(self.conv1(x, input_data.edge_index))
             mu = self.conv_mu(x, input_data.edge_index)
         return mu
-    
 
     def verify_train_input_data(self, data: Data):
-            # VGAE não recebe data.x (ele o cria) e não precisa de máscaras
-            # para o treino não-supervisionado.
-            assert data.edge_index is not None, "Os dados de entrada devem conter edge_index (data.edge_index)."
-            assert data.feature_indices is not None, "Os dados de entrada devem conter feature_indices."
-            assert data.feature_offsets is not None, "Os dados de entrada devem conter feature_offsets."
-            assert data.feature_weights is not None, "Os dados de entrada devem conter feature_weights."
-            assert data.num_nodes is not None, "Os dados de entrada devem conter num_nodes."
-            assert data.num_nodes > 0, "O número de nós (data.num_nodes) deve ser maior que zero."
+        """
+        Validates that the required fields for unsupervised VGAE training are present.
 
-    
+        Requirements:
+        - data.edge_index: adjacency (Tensor)
+        - data.feature_indices / feature_offsets / feature_weights: sparse feature representation for EmbeddingBag
+        - data.num_nodes: total number of nodes (> 0)
+
+        Raises:
+            AssertionError: if any required attribute is missing or invalid.
+        """
+        # VGAE builds x internally; train/test masks are not needed for unsupervised training.
+        assert (
+            data.edge_index is not None
+        ), "Input data must contain edge_index (data.edge_index)."
+        assert (
+            data.feature_indices is not None
+        ), "Input data must contain feature_indices."
+        assert (
+            data.feature_offsets is not None
+        ), "Input data must contain feature_offsets."
+        assert (
+            data.feature_weights is not None
+        ), "Input data must contain feature_weights."
+        assert data.num_nodes is not None, "Input data must contain num_nodes."
+        assert data.num_nodes > 0, "data.num_nodes must be greater than zero."
+
     def train_model(
         self,
         data: Data,
         optimizer: optim.Optimizer,
         epochs: int,
     ) -> Dict[str, Any]:
-            """
-            Treina o modelo VGAE no conjunto de dados fornecido.
+        """
+        Treina o modelo VGAE no conjunto de dados fornecido.
 
-            Args:
-                data (Data): Objeto de dados do PyTorch Geometric.
-                epochs (int): Número de épocas para treinar.
+        Args:
+            data (Data): Objeto de dados do PyTorch Geometric.
+            epochs (int): Número de épocas para treinar.
 
-            Returns:
-            Dict[str, Any]: Relatório com histórico e tempo total.
-            """
-            self.verify_train_input_data(data)
+        Returns:
+        Dict[str, Any]: Relatório com histórico e tempo total.
+        """
+        self.verify_train_input_data(data)
+        edge_index = cast(torch.Tensor, data.edge_index)
+        num_nodes = cast(int, data.num_nodes)
 
-            training_history: List[Dict[str, float]] = []
+        training_history: List[Dict[str, float]] = []
 
-            start_time = time.time()
+        start_time = time.process_time()
 
-            for epoch in range(1, epochs + 1):
-                self.train()
-                optimizer.zero_grad()
-                z = self.encode(data)
-                recon_loss = self.reconstruction_loss(z, data.edge_index)
+        for epoch in range(1, epochs + 1):
+            self.train()
+            optimizer.zero_grad()
+            z = self.encode(data)
+            recon_loss = self.reconstruction_loss(z, edge_index)
 
-                
-                kl_loss = (1.0 / float(data.num_nodes)) * self.kl_loss()
-                total_loss = recon_loss + kl_loss
-                total_loss.backward()
-                optimizer.step()
-    
-                epoch_metrics = {
-                    "epoch": epoch,
-                    "train_total_loss": total_loss.item(),
-                    "train_recon_loss": recon_loss.item(),
-                    "train_kl_loss": kl_loss.item(),
-                    "test_total_loss": None,
-                    "test_recon_loss": None,
-                    "test_kl_loss": None,
-                }
-                training_history.append(epoch_metrics)
-    
-            total_time = time.time() - start_time
-            return {
-                "total_training_time": float(total_time),
-                "epochs": epochs,
-                "final_train_loss": total_loss.item(),
-                "training_history": training_history,
+            kl_loss = (1.0 / float(num_nodes)) * self.kl_loss()
+            total_loss = recon_loss + kl_loss
+            total_loss.backward()
+            optimizer.step()
+
+            epoch_metrics = {
+                "epoch": epoch,
+                "train_total_loss": total_loss.item(),
+                "train_recon_loss": recon_loss.item(),
+                "train_kl_loss": kl_loss.item(),
+                "test_total_loss": None,
+                "test_recon_loss": None,
+                "test_kl_loss": None,
             }
+            training_history.append(epoch_metrics)
+
+        total_time = time.process_time() - start_time
+        return {
+            "total_training_time": float(total_time),
+            "epochs": epochs,
+            "final_train_loss": total_loss.item(),
+            "training_history": training_history,
+        }
 
     def evaluate(self, data: Data) -> Any:
         """

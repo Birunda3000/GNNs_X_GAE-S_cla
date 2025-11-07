@@ -233,7 +233,6 @@ def main():
     )
 
     # --- SALVAMENTO DOS RESULTADOS ---
-    print(f"[DEBUG]: {training_report}")
     final_metrics = training_report["training_history"][-1]
     metrics_to_name = {
         "train_loss": final_metrics["train_total_loss"],

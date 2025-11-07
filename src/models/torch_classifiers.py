@@ -29,7 +29,7 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
 
     @abstractmethod
     def forward(self, *args, **kwargs):
-        pass
+        raise NotImplementedError("Método forward() deve ser implementado na subclasse.")
 
     def _train_step(self, optimizer, criterion, use_gnn, x, y, edge_index=None, train_mask=None):
         self.train()
