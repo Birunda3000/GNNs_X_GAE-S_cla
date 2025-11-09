@@ -32,9 +32,14 @@ class Config:
 
     # --- Configurações de Treinamento ---
     EPOCHS = 500
-    LEARNING_RATE = 0.0001
-    EARLY_STOPPING_PATIENCE = 10  # Épocas sem melhora antes de parar
-    EARLY_STOPPING_MIN_DELTA = 1e-4  # Melhora mínima para considerar como progresso
+    LEARNING_RATE = 1e-3
+
+    EARLY_STOPPING_PATIENCE = 5  # Épocas sem melhora antes de parar
+    EARLY_STOPPING_MIN_DELTA = 1e-6  # Melhora mínima para considerar como progresso
+
+    SCHEDULER_PATIENCE = 3  # Épocas sem melhora antes de reduzir LR
+    SCHEDULER_FACTOR = 0.7  # Fator de redução do LR
+    MIN_LR = 1e-7  # LR mínimo permitido
 
     # --- Configurações de Visualização ---
     VIS_SAMPLES = 1500  # Número máximo de nós para incluir na visualização

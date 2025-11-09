@@ -12,6 +12,7 @@ import numpy as np
 import psutil
 import torch
 import torch.optim as optim
+from torch.optim import lr_scheduler
 
 # Local application
 from src.config import Config
@@ -19,7 +20,7 @@ import src.data_converters as data_converters
 import src.data_loaders as data_loaders
 from src.directory_manager import DirectoryManager
 from src.report_manager import ReportManager
-from src.models.embedding_models.graphsage_embedding_models import GraphSageVGAE, GraphSageGAE
+from src.models.embedding_models.autoencoders_models import GraphSageGAE
 from src.early_stopper import EarlyStopper
 from src.embeddings_eval import evaluate_embeddings
 from src.utils import format_b, save_embeddings_to_wsg, salvar_modelo_pytorch_completo
@@ -52,46 +53,27 @@ def main():
     np.random.seed(config.RANDOM_SEED)
     random.seed(config.RANDOM_SEED)
     print("=" * 50)
-    print("INICIANDO PROCESSO DE TREINAMENTO E EXTRAÇÃO DE EMBEDDINGS (VGAE)")
+    print("INICIANDO PROCESSO DE TREINAMENTO E EXTRAÇÃO DE EMBEDDINGS")
     print("=" * 50)
     print(f"Dispositivo de treinamento: {device}")
     print(f"Dataset selecionado: {WSG_DATASET.dataset_name}")
 
     # --- Pipeline de Dados ---
-    print("\n[FASE 1/2] Executando pipeline de dados...")
+    print("\n[FASE 1] Carregando dados do WSG...")
 
     wsg_obj = WSG_DATASET.load()
 
     mem_after_load = process.memory_info().rss
-    peak_ram_overall_bytes = max(
-        peak_ram_overall_bytes, mem_after_load
-    )  # Atualiza pico
-    print(f"RAM após carregar wsg_obj: {format_b(mem_after_load)}")
+    peak_ram_overall_bytes = max(peak_ram_overall_bytes, mem_after_load)  # Atualiza pico
 
+    print("\n[FASE 2] Convertendo dados para formato Pytorch Geometric...")
     pyg_data = data_converters.wsg_for_vgae(wsg_obj, config)
 
     mem_after_convert = process.memory_info().rss
-    peak_ram_overall_bytes = max(
-        peak_ram_overall_bytes, mem_after_convert
-    )  # Atualiza pico
-    print(
-        f"RAM após converter para pyg_data (EmbeddingBag): {format_b(mem_after_convert)}"
-    )
+    peak_ram_overall_bytes = max(peak_ram_overall_bytes, mem_after_convert)  # Atualiza pico
+
+    print(f"RAM após converter para pyg_data (EmbeddingBag): {format_b(mem_after_convert)}")
     print("Pipeline de dados concluído.")
-
-    directory_manager = DirectoryManager(
-        timestamp=config.TIMESTAMP,
-        run_folder_name=f"EMBEDDING_RUNS",
-    )
-    report_manager = ReportManager(directory_manager)
-
-    early_stopper = EarlyStopper(
-        patience=config.EARLY_STOPPING_PATIENCE,
-        min_delta=config.EARLY_STOPPING_MIN_DELTA,
-        mode="max",
-        metric_name="avg_f1_knn_logreg",
-        custom_eval=lambda model: evaluate_embeddings(model, pyg_data, device)
-    )
 
     # --- Instanciação do Modelo ---
     print("\n[FASE 3] Construindo o modelo VGAE...")
@@ -101,16 +83,29 @@ def main():
         embedding_dim=config.EMBEDDING_DIM,
         hidden_dim=config.HIDDEN_DIM,
         out_embedding_dim=config.OUT_EMBEDDING_DIM,
-        early_stopper=early_stopper,
     ).to(device)
 
+    directory_manager = DirectoryManager(
+        timestamp=config.TIMESTAMP,
+        run_folder_name=f"EMBEDDING_RUNS",
+    )
+    report_manager = ReportManager(directory_manager)
+    early_stopper = EarlyStopper(
+        patience=config.EARLY_STOPPING_PATIENCE,
+        min_delta=config.EARLY_STOPPING_MIN_DELTA,
+        mode="max",
+        metric_name="avg_f1_knn_logreg",
+        custom_eval=lambda model: evaluate_embeddings(model, pyg_data, device)
+    )
+    optimizer = optim.Adam(model.parameters(), lr=config.LEARNING_RATE)
+    scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode="max", patience=config.SCHEDULER_PATIENCE, factor=config.SCHEDULER_FACTOR, min_lr=config.MIN_LR)
+    # ------
+
     mem_after_model = process.memory_info().rss
-    peak_ram_overall_bytes = max(
-        peak_ram_overall_bytes, mem_after_model
-    )  # Atualiza pico
+    peak_ram_overall_bytes = max(peak_ram_overall_bytes, mem_after_model)  # Atualiza pico
     print(f"RAM após instanciar modelo: {format_b(mem_after_model)}")
 
-    optimizer = optim.Adam(model.parameters(), lr=config.LEARNING_RATE)
+
     print("Modelo construído com sucesso.")
 
     # --- Loop de Treinamento ---
@@ -125,6 +120,8 @@ def main():
         "data": pyg_data,
         "optimizer": optimizer,
         "epochs": config.EPOCHS,
+        "early_stopper": early_stopper,
+        "scheduler": scheduler,
     }
     proc_tuple = (func, func_args, func_kwargs)
     mem_usage_result, training_report = memory_usage(
@@ -135,30 +132,23 @@ def main():
     )
     peak_ram_train_func_mib = mem_usage_result or 0.0
     # Atualiza pico GERAL com o pico do treino (convertido para Bytes)
-    peak_ram_overall_bytes = max(
-        peak_ram_overall_bytes, int(peak_ram_train_func_mib * 1024 * 1024)
-    )
+    peak_ram_overall_bytes = max(peak_ram_overall_bytes, int(peak_ram_train_func_mib * 1024 * 1024))
 
     # --- FIM TREINO ---
 
     # --- Coleta de Métricas Finais ---
     mem_after_train = process.memory_info().rss  # RAM medida *após* o bloco de treino
-    # Garante que o pico geral considere o valor final
     peak_ram_overall_bytes = max(peak_ram_overall_bytes, mem_after_train)
 
     print(f"\nRAM após treinamento (imediatamente após): {format_b(mem_after_train)}")
-    print(
-        f"RAM PICO durante a função treino: {format_b(int(peak_ram_train_func_mib * 1024 * 1024))}"
-    )
+    print(f"RAM PICO durante a função treino: {format_b(int(peak_ram_train_func_mib * 1024 * 1024))}")
 
     peak_vram_bytes = 0
     if "cuda" in device.type and torch.cuda.is_available():
         peak_vram_bytes = torch.cuda.max_memory_allocated(device)
         print(f"PICO VRAM (GPU) durante treino: {format_b(peak_vram_bytes)}")
 
-    print(
-        f"Treinamento finalizado em {training_report['total_training_time']:.2f} segundos."
-    )
+    print(f"Treinamento finalizado em {training_report['total_training_time']:.2f} segundos.")
 
     # --- Inferência e Salvamento ---
     print("\n[FASE FINAL] Gerando e salvando resultados...")
@@ -166,15 +156,11 @@ def main():
 
     inference_start_time = time.process_time()
     final_embeddings = model.inference(pyg_data)
-    print(f"[DEBUG] Final embeddings shape: {final_embeddings.shape }")
     inference_end_time = time.process_time()
     inference_duration = inference_end_time - inference_start_time
-    print(
-        f"Geração de embeddings (inferência) concluída em {inference_duration:.4f} segundos."
-    )
+    print(f"Geração de embeddings (inferência) concluída em {inference_duration:.4f} segundos.")
 
     mem_after_inference = process.memory_info().rss  # RAM no final de tudo
-    # Garante que o pico geral considere o valor final pós-inferência
     peak_ram_overall_bytes = max(peak_ram_overall_bytes, mem_after_inference)
 
     # --- DICIONÁRIO DE MÉTRICAS CORRIGIDO ---
@@ -195,18 +181,10 @@ def main():
         "ram_after_load_readable": format_b(mem_after_load),
         "ram_after_convert_readable": format_b(mem_after_convert),
         "ram_after_model_readable": format_b(mem_after_model),
-        "ram_after_train_readable": format_b(
-            mem_after_train
-        ),  # Legível RAM após treino
-        "ram_after_inference_readable": format_b(
-            mem_after_inference
-        ),  # Legível RAM final
-        "peak_ram_train_func_readable": format_b(
-            peak_ram_train_func_mib
-        ),  # Pico da func treino formatado
-        "peak_ram_overall_readable": format_b(
-            peak_ram_overall_bytes
-        ),  # Pico GERAL formatado
+        "ram_after_train_readable": format_b(mem_after_train),  # Legível RAM após treino
+        "ram_after_inference_readable": format_b(mem_after_inference),  # Legível RAM final
+        "peak_ram_train_func_readable": format_b(peak_ram_train_func_mib),  # Pico da func treino formatado
+        "peak_ram_overall_readable": format_b(peak_ram_overall_bytes),  # Pico GERAL formatado
         "vram_peak_readable": format_b(peak_vram_bytes),
     }
 
@@ -222,16 +200,13 @@ def main():
         "Learning_Rate": config.LEARNING_RATE,
         "Device": config.DEVICE,
         "Training_Report": training_report,
+        "Memory_Metrics": memory_metrics,
+        "Inference_Duration_Seconds": inference_duration,
     }
     report_manager.create_report(report)
-    report_manager.add_report_section("Memory_Metrics", memory_metrics)
-    report_manager.add_report_section(
-        "Inference_Duration_Seconds", {"inference_time": inference_duration}
-    )
     report_manager.save_report()
 
 
-    model.early_stopper = None  # Remove referência para salvar o modelo
     salvar_modelo_pytorch_completo(
         model=model,
         dataset_name=WSG_DATASET.dataset_name,
@@ -247,10 +222,9 @@ def main():
     )
 
     # --- SALVAMENTO DOS RESULTADOS ---
-    final_metrics = training_report["training_history"][-1]
     metrics_to_name = {
-        "train_loss": final_metrics["train_total_loss"],
-        "emb_dim": config.OUT_EMBEDDING_DIM,
+        "score": report["Training_Report"]["best_score"],
+        "emb_dim": report["Embedding_Dim"],
     }
     final_path = directory_manager.finalize_run_directory(
         dataset_name=WSG_DATASET.dataset_name, metrics=metrics_to_name
