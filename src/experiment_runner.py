@@ -89,7 +89,7 @@ class ExperimentRunner:
             kwargs = {"data": data}
             # Executa a função e mede o pico (max_usage=True). Retorna (pico_em_MiB, retval)
             
-            mem_usage_result, (acc, f1, train_time, model_report) = memory_usage(
+            mem_usage_result, (model_report) = memory_usage(
                 proc=cast(Any, (func, args, kwargs)),
                 max_usage=True,   # retorna apenas o pico
                 retval=True,      # retorna os valores que a função original retornaria
@@ -120,11 +120,13 @@ class ExperimentRunner:
                     peak_vram_bytes = current_vram_peak
 
 
+
+
             # Salva resultados normais
             report["results_summary_per_model"][model.model_name] = {
-                "accuracy": acc,
-                "f1_score_weighted": f1,
-                "training_time_seconds": train_time,
+                "test_accuracy": model_report["best_test_accuracy"],
+                "test_f1_score_weighted": model_report["best_test_f1"],
+                "training_time_seconds": model_report["total_training_time"],
             }
             report["detailed_results_per_model"][f"{model.model_name}_model_report"] = model_report
 
@@ -141,8 +143,10 @@ class ExperimentRunner:
         print(f"PICO de VRAM (Geral): {format_bytes(peak_vram_bytes)}")
 
 
-        metric_to_folder = "f1_score_weighted"
+        metric_to_folder = "test_f1_score_weighted"
         best_model = max(report["results_summary_per_model"].items(), key=lambda x: x[1][metric_to_folder])
+
+
 
         best_metric = best_model[1][metric_to_folder]
         

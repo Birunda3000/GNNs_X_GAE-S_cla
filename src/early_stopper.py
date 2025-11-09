@@ -39,6 +39,7 @@ class EarlyStopper:
         """
 
         # Permite usar função customizada para calcular a métrica
+        report = None
         if self.custom_eval is not None:
             report, current_value = self.custom_eval(model)
 
@@ -60,8 +61,9 @@ class EarlyStopper:
 
             if self.restore_best:
                 self.best_state_dict = {
-                    k: v.clone().detach() for k, v in model.state_dict().items()
+                    k: v.cpu().clone().detach() for k, v in model.state_dict().items()
                 }
+
         else:
             self.epochs_no_improve += 1
 
@@ -73,9 +75,12 @@ class EarlyStopper:
             )
             return True, self.best_value, self.best_epoch, report 
 
-        return False,    current_value,   self.best_epoch, report
+        return False, current_value, self.best_epoch, report
 
     def restore_best_state(self, model: torch.nn.Module):
         """Restaura o melhor estado salvo do modelo."""
         if self.restore_best and self.best_state_dict is not None:
             model.load_state_dict(self.best_state_dict)
+            model.to(next(model.parameters()).device)
+        else:
+            raise ValueError("Nenhum estado salvo para restaurar no modelo.")

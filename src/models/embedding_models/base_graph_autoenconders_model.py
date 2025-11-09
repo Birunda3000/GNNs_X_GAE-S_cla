@@ -8,7 +8,6 @@ from tqdm import tqdm
 import time
 from torch_geometric.nn import MessagePassing
 from torch import Tensor
-from torch.optim import lr_scheduler
 
 from src.models.base_model import BaseModel
 from src.early_stopper import EarlyStopper
@@ -90,6 +89,7 @@ class BaseGAECommon(BaseModel, nn.Module):
             total_loss.backward()
             optimizer.step()
 
+            # Na última epoch score sera o melhor valor monitorado pelo early stopping
             stop_now, score, best_epoch, report = early_stopper.check(self, epoch=epoch)
             scheduler.step(score)
 
@@ -103,7 +103,7 @@ class BaseGAECommon(BaseModel, nn.Module):
                 "early_stopping_report": report
             })
 
-            pbar.set_postfix({"loss": f"{total_loss.item():.4f}"})
+            pbar.set_postfix({"loss": f"{total_loss.item():.4f}", "score": f"{score:.4f}"})
 
             if early_stopper is not None and stop_now:
                 print(f"[EARLY STOPPING] Parando no epoch {epoch}")
@@ -114,7 +114,6 @@ class BaseGAECommon(BaseModel, nn.Module):
             "total_training_time": time.process_time() - start_time,
             "best_epoch": best_epoch,
             "best_score": score,
-            "final_train_loss": total_loss.item(),
             "training_history": training_history,
         }
 

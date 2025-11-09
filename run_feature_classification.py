@@ -21,7 +21,7 @@ from src.config import Config
 import src.data_loaders as data_loaders
 import src.data_converters as data_converters
 from src.models.sklearn_model import SklearnClassifier
-from src.models.torch_classifiers import MLPClassifier
+from src.models.pytorch_classification.torch_classifiers import MLPClassifier
 from src.models.xgboost_classifier import XGBoostClassifier
 from src.experiment_runner import ExperimentRunner
 

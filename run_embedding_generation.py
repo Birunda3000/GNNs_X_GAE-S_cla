@@ -26,7 +26,7 @@ from src.embeddings_eval import evaluate_embeddings
 from src.utils import format_b, save_embeddings_to_wsg, salvar_modelo_pytorch_completo
 
 
-WSG_DATASET = data_loaders.MusaeGithubLoader()# Ou MusaeFacebookLoader()
+WSG_DATASET = data_loaders.MusaeFacebookLoader()
 
 
 def main():
@@ -94,7 +94,7 @@ def main():
         patience=config.EARLY_STOPPING_PATIENCE,
         min_delta=config.EARLY_STOPPING_MIN_DELTA,
         mode="max",
-        metric_name="avg_f1_knn_logreg",
+        metric_name="max_f1",
         custom_eval=lambda model: evaluate_embeddings(model, pyg_data, device)
     )
     optimizer = optim.Adam(model.parameters(), lr=config.LEARNING_RATE)

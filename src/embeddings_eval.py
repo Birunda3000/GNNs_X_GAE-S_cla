@@ -34,25 +34,25 @@ def evaluate_embeddings(model, data: Data, device: torch.device) -> Tuple[Dict[s
     # --- KNN ---
     knn = KNeighborsClassifier(n_neighbors=5)
     knn.fit(X_train, y_train)
-    y_pred_knn = knn.predict(X_test)
-    f1_knn = float(f1_score(y_test, y_pred_knn, average="weighted"))
+    test_y_pred_knn = knn.predict(X_test)
+    f1_knn = float(f1_score(y_test, test_y_pred_knn, average="weighted"))
 
     # --- Logistic Regression ---
     logreg = LogisticRegression(max_iter=300)
     logreg.fit(X_train, y_train)
-    y_pred_lr = logreg.predict(X_test)
-    f1_lr = float(f1_score(y_test, y_pred_lr, average="weighted"))
+    test_y_pred_lr = logreg.predict(X_test)
+    f1_lr = float(f1_score(y_test, test_y_pred_lr, average="weighted"))
 
     # --- Decision Tree ---
     tree = DecisionTreeClassifier(max_depth=5, random_state=42)
     tree.fit(X_train, y_train)
-    y_pred_tree = tree.predict(X_test)
-    f1_tree = float(f1_score(y_test, y_pred_tree, average="weighted"))
+    test_y_pred_tree = tree.predict(X_test)
+    f1_tree = float(f1_score(y_test, test_y_pred_tree, average="weighted"))
 
     scores = {
-        "KNN_f1_weighted": f1_knn,
-        "LogisticRegression_f1_weighted": f1_lr,
-        "DecisionTree_f1_weighted": f1_tree,
+        "test_KNN_f1_weighted": f1_knn,
+        "test_LogisticRegression_f1_weighted": f1_lr,
+        "test_DecisionTree_f1_weighted": f1_tree,
     }
 
     best_score = max(f1_knn, f1_lr, f1_tree)

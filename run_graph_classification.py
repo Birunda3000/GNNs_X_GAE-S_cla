@@ -9,10 +9,10 @@ import src.data_converters as data_converters
 import src.data_loaders as data_loaders
 from src.config import Config
 from src.experiment_runner import ExperimentRunner
-from src.models.torch_classifiers import GATClassifier, GCNClassifier
+from src.models.pytorch_classification.classification_models import GCNClassifier, GATClassifier
 
 
-WSG_DATASET = data_loaders.MusaeFacebookLoader()# Ou MusaeGithubLoader()
+WSG_DATASET = data_loaders.MusaeGithubLoader()
 
 
 
@@ -32,14 +32,10 @@ def main():
     # --- 3. Definir Modelos ---
     input_dim = wsg_obj.metadata.num_total_features
     output_dim = len(set(y for y in wsg_obj.graph_structure.y if y is not None))
-    models_to_run = [
-        GCNClassifier(
-            config, input_dim=input_dim, hidden_dim=128, output_dim=output_dim
-        ),
-        GATClassifier(
-            config, input_dim=input_dim, hidden_dim=128, output_dim=output_dim
-        ),
 
+    models_to_run = [
+        GCNClassifier(config, input_dim=input_dim, hidden_dim=config.HIDDEN_DIM, output_dim=output_dim),
+        GATClassifier(config, input_dim=input_dim, hidden_dim=config.HIDDEN_DIM, output_dim=output_dim),
     ]
 
     # --- 4. Executar o Experimento ---
@@ -53,6 +49,7 @@ def main():
 
     process = psutil.Process(os.getpid())
     mem_start = process.memory_info().rss
+
     runner.run(models_to_run, process=process, mem_start=mem_start)
 
 
