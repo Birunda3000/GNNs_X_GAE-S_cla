@@ -50,9 +50,9 @@ def evaluate_embeddings(model, data: Data, device: torch.device) -> Tuple[Dict[s
     f1_tree = float(f1_score(y_test, y_pred_tree, average="weighted"))
 
     scores = {
-        "KNN": f1_knn,
-        "LogisticRegression": f1_lr,
-        "DecisionTree": f1_tree,
+        "KNN_f1_weighted": f1_knn,
+        "LogisticRegression_f1_weighted": f1_lr,
+        "DecisionTree_f1_weighted": f1_tree,
     }
 
     best_score = max(f1_knn, f1_lr, f1_tree)

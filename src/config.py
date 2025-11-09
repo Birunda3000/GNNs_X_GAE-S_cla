@@ -34,10 +34,10 @@ class Config:
     EPOCHS = 500
     LEARNING_RATE = 1e-3
 
-    EARLY_STOPPING_PATIENCE = 5  # Épocas sem melhora antes de parar
+    EARLY_STOPPING_PATIENCE = 16  # Épocas sem melhora antes de parar
     EARLY_STOPPING_MIN_DELTA = 1e-6  # Melhora mínima para considerar como progresso
 
-    SCHEDULER_PATIENCE = 3  # Épocas sem melhora antes de reduzir LR
+    SCHEDULER_PATIENCE = 5  # Épocas sem melhora antes de reduzir LR
     SCHEDULER_FACTOR = 0.7  # Fator de redução do LR
     MIN_LR = 1e-7  # LR mínimo permitido
 
