@@ -12,7 +12,7 @@ from src.directory_manager import DirectoryManager
 from src.report_manager import ReportManager
 from src.data_format_definition import WSG
 
-from src.models.base_model import BaseModel#criar base classifier?
+from src.models.base_model import BaseModel
 
 from src.utils import format_bytes
 
