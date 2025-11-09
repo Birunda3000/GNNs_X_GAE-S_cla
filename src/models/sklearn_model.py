@@ -28,7 +28,7 @@ class SklearnClassifier(BaseModel):
 
     def train_model(
         self, data: Data
-    ) -> Tuple[float, float, float, Dict[str, Any]]:
+    ) -> Dict[str, Any]:
         print(f"\n--- Avaliando (Sklearn): {self.model_name} ---")
 
         assert isinstance(data.x, torch.Tensor), f"Esperado torch.Tensor, obtido {type(data.x)}"
@@ -60,13 +60,15 @@ class SklearnClassifier(BaseModel):
             classification_report(y_train, self.model.predict(X_train), output_dict=True, zero_division=0),
         )
 
-        report = {
+        return {
             "total_training_time": train_time,
+            "best_test_accuracy": test_acc,
+            "best_test_f1": test_f1,
             "test_report": test_report,
             "train_report": train_report
         }
 
-        return float(test_acc), float(test_f1), float(train_time), report
+        
     
     def evaluate(self, data: Data) -> None:
         NotImplementedError("Método 'evaluate' não implementado para SklearnClassifier.")

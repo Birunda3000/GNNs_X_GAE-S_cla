@@ -12,7 +12,7 @@ from src.experiment_runner import ExperimentRunner
 from src.models.pytorch_classification.classification_models import GCNClassifier, GATClassifier
 
 
-WSG_DATASET = data_loaders.MusaeGithubLoader()
+WSG_DATASET = data_loaders.MusaeFacebookLoader()
 
 
 

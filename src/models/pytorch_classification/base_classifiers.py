@@ -61,8 +61,10 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
 
         if use_gnn and edge_index is not None:
             args = [x, edge_index]
+        elif not use_gnn and edge_index is not None:
+            print("[WARNING]: edge_index fornecido, mas use_gnn está definido como False. Ignorando edge_index.")
+            args = [x]
         else:
-            print("[INFO]: Usando classificador sem informações de arestas.")
             args = [x]
         
         out = self(*args)

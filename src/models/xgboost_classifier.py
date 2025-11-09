@@ -14,7 +14,7 @@ class XGBoostClassifier(BaseModel):
     Implementação de um classificador XGBoost que segue a interface BaseModel.
     """
 
-    def __init__(self, config: Config, num_boost_round=100, **model_params):
+    def __init__(self, config: Config, num_boost_round=200, **model_params):
         # Chama o __init__ da classe base
         super().__init__(config)
         self.model_name = "XGBoostClassifier"
@@ -45,7 +45,7 @@ class XGBoostClassifier(BaseModel):
 
     def train_model(
         self, data: Data
-    ) -> Tuple[float, float, float, Dict[str, Any]]:
+    ) -> Dict[str, Any]:
         """
         Treina o modelo XGBoost e retorna as métricas de acordo com
         o esperado pelo ExperimentRunner.
@@ -108,14 +108,13 @@ class XGBoostClassifier(BaseModel):
             classification_report(y_train, y_pred_train, output_dict=True, zero_division=0),
         )
 
-        report = {
+        return {
             "total_training_time": train_time,
+            "best_test_accuracy": test_acc,
+            "best_test_f1": test_f1,
             "test_report": test_report,
             "train_report": train_report
         }
-
-        # Retorna o tuple esperado pelo ExperimentRunner
-        return test_acc, test_f1, train_time, report
 
     def evaluate(self, x, y: Optional[Any] = None) -> Any:
         """Evaluate the model."""

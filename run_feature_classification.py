@@ -21,12 +21,12 @@ from src.config import Config
 import src.data_loaders as data_loaders
 import src.data_converters as data_converters
 from src.models.sklearn_model import SklearnClassifier
-from src.models.pytorch_classification.torch_classifiers import MLPClassifier
+from src.models.pytorch_classification.classification_models import MLPClassifier
 from src.models.xgboost_classifier import XGBoostClassifier
 from src.experiment_runner import ExperimentRunner
 
 wsg_file_paths = [
-    "/app/gnn_tcc/data/output/EMBEDDING_RUNS/musae-facebook__loss_2_2581__emb_dim_32__30-10-2025_19-32-36/musae-facebook_(32)_embeddings_epoch_200.wsg.json"
+    "/app/gnn_tcc/data/output/EMBEDDING_RUNS/Musae-Facebook__score_0_8756__emb_dim_8__09-11-2025_18-57-52/Musae-Facebook_(8)_embeddings_epoch_500.wsg.json"
 ]
 
 WSG_DATASET = data_loaders.DirectWSGLoader(file_path=wsg_file_paths[0])

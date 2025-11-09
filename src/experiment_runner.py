@@ -119,9 +119,6 @@ class ExperimentRunner:
                 if current_vram_peak > peak_vram_bytes:
                     peak_vram_bytes = current_vram_peak
 
-
-
-
             # Salva resultados normais
             report["results_summary_per_model"][model.model_name] = {
                 "test_accuracy": model_report["best_test_accuracy"],
