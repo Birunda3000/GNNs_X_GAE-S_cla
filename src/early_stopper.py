@@ -1,5 +1,5 @@
 import torch
-from typing import Optional, Callable, Tuple
+from typing import Optional, Callable, Tuple, Dict
 
 
 class EarlyStopper:
@@ -9,12 +9,12 @@ class EarlyStopper:
 
     def __init__(
         self,
+        custom_eval: Optional[Callable[[torch.nn.Module], Tuple[Dict[str, float], float]]] = None,
         patience: int = 10,
         min_delta: float = 1e-4,
         mode: str = "min",
         metric_name: str = "val_loss",
         restore_best: bool = True,
-        custom_eval: Optional[Callable[[torch.nn.Module], float]] = None,
     ):
         assert mode in ["min", "max"], "mode deve ser 'min' ou 'max'."
 
@@ -30,18 +30,14 @@ class EarlyStopper:
         self.best_state_dict = None
         self.epochs_no_improve = 0
 
-    def check(
-        self,
-        model: torch.nn.Module,
-        epoch: int,
-        current_value: Optional[float] = None
-    ) -> Tuple[bool, float]:
+    def check(self, model: torch.nn.Module, epoch: int, current_value: Optional[float] = None) -> Tuple[bool, float, int, Optional[Dict[str, float]]]:
         """
         Avalia se deve parar o treinamento com base na métrica atual.
 
         Retorna:
             (stop_now, current_value)
         """
+
         # Permite usar função customizada para calcular a métrica
         if self.custom_eval is not None:
             report, current_value = self.custom_eval(model)
@@ -75,9 +71,9 @@ class EarlyStopper:
                 f"[EARLY STOPPING] {self.metric_name} não melhorou por {self.patience} épocas. "
                 f"Melhor valor: {self.best_value:.6f} (epoch {self.best_epoch})"
             )
-            return True, self.best_value, self.best_epoch, report, 
+            return True, self.best_value, self.best_epoch, report 
 
-        return False, current_value, self.best_epoch, report
+        return False,    current_value,   self.best_epoch, report
 
     def restore_best_state(self, model: torch.nn.Module):
         """Restaura o melhor estado salvo do modelo."""

@@ -5,9 +5,10 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import f1_score
 from torch_geometric.data import Data
+from typing import Tuple, Dict
 
 
-def evaluate_embeddings(model, data: Data, device: torch.device):
+def evaluate_embeddings(model, data: Data, device: torch.device) -> Tuple[Dict[str, float], float]:
     """
     Avalia a qualidade dos embeddings gerados pelo modelo VGAE usando
     três perspectivas complementares:
@@ -16,7 +17,8 @@ def evaluate_embeddings(model, data: Data, device: torch.device):
     - Regressão Logística → Separabilidade linear global
     - Decision Tree rasa → Separabilidade não-linear simples (fronteiras curvas)
 
-    Retorna um dicionário com todos os F1-scores e o score médio combinado.
+    Retorna:
+        (scores_dict, best_score)
     """
     model.eval()
     with torch.no_grad():
@@ -29,25 +31,23 @@ def evaluate_embeddings(model, data: Data, device: torch.device):
     X_train, X_test = embeddings[train_mask], embeddings[test_mask]
     y_train, y_test = y[train_mask], y[test_mask]
 
-    # --- KNN (estrutura local / clusters) ---
+    # --- KNN ---
     knn = KNeighborsClassifier(n_neighbors=5)
     knn.fit(X_train, y_train)
     y_pred_knn = knn.predict(X_test)
-    f1_knn = f1_score(y_test, y_pred_knn, average="weighted")
+    f1_knn = float(f1_score(y_test, y_pred_knn, average="weighted"))
 
-    # --- Regressão Logística (separação linear global) ---
+    # --- Logistic Regression ---
     logreg = LogisticRegression(max_iter=300)
     logreg.fit(X_train, y_train)
     y_pred_lr = logreg.predict(X_test)
-    f1_lr = f1_score(y_test, y_pred_lr, average="weighted")
+    f1_lr = float(f1_score(y_test, y_pred_lr, average="weighted"))
 
-    # --- Decision Tree rasa (não-linear simples) ---
+    # --- Decision Tree ---
     tree = DecisionTreeClassifier(max_depth=5, random_state=42)
     tree.fit(X_train, y_train)
     y_pred_tree = tree.predict(X_test)
-    f1_tree = f1_score(y_test, y_pred_tree, average="weighted")
-
-    # --- Score composto ---
+    f1_tree = float(f1_score(y_test, y_pred_tree, average="weighted"))
 
     scores = {
         "KNN": f1_knn,
@@ -57,5 +57,5 @@ def evaluate_embeddings(model, data: Data, device: torch.device):
 
     best_score = max(f1_knn, f1_lr, f1_tree)
 
-
     return scores, best_score
+    

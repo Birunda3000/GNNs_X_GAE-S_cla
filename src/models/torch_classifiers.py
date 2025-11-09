@@ -155,7 +155,7 @@ class MLPClassifier(PyTorchClassifier):
 
     def train_model(self, data: Data):
 
-        optimizer = optim.Adam(self.parameters(), lr=0.01, weight_decay=5e-4)
+        optimizer = optim.Adam(self.parameters(), lr=self.config.LEARNING_RATE, weight_decay=5e-4)
         criterion = nn.CrossEntropyLoss()
 
         return self.internal_train_model(
@@ -185,7 +185,7 @@ class GCNClassifier(PyTorchClassifier):
         super().verify_train_input_data(data)
 
     def train_model(self, data: Data):
-        optimizer = optim.Adam(self.parameters(), lr=0.01, weight_decay=5e-4)
+        optimizer = optim.Adam(self.parameters(), lr=self.config.LEARNING_RATE, weight_decay=5e-4)
         criterion = nn.CrossEntropyLoss()
 
         return self.internal_train_model(
@@ -219,7 +219,7 @@ class GATClassifier(PyTorchClassifier):
 
     def train_model(self, data: Data):
 
-        optimizer = optim.Adam(self.parameters(), lr=0.01, weight_decay=5e-4)
+        optimizer = optim.Adam(self.parameters(), lr=self.config.LEARNING_RATE, weight_decay=5e-4)
         criterion = nn.CrossEntropyLoss()
 
         return self.internal_train_model(

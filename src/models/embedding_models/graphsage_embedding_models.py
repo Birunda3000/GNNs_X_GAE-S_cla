@@ -1,10 +1,9 @@
-# src/model.py
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_geometric.nn import GCNConv
+from torch_geometric.nn import SAGEConv
 from torch_geometric.data import Data
-from typing import List, Dict, Any, cast
+from typing import List, Dict, Any, cast, Optional
 import torch.optim as optim
 import time
 import src.models.base_model as basemodel
@@ -14,7 +13,7 @@ from tqdm import tqdm
 
 
 
-class VGAE(basemodel.BaseModel, nn.Module):
+class GraphSageVGAE(basemodel.BaseModel, nn.Module):
     """
     Implementação de um Autoencoder Variacional de Grafo (VGAE).
 
@@ -34,7 +33,7 @@ class VGAE(basemodel.BaseModel, nn.Module):
         embedding_dim: int,
         hidden_dim: int,
         out_embedding_dim: int,
-        early_stopper: EarlyStopper
+        early_stopper: Optional[EarlyStopper]
     ):
         """
         Inicializador do modelo VGAE.
@@ -57,11 +56,11 @@ class VGAE(basemodel.BaseModel, nn.Module):
         )
 
         # Encoder: duas camadas GCN para gerar os parâmetros da distribuição
-        self.conv1 = GCNConv(embedding_dim, hidden_dim)
-        self.conv_mu = GCNConv(
+        self.conv1 = SAGEConv(embedding_dim, hidden_dim)
+        self.conv_mu = SAGEConv(
             hidden_dim, out_embedding_dim
         )  # Cabeça para a média (mu)
-        self.conv_logstd = GCNConv(
+        self.conv_logstd = SAGEConv(
             hidden_dim, out_embedding_dim
         )  # Cabeça para o log da variância
 
@@ -255,6 +254,7 @@ class VGAE(basemodel.BaseModel, nn.Module):
 
             epoch_metrics = {
                 "epoch": epoch,
+                "Time": time.process_time() - start_time,
                 "train_total_loss": total_loss.item(),
                 "train_recon_loss": recon_loss.item(),
                 "train_kl_loss": kl_loss.item(),
@@ -274,6 +274,7 @@ class VGAE(basemodel.BaseModel, nn.Module):
             )
 
             if stop_now:
+                assert self.early_stopper is not None
                 print(f"[EARLY STOPPING] Parando no epoch {epoch}")
                 self.early_stopper.restore_best_state(self)
                 break
@@ -298,3 +299,210 @@ class VGAE(basemodel.BaseModel, nn.Module):
             Any: Resultados da avaliação (a definir conforme necessidade).
         """
         raise NotImplementedError("Função de avaliação não implementada para VGAE.")
+
+
+
+class GraphSageGAE(basemodel.BaseModel, nn.Module):
+    """
+    Implementação de um Autoencoder de Grafo (GAE).
+
+    O GAE aprende embeddings de nós de forma auto-supervisionada,
+    tentando reconstruir a estrutura de adjacência do grafo.
+    Diferentemente do VGAE, o GAE é determinístico — ou seja, 
+    não há amostragem nem divergência KL.
+    """
+
+    def __init__(
+        self,
+        config: Config,
+        num_total_features: int,
+        embedding_dim: int,
+        hidden_dim: int,
+        out_embedding_dim: int,
+        early_stopper: Optional[EarlyStopper]
+    ):
+        """
+        Inicializador do modelo GAE.
+
+        Args:
+            num_total_features (int): Tamanho do vocabulário de features (de pyg_data.num_total_features).
+            embedding_dim (int): Dimensão do embedding para cada feature do vocabulário.
+            hidden_dim (int): Dimensão da camada GCN intermediária.
+            out_embedding_dim (int): Dimensão final dos embeddings dos nós.
+        """
+        basemodel.BaseModel.__init__(self, config)
+        nn.Module.__init__(self)
+
+        self.early_stopper = early_stopper
+
+        # Camada de entrada: processa as features esparsas e cria um vetor denso inicial
+        self.feature_embedder = nn.EmbeddingBag(
+            num_embeddings=num_total_features,
+            embedding_dim=embedding_dim,
+            mode="sum",
+        )
+
+        # Encoder determinístico: duas camadas GCN
+        self.conv1 = SAGEConv(embedding_dim, hidden_dim)
+        self.conv2 = SAGEConv(hidden_dim, out_embedding_dim)
+
+    def encode(self, data: Data) -> torch.Tensor:
+        """
+        Executa a passagem de codificação determinística.
+
+        Args:
+            data (Data): Objeto de dados do PyTorch Geometric.
+
+        Returns:
+            torch.Tensor: A matriz de embeddings Z determinísticos.
+        """
+        x = self.feature_embedder(
+            data.feature_indices,
+            data.feature_offsets,
+            per_sample_weights=data.feature_weights,
+        )
+
+        x = F.normalize(x, p=2, dim=-1)
+        x = F.relu(self.conv1(x, data.edge_index))
+        z = self.conv2(x, data.edge_index)
+        return z
+
+    def decode(self, z: torch.Tensor, edge_index: torch.Tensor) -> torch.Tensor:
+        """
+        Decodifica os embeddings Z para reconstruir as arestas.
+
+        Args:
+            z (torch.Tensor): Matriz de embeddings dos nós.
+            edge_index (torch.Tensor): Arestas a serem pontuadas.
+
+        Returns:
+            torch.Tensor: Logits da probabilidade de existência de cada aresta.
+        """
+        return (z[edge_index[0]] * z[edge_index[1]]).sum(dim=1)
+
+    def reconstruction_loss(
+        self, z: torch.Tensor, pos_edge_index: torch.Tensor
+    ) -> torch.Tensor:
+        """
+        Calcula a loss de reconstrução com amostragem de arestas negativas.
+        """
+        pos_logits = self.decode(z, pos_edge_index)
+        pos_loss = F.binary_cross_entropy_with_logits(
+            pos_logits, z.new_ones(pos_edge_index.size(1))
+        )
+
+        num_neg_samples = pos_edge_index.size(1)
+        neg_edge_index = torch.randint(
+            0, z.size(0), (2, num_neg_samples), dtype=torch.long, device=z.device
+        )
+        neg_logits = self.decode(z, neg_edge_index)
+        neg_loss = F.binary_cross_entropy_with_logits(
+            neg_logits, z.new_zeros(num_neg_samples)
+        )
+
+        return pos_loss + neg_loss
+
+    def inference(self, input_data: Data) -> torch.Tensor:
+        """
+        Após o treinamento, gera os embeddings finais determinísticos dos nós.
+        """
+        with torch.no_grad():
+            x = self.feature_embedder(
+                input_data.feature_indices,
+                input_data.feature_offsets,
+                per_sample_weights=input_data.feature_weights,
+            )
+
+            x = F.normalize(x, p=2, dim=-1)
+            x = F.relu(self.conv1(x, input_data.edge_index))
+            z = self.conv2(x, input_data.edge_index)
+
+        return z
+
+    def verify_train_input_data(self, data: Data):
+        """
+        Valida os campos necessários para o treinamento não supervisionado do GAE.
+        """
+        assert data.edge_index is not None, "Input data must contain edge_index."
+        assert data.feature_indices is not None, "Input data must contain feature_indices."
+        assert data.feature_offsets is not None, "Input data must contain feature_offsets."
+        assert data.feature_weights is not None, "Input data must contain feature_weights."
+        assert data.num_nodes is not None and data.num_nodes > 0, "data.num_nodes must be valid."
+
+    def train_model(
+        self,
+        data: Data,
+        optimizer: optim.Optimizer,
+        epochs: int,
+    ) -> Dict[str, Any]:
+        """
+        Treina o modelo GAE no conjunto de dados fornecido.
+
+        Args:
+            data (Data): Objeto de dados do PyTorch Geometric.
+            epochs (int): Número de épocas para treinar.
+
+        Returns:
+            Dict[str, Any]: Relatório com histórico e tempo total.
+        """
+        self.verify_train_input_data(data)
+        edge_index = cast(torch.Tensor, data.edge_index)
+        training_history: List[Dict[str, float]] = []
+
+        pbar = tqdm(
+            range(1, epochs + 1),
+            desc=f"Treinando {self.model_name}",
+            leave=False,
+        )
+
+        score = None
+        start_time = time.process_time()
+
+        for epoch in pbar:
+            self.train()
+            optimizer.zero_grad()
+            z = self.encode(data)
+            recon_loss = self.reconstruction_loss(z, edge_index)
+            total_loss = recon_loss
+            total_loss.backward()
+            optimizer.step()
+
+            if self.early_stopper is not None:
+                stop_now, score, best_epoch, report = self.early_stopper.check(self, epoch=epoch)
+
+            epoch_metrics = {
+                "epoch": epoch,
+                "Time": time.process_time() - start_time,
+                "train_total_loss": total_loss.item(),
+                "train_recon_loss": recon_loss.item(),
+                "early_stopping_score": score if self.early_stopper is not None else None,
+                "early_stopping_report": report if self.early_stopper is not None else None,
+            }
+            training_history.append(epoch_metrics)
+
+            pbar.set_postfix(
+                {
+                    "e_s_score": f"{score:.4f}" if self.early_stopper is not None else "N/A",
+                    "total_loss": f"{total_loss.item():.4f}",
+                }
+            )
+
+            if self.early_stopper is not None and stop_now:
+                print(f"[EARLY STOPPING] Parando no epoch {epoch}")
+                self.early_stopper.restore_best_state(self)
+                break
+
+        total_time = time.process_time() - start_time
+        return {
+            "total_training_time": float(total_time),
+            "best_epoch": best_epoch if self.early_stopper is not None else None,
+            "final_early_stopping_score": score if self.early_stopper is not None else None,
+            "final_train_loss": total_loss.item(),
+            "training_history": training_history,
+        }
+
+    def evaluate(self, data: Data) -> Any:
+        """
+        Avalia o modelo GAE (não implementado por padrão).
+        """
+        raise NotImplementedError("Função de avaliação não implementada para GAE.")
