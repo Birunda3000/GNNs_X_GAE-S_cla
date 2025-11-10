@@ -20,7 +20,7 @@ import src.data_converters as data_converters
 import src.data_loaders as data_loaders
 from src.directory_manager import DirectoryManager
 from src.report_manager import ReportManager
-from src.models.embedding_models.autoencoders_models import GraphSageGAE
+from src.models.embedding_models.autoencoders_models import GraphSageGAE, GraphSageVGAE
 from src.early_stopper import EarlyStopper
 from src.embeddings_eval import evaluate_embeddings
 from src.utils import format_b, save_embeddings_to_wsg, salvar_modelo_pytorch_completo
@@ -77,7 +77,7 @@ def main():
 
     # --- Instanciação do Modelo ---
     print("\n[FASE 3] Construindo o modelo VGAE...")
-    model = GraphSageGAE(
+    model = GraphSageVGAE(
         config=config,
         num_total_features=pyg_data.num_total_features,
         embedding_dim=config.EMBEDDING_DIM,

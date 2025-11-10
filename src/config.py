@@ -28,18 +28,18 @@ class Config:
     EMBEDDING_DIM = 128  # Dimensão do embedding das features de entrada
     HIDDEN_DIM = 256  # Dimensão da camada GCN oculta
 
-    OUT_EMBEDDING_DIM = 8 # Dimensão do embedding final do nó variar [8,32,64,128]
+    OUT_EMBEDDING_DIM = 2 # Dimensão do embedding final do nó variar [8,32,64,128]
 
     # --- Configurações de Treinamento ---
     EPOCHS = 500
     LEARNING_RATE = 1e-3
 
-    EARLY_STOPPING_PATIENCE = 16  # Épocas sem melhora antes de parar
+    EARLY_STOPPING_PATIENCE = 30#16  # Épocas sem melhora antes de parar
     EARLY_STOPPING_MIN_DELTA = 1e-6  # Melhora mínima para considerar como progresso
 
     SCHEDULER_PATIENCE = 5  # Épocas sem melhora antes de reduzir LR
     SCHEDULER_FACTOR = 0.7  # Fator de redução do LR
-    MIN_LR = 1e-7  # LR mínimo permitido
+    MIN_LR = 1e-8  # LR mínimo permitido
 
     # --- Configurações de Visualização ---
     VIS_SAMPLES = 1500  # Número máximo de nós para incluir na visualização

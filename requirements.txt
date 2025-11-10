@@ -20,6 +20,7 @@ ipykernel
 pydantic
 scikit-learn
 xgboost
+plotly
 
 # Visualização
 pyvis
