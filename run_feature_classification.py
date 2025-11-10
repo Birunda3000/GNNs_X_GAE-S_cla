@@ -15,7 +15,6 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 import psutil
 
-
 # === IMPORTS INTERNOS DO PROJETO ===
 from src.config import Config
 import src.data_loaders as data_loaders
