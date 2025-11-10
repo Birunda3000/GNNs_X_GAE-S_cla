@@ -26,7 +26,8 @@ from src.embeddings_eval import evaluate_embeddings
 from src.utils import format_b, save_embeddings_to_wsg, salvar_modelo_pytorch_completo
 
 
-WSG_DATASET = data_loaders.MusaeFacebookLoader()
+#WSG_DATASET = data_loaders.MusaeFacebookLoader()
+WSG_DATASET = data_loaders.MusaeGithubLoader()
 
 
 def main():
@@ -77,7 +78,7 @@ def main():
 
     # --- Instanciação do Modelo ---
     print("\n[FASE 3] Construindo o modelo VGAE...")
-    model = GraphSageVGAE(
+    model = GraphSageGAE(
         config=config,
         num_total_features=pyg_data.num_total_features,
         embedding_dim=config.EMBEDDING_DIM,

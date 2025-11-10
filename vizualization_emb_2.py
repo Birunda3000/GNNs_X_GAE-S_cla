@@ -5,7 +5,7 @@ from src.data_format_definition import WSG
 from src.data_loaders import DirectWSGLoader
 
 # Caminho do arquivo .wsg.json (substitua pelo seu)
-WSG_PATH = "/app/gnn_tcc/data/output/EMBEDDING_RUNS/Musae-Facebook__score_0_5546__emb_dim_2__10-11-2025_09-51-46/Musae-Facebook_(2)_embeddings_epoch_500.wsg.json"
+WSG_PATH = "data/output/EMBEDDING_RUNS/Musae-Facebook__score_0_5457__emb_dim_2__10-11-2025_14-07-52/Musae-Facebook_(2)_embeddings_epoch_500.wsg.json"
 
 # === 1. Carrega o arquivo como objeto WSG ===
 loader = DirectWSGLoader(WSG_PATH)

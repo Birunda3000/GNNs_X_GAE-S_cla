@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 from src.data_loaders import DirectWSGLoader
 
 # Caminho do arquivo .wsg.json (substitua pelo seu)
-WSG_PATH = "/app/gnn_tcc/data/output/EMBEDDING_RUNS/Musae-Facebook__score_0_7470__emb_dim_3__10-11-2025_09-43-36/Musae-Facebook_(3)_embeddings_epoch_500.wsg.json"
+WSG_PATH = "/app/gnn_tcc/data/output/EMBEDDING_RUNS/Musae-Github__score_0_8457__emb_dim_3__10-11-2025_14-51-06/Musae-Github_(3)_embeddings_epoch_500.wsg.json"
 
 # === 1. Carrega o WSG ===
 loader = DirectWSGLoader(WSG_PATH)

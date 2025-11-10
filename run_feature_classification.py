@@ -5,6 +5,7 @@ Executa múltiplos classificadores (Sklearn, MLP, XGBoost) sobre embeddings salv
 
 # === IMPORTS PADRÃO ===
 import os
+import glob
 import random
 
 # === IMPORTS DE TERCEIROS ===
@@ -24,12 +25,6 @@ from src.models.pytorch_classification.classification_models import MLPClassifie
 from src.models.xgboost_classifier import XGBoostClassifier
 from src.experiment_runner import ExperimentRunner
 
-wsg_file_paths = [
-    "/app/gnn_tcc/data/output/EMBEDDING_RUNS/Musae-Facebook__score_0_8756__emb_dim_8__09-11-2025_18-57-52/Musae-Facebook_(8)_embeddings_epoch_500.wsg.json"
-]
-
-WSG_DATASET = data_loaders.DirectWSGLoader(file_path=wsg_file_paths[0])
-
 
 def main(wsg_file_path: str):
     # --- 1. Configuração Inicial ---
@@ -43,6 +38,8 @@ def main(wsg_file_path: str):
     print("=" * 65, "\nINICIANDO TAREFA DE CLASSIFICAÇÃO DE EMBEDDINGS")
     print(f"Arquivo de entrada: {wsg_file_path}\n", "=" * 65)
 
+
+    WSG_DATASET = data_loaders.DirectWSGLoader(file_path=wsg_file_path)
     wsg_obj = WSG_DATASET.load()
 
     # --- 3. Definir Modelos ---
@@ -83,21 +80,17 @@ def main(wsg_file_path: str):
 
 if __name__ == "__main__":
 
-    main(wsg_file_paths[0])
+    base_path = "data/output/EMBEDDING_RUNS"  # caminho fixo
+    pattern = "*.wsg.json"                    # extensão que você usa
+    list_of_files = glob.glob(os.path.join(base_path, "**", pattern), recursive=True)
 
-    """
-    base_dirs = [
-        "data/output/EMBEDDING_RUNS",
-        #"data/output/EMBEDDING_RUNS_epochs(1)",
-        #"data/output/t_EMBEDDING_RUNS_epochs(1)",
-        #"data/output/t_EMBEDDING_RUNS_epochs(200)",
-    ]
+    print(f"Encontrados {len(list_of_files)} arquivos para processar.")
+
+    for file_path in list_of_files:
+        print(f"\n=== Rodando para: {file_path} ===")
+        try:
+            main(file_path)
+        except Exception as e:
+            print(f"Erro ao processar {file_path}: {e}")
 
 
-   # Encontra todos os arquivos .wsg.json nessas pastas (e subpastas)
-    wsg_file_paths = []
-    for base in base_dirs:
-        wsg_file_paths.extend(glob.glob(os.path.join(base, "**", "*.wsg.json"), recursive=True))
-
-    for wsg_file_path in wsg_file_paths:
-        main(wsg_file_path)"""

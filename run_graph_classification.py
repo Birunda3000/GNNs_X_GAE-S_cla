@@ -13,7 +13,7 @@ from src.models.pytorch_classification.classification_models import GCNClassifie
 
 
 WSG_DATASET = data_loaders.MusaeFacebookLoader()
-
+#WSG_DATASET = data_loaders.MusaeGithubLoader()
 
 
 def main():

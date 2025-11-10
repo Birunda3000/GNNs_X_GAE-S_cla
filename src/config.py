@@ -28,7 +28,7 @@ class Config:
     EMBEDDING_DIM = 128  # Dimensão do embedding das features de entrada
     HIDDEN_DIM = 256  # Dimensão da camada GCN oculta
 
-    OUT_EMBEDDING_DIM = 2 # Dimensão do embedding final do nó variar [8,32,64,128]
+    OUT_EMBEDDING_DIM = 3 # Dimensão do embedding final do nó variar [8,32,64,128]
 
     # --- Configurações de Treinamento ---
     EPOCHS = 500
