@@ -7,9 +7,9 @@ from typing import Any
 # ---------- CONFIGURAÇÃO ----------
 # Lista de pastas onde o script vai procurar arquivos JSON
 FOLDERS = [
+    "data/output/EMBEDDING_RUNS",
     "data/output/CLASSIFICATION_RUNS",
-    #"data/input/GRAPH_CLASSIFICATION_RUNS",
-    # adicione outras pastas aqui
+    "data/output/GRAPH_CLASSIFICATION_RUNS",
 ]
 
 # Extensões que serão consideradas “JSON”
