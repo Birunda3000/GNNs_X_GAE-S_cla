@@ -1,30 +1,41 @@
+# run_graph_classification_batch.py
+
 import os
 import random
-
 import numpy as np
 import psutil
 import torch
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 import src.data_converters as data_converters
 import src.data_loaders as data_loaders
 from src.config import Config
 from src.experiment_runner import ExperimentRunner
-from src.models.pytorch_classification.classification_models import GCNClassifier, GATClassifier
+from src.models.pytorch_classification.classification_models import (
+    GCNClassifier,
+    GATClassifier,
+)
 
 
-WSG_DATASET = data_loaders.MusaeFacebookLoader()
-#WSG_DATASET = data_loaders.MusaeGithubLoader()
-
-
-def main():
+def run_graph_classification(WSG_DATASET):
+    """
+    Executa o pipeline de classificação de grafo para um dataset específico.
+    """
     # --- 1. Configuração Inicial ---
     config = Config()
     torch.manual_seed(config.RANDOM_SEED)
     np.random.seed(config.RANDOM_SEED)
     random.seed(config.RANDOM_SEED)
 
-    print("=" * 65, "\nINICIANDO TAREFA DE CLASSIFICAÇÃO DE GRAFO (FIM-A-FIM)")
-    print(f"Dataset de entrada: {WSG_DATASET.dataset_name}\n", "=" * 65)
+    
+    config.TIMESTAMP = datetime.now(ZoneInfo("America/Sao_Paulo")).strftime(
+        "%d-%m-%Y_%H-%M-%S"
+    )
+
+    print("=" * 70)
+    print(f"INICIANDO CLASSIFICAÇÃO DE GRAFO PARA DATASET: {WSG_DATASET.dataset_name}")
+    print("=" * 70)
 
     # --- 2. Carregar Dados ---
     wsg_obj = WSG_DATASET.load()
@@ -44,7 +55,7 @@ def main():
         run_folder_name="GRAPH_CLASSIFICATION_RUNS",
         wsg_obj=wsg_obj,
         data_source_name=os.path.basename(WSG_DATASET.dataset_name),
-        data_converter=data_converters.wsg_for_gcn_gat_multi_hot
+        data_converter=data_converters.wsg_for_gcn_gat_multi_hot,
     )
 
     process = psutil.Process(os.getpid())
@@ -52,6 +63,15 @@ def main():
 
     runner.run(models_to_run, process=process, mem_start=mem_start)
 
+    print(f"\nConcluído: {WSG_DATASET.dataset_name}")
+    print("=" * 70 + "\n")
+
 
 if __name__ == "__main__":
-    main()
+    datasets = [
+        data_loaders.MusaeFacebookLoader(),
+        data_loaders.MusaeGithubLoader(),
+    ]
+
+    for dataset in datasets:
+        run_graph_classification(dataset)

@@ -7,6 +7,8 @@ Executa múltiplos classificadores (Sklearn, MLP, XGBoost) sobre embeddings salv
 import os
 import glob
 import random
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 # === IMPORTS DE TERCEIROS ===
 import torch
@@ -32,6 +34,10 @@ def main(wsg_file_path: str):
     torch.manual_seed(config.RANDOM_SEED)
     np.random.seed(config.RANDOM_SEED)
     random.seed(config.RANDOM_SEED)
+
+    config.TIMESTAMP = datetime.now(ZoneInfo("America/Sao_Paulo")).strftime(
+        "%d-%m-%Y_%H-%M-%S"
+    )
 
     # --- 2. Carregar Dados ---
 

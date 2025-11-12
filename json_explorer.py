@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import os
 import json
-import glob
 from typing import Any
 
 # ---------- CONFIGURAÇÃO ----------
@@ -13,7 +12,7 @@ FOLDERS = [
 ]
 
 # Extensões que serão consideradas “JSON”
-EXTENSIONS = (".json", ".jsonl", ".wsg.json", ".json.wsg")
+EXTENSIONS = (".json",)
 
 # Limite de amostras para cada pasta (evita ler milhares de arquivos acidentalmente)
 MAX_FILES = 500
@@ -21,7 +20,6 @@ MAX_FILES = 500
 
 
 def guess_type(value: Any):
-    """Retorna uma string representando o tipo de um valor Python"""
     if value is None:
         return "None"
     if isinstance(value, bool):
@@ -35,7 +33,6 @@ def guess_type(value: Any):
     if isinstance(value, list):
         if not value:
             return "list[empty]"
-        # tenta inferir tipo dos primeiros elementos
         subtypes = {guess_type(v) for v in value[:5]}
         return f"list[{', '.join(sorted(subtypes))}]"
     if isinstance(value, dict):
@@ -44,7 +41,6 @@ def guess_type(value: Any):
 
 
 def describe_json_structure(obj: Any, indent: int = 0):
-    """Gera uma descrição textual da estrutura de um JSON"""
     spacer = "  " * indent
     if isinstance(obj, dict):
         lines = ["{"]
@@ -52,7 +48,7 @@ def describe_json_structure(obj: Any, indent: int = 0):
             t = guess_type(v)
             if isinstance(v, (dict, list)):
                 lines.append(f"{spacer}  {k}: {t}")
-                if indent < 2:  # limita profundidade de aninhamento
+                if indent < 2:
                     sub = describe_json_structure(v, indent + 1)
                     for line in sub.splitlines():
                         lines.append(f"{spacer}    {line}")
@@ -71,31 +67,37 @@ def describe_json_structure(obj: Any, indent: int = 0):
         return f"{spacer}{guess_type(obj)}"
 
 
+def has_exact_json_extension(filename: str) -> bool:
+    """Retorna True apenas se o arquivo tiver extensão exata '.json' (um único ponto)."""
+    base = os.path.basename(filename)
+    if not base.lower().endswith(".json"):
+        return False
+    name_part, ext = os.path.splitext(base)
+    # só aceita se houver apenas um ponto no nome completo
+    return ext == ".json" and "." not in name_part
+
+
 def find_json_files(folders):
-    """Busca arquivos JSON (com extensões variadas)"""
+    """Busca arquivos JSON exatamente com extensão '.json' (ignora .wsg.json etc)."""
     files = []
     for folder in folders:
         for root, _, filenames in os.walk(folder):
             for name in filenames:
-                if name.endswith(EXTENSIONS):
+                if has_exact_json_extension(name):
                     files.append(os.path.join(root, name))
     return files
 
 
 def analyze_files(files):
-    """Analisa e agrupa as estruturas encontradas"""
     structures = {}
     for fpath in files[:MAX_FILES]:
         try:
             with open(fpath, "r", encoding="utf-8") as f:
                 text = f.read().strip()
-                # tenta vários formatos
-                if text.startswith("{"):
-                    obj = json.loads(text)
-                elif text.startswith("["):
+                if text.startswith("{") or text.startswith("["):
                     obj = json.loads(text)
                 else:
-                    continue  # ignora se não é JSON válido
+                    continue
             struct = describe_json_structure(obj)
             structures.setdefault(struct, []).append(fpath)
         except Exception as e:

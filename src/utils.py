@@ -124,9 +124,9 @@ def save_embeddings_to_wsg(
     # --- SALVAMENTO ---
     dataset_name = wsg_obj.metadata.dataset_name
     filename = (
-        f"{dataset_name}_({config.OUT_EMBEDDING_DIM})_embeddings_epoch_{config.EPOCHS}.wsg.json"
+        f"{dataset_name}_({config.OUT_EMBEDDING_DIM})_embeddings_{config.TIMESTAMP}.wsg.json"
     )
-    output_path = os.path.join(save_path, filename)
+    output_path = os.path.join(save_path, filename, )
 
     # Usa método compatível com Pydantic v2+
     try:
