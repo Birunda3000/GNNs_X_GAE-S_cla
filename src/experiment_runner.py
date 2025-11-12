@@ -48,6 +48,7 @@ class ExperimentRunner:
 
         report = {}
         report["input_wsg_file"] = self.data_source_name
+        report["embdedding_gen_timestamp"] =  self.data_source_name.split("_embeddings_")[-1].split(".wsg.json")[0]
         report["Random_Seed"] = self.config.RANDOM_SEED
         report["Timestamp"] = self.config.TIMESTAMP
         report["Train_Split_Ratio"] = self.config.TRAIN_SPLIT_RATIO

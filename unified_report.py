@@ -70,7 +70,7 @@ if __name__ == "__main__":
 
     for run_folder in run_folders:
         BASE_DIR = os.path.join("data", "output", run_folder)
-        OUTPUT_CSV = os.path.join(BASE_DIR, "runs_summary_report.csv")
+        OUTPUT_CSV = os.path.join(BASE_DIR, f"{run_folder}_summary_report.csv")
 
         reports = collect_run_reports(BASE_DIR)
         write_csv(reports, OUTPUT_CSV)
