@@ -31,7 +31,7 @@ class Config:
     OUT_EMBEDDING_DIM = 3 # Dimensão do embedding final do nó variar [8,32,64,128]
 
     # --- Configurações de Treinamento ---
-    EPOCHS = 10
+    EPOCHS = 500
     LEARNING_RATE = 1e-3
 
     EARLY_STOPPING_PATIENCE = 30#16  # Épocas sem melhora antes de parar

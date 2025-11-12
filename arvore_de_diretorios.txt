@@ -38,61 +38,64 @@ gnn_tcc/
 │   │       └── musae_git_target.csv
 │   ├── output
 │   │   ├── CLASSIFICATION_RUNS
-│   │   │   ├── Musae-Facebook-Embeddings__best_tes_0_4562__model_logisticregression__12-11-2025_14-23-13
+│   │   │   ├── Musae-Facebook-Embeddings__best_tes_0_5338__model_logisticregression__12-11-2025_15-49-07
 │   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Facebook-Embeddings__best_tes_0_4689__model_xgboost__12-11-2025_14-23-17
+│   │   │   ├── Musae-Facebook-Embeddings__best_tes_0_5963__model_xgboost__12-11-2025_15-49-12
 │   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Facebook-Embeddings__best_tes_0_5275__model_xgboost__12-11-2025_14-23-21
+│   │   │   ├── Musae-Facebook-Embeddings__best_tes_0_6154__model_xgboost__12-11-2025_15-49-16
 │   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Facebook-Embeddings__best_tes_0_7020__model_kneighbors__12-11-2025_14-23-26
+│   │   │   ├── Musae-Facebook-Embeddings__best_tes_0_7165__model_kneighbors__12-11-2025_15-49-21
 │   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Github-Embeddings__best_tes_0_6668__model_kneighbors__12-11-2025_14-23-31
+│   │   │   ├── Musae-Github-Embeddings__best_tes_0_7151__model_logisticregression__12-11-2025_15-49-27
 │   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Github-Embeddings__best_tes_0_7486__model_xgboost__12-11-2025_14-23-38
+│   │   │   ├── Musae-Github-Embeddings__best_tes_0_7910__model_xgboost__12-11-2025_15-49-34
 │   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Github-Embeddings__best_tes_0_7999__model_xgboost__12-11-2025_14-23-44
+│   │   │   ├── Musae-Github-Embeddings__best_tes_0_7926__model_xgboost__12-11-2025_15-49-43
 │   │   │   │   └── run_report.json
-│   │   │   └── Musae-Github-Embeddings__best_tes_0_8169__model_xgboost__12-11-2025_14-23-52
-│   │   │       └── run_report.json
+│   │   │   ├── Musae-Github-Embeddings__best_tes_0_8181__model_xgboost__12-11-2025_15-49-51
+│   │   │   │   └── run_report.json
+│   │   │   └── CLASSIFICATION_RUNS_summary_report.csv
 │   │   ├── EMBEDDING_RUNS
-│   │   │   ├── Musae-Facebook__score_0_4402__emb_dim_2__12-11-2025_14-20-42
-│   │   │   │   ├── Musae-Facebook_(2)_embeddings_12-11-2025_14-20-42.wsg.json
-│   │   │   │   ├── Musae-Facebook__GraphSageGAE__12-11-2025_14-20-42.pt
+│   │   │   ├── Musae-Facebook__score_0_5413__emb_dim_2__12-11-2025_15-07-52
+│   │   │   │   ├── Musae-Facebook_(2)_embeddings_12-11-2025_15-07-52.wsg.json
+│   │   │   │   ├── Musae-Facebook__GraphSageGAE__12-11-2025_15-07-52.pt
 │   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Facebook__score_0_4459__emb_dim_3__12-11-2025_14-20-48
-│   │   │   │   ├── Musae-Facebook_(3)_embeddings_12-11-2025_14-20-48.wsg.json
-│   │   │   │   ├── Musae-Facebook__GraphSageGAE__12-11-2025_14-20-48.pt
+│   │   │   ├── Musae-Facebook__score_0_5917__emb_dim_3__12-11-2025_15-07-59
+│   │   │   │   ├── Musae-Facebook_(3)_embeddings_12-11-2025_15-07-59.wsg.json
+│   │   │   │   ├── Musae-Facebook__GraphSageGAE__12-11-2025_15-07-59.pt
 │   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Facebook__score_0_5092__emb_dim_4__12-11-2025_14-20-55
-│   │   │   │   ├── Musae-Facebook_(4)_embeddings_12-11-2025_14-20-55.wsg.json
-│   │   │   │   ├── Musae-Facebook__GraphSageGAE__12-11-2025_14-20-55.pt
+│   │   │   ├── Musae-Facebook__score_0_5958__emb_dim_4__12-11-2025_15-08-07
+│   │   │   │   ├── Musae-Facebook_(4)_embeddings_12-11-2025_15-08-07.wsg.json
+│   │   │   │   ├── Musae-Facebook__GraphSageGAE__12-11-2025_15-08-07.pt
 │   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Facebook__score_0_7088__emb_dim_8__12-11-2025_14-21-02
-│   │   │   │   ├── Musae-Facebook_(8)_embeddings_12-11-2025_14-21-02.wsg.json
-│   │   │   │   ├── Musae-Facebook__GraphSageGAE__12-11-2025_14-21-02.pt
+│   │   │   ├── Musae-Facebook__score_0_7165__emb_dim_8__12-11-2025_15-08-14
+│   │   │   │   ├── Musae-Facebook_(8)_embeddings_12-11-2025_15-08-14.wsg.json
+│   │   │   │   ├── Musae-Facebook__GraphSageGAE__12-11-2025_15-08-14.pt
 │   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Github__score_0_6669__emb_dim_2__12-11-2025_14-21-11
-│   │   │   │   ├── Musae-Github_(2)_embeddings_12-11-2025_14-21-11.wsg.json
-│   │   │   │   ├── Musae-Github__GraphSageGAE__12-11-2025_14-21-11.pt
+│   │   │   ├── Musae-Github__score_0_7210__emb_dim_2__12-11-2025_15-08-24
+│   │   │   │   ├── Musae-Github_(2)_embeddings_12-11-2025_15-08-24.wsg.json
+│   │   │   │   ├── Musae-Github__GraphSageGAE__12-11-2025_15-08-24.pt
 │   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Github__score_0_7615__emb_dim_3__12-11-2025_14-21-20
-│   │   │   │   ├── Musae-Github_(3)_embeddings_12-11-2025_14-21-20.wsg.json
-│   │   │   │   ├── Musae-Github__GraphSageGAE__12-11-2025_14-21-20.pt
+│   │   │   ├── Musae-Github__score_0_7968__emb_dim_4__12-11-2025_15-08-48
+│   │   │   │   ├── Musae-Github_(4)_embeddings_12-11-2025_15-08-48.wsg.json
+│   │   │   │   ├── Musae-Github__GraphSageGAE__12-11-2025_15-08-48.pt
 │   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Github__score_0_8008__emb_dim_4__12-11-2025_14-21-30
-│   │   │   │   ├── Musae-Github_(4)_embeddings_12-11-2025_14-21-30.wsg.json
-│   │   │   │   ├── Musae-Github__GraphSageGAE__12-11-2025_14-21-30.pt
+│   │   │   ├── Musae-Github__score_0_7998__emb_dim_8__12-11-2025_15-09-00
+│   │   │   │   ├── Musae-Github_(8)_embeddings_12-11-2025_15-09-00.wsg.json
+│   │   │   │   ├── Musae-Github__GraphSageGAE__12-11-2025_15-09-00.pt
 │   │   │   │   └── run_report.json
-│   │   │   └── Musae-Github__score_0_8195__emb_dim_8__12-11-2025_14-21-41
-│   │   │       ├── Musae-Github_(8)_embeddings_12-11-2025_14-21-41.wsg.json
-│   │   │       ├── Musae-Github__GraphSageGAE__12-11-2025_14-21-41.pt
-│   │   │       └── run_report.json
-│   │   ├── GRAPH_CLASSIFICATION_RUNS
-│   │   │   ├── Musae-Facebook__best_tes_0_8663__model_gat__12-11-2025_14-24-18
+│   │   │   ├── Musae-Github__score_0_8244__emb_dim_3__12-11-2025_15-08-35
+│   │   │   │   ├── Musae-Github_(3)_embeddings_12-11-2025_15-08-35.wsg.json
+│   │   │   │   ├── Musae-Github__GraphSageGAE__12-11-2025_15-08-35.pt
 │   │   │   │   └── run_report.json
-│   │   │   └── Musae-Github__best_tes_0_8462__model_gat__12-11-2025_14-25-01
-│   │   │       └── run_report.json
-│   │   └── merged_runs_summary.csv
+│   │   │   ├── _tmp__12-11-2025_16-35-37
+│   │   │   └── EMBEDDING_RUNS_summary_report.csv
+│   │   └── GRAPH_CLASSIFICATION_RUNS
+│   │       ├── Musae-Facebook__best_tes_0_8663__model_gat__12-11-2025_14-24-18
+│   │       │   └── run_report.json
+│   │       ├── Musae-Github__best_tes_0_8462__model_gat__12-11-2025_14-25-01
+│   │       │   └── run_report.json
+│   │       └── GRAPH_CLASSIFICATION_RUNS_summary_report.csv
 │   └── processed
 │       └── cora
 │           ├── cora_cites.csv
@@ -134,11 +137,11 @@ gnn_tcc/
 ├── github_embeddings_visualization_final.png
 ├── github_embeddings_visualization_final_2d.png
 ├── json_explorer.py
-├── report.py
 ├── requirements.txt
 ├── run_embedding_generation.py
 ├── run_feature_classification.py
 ├── run_graph_classification.py
+├── unified_report.py
 ├── vgae_mem.py
 ├── vgae_mem2.py
 ├── vizualization_emb_2.py

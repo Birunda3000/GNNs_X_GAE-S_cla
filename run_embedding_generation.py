@@ -185,7 +185,7 @@ if __name__ == "__main__":
         data_loaders.MusaeFacebookLoader(),
         data_loaders.MusaeGithubLoader(),
     ]
-    emb_sizes = [2, 3, 4, 8]
+    emb_sizes = [2, 3, 4, 8, 16, 32, 64, 128]
 
     for dataset in datasets:
         for emb in emb_sizes:
