@@ -28,7 +28,6 @@ def run_graph_classification(WSG_DATASET):
     np.random.seed(config.RANDOM_SEED)
     random.seed(config.RANDOM_SEED)
 
-    
     config.TIMESTAMP = datetime.now(ZoneInfo("America/Sao_Paulo")).strftime(
         "%d-%m-%Y_%H-%M-%S"
     )
@@ -45,8 +44,18 @@ def run_graph_classification(WSG_DATASET):
     output_dim = len(set(y for y in wsg_obj.graph_structure.y if y is not None))
 
     models_to_run = [
-        GCNClassifier(config, input_dim=input_dim, hidden_dim=config.HIDDEN_DIM, output_dim=output_dim),
-        GATClassifier(config, input_dim=input_dim, hidden_dim=config.HIDDEN_DIM, output_dim=output_dim),
+        GCNClassifier(
+            config,
+            input_dim=input_dim,
+            hidden_dim=config.HIDDEN_DIM,
+            output_dim=output_dim,
+        ),
+        GATClassifier(
+            config,
+            input_dim=input_dim,
+            hidden_dim=config.HIDDEN_DIM,
+            output_dim=output_dim,
+        ),
     ]
 
     # --- 4. Executar o Experimento ---
@@ -54,7 +63,7 @@ def run_graph_classification(WSG_DATASET):
         config=config,
         run_folder_name="GRAPH_CLASSIFICATION_RUNS",
         wsg_obj=wsg_obj,
-        data_source_name=os.path.basename(WSG_DATASET.dataset_name),
+        data_source_name=WSG_DATASET.dataset_name,
         data_converter=data_converters.wsg_for_gcn_gat_multi_hot,
     )
 

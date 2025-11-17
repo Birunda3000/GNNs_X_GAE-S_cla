@@ -8,6 +8,7 @@ from tqdm import tqdm
 import time
 from torch_geometric.nn import MessagePassing
 from torch import Tensor
+from torch_geometric.utils import negative_sampling
 
 from src.models.base_model import BaseModel
 from src.early_stopper import EarlyStopper
@@ -38,37 +39,62 @@ class BaseGAECommon(BaseModel, nn.Module):
         self.feature_embedder = nn.EmbeddingBag(
             num_embeddings=num_total_features,
             embedding_dim=embedding_dim,
-            mode="sum",# ***Uso "sum" para agregar embeddings de features, media não implementada***
+            mode="sum",  # ***Uso "sum" para agregar embeddings de features, media não implementada***
         )
 
     # ========== MÉTODOS GENÉRICOS ==========
 
     def verify_train_input_data(self, data: Data):
         assert data.edge_index is not None, "Input data must contain edge_index."
-        assert data.feature_indices is not None, "Input data must contain feature_indices."
-        assert data.feature_offsets is not None, "Input data must contain feature_offsets."
-        assert data.feature_weights is not None, "Input data must contain feature_weights."
-        assert data.num_nodes is not None and data.num_nodes > 0, "data.num_nodes must be valid."
+        assert (
+            data.feature_indices is not None
+        ), "Input data must contain feature_indices."
+        assert (
+            data.feature_offsets is not None
+        ), "Input data must contain feature_offsets."
+        assert (
+            data.feature_weights is not None
+        ), "Input data must contain feature_weights."
+        assert (
+            data.num_nodes is not None and data.num_nodes > 0
+        ), "data.num_nodes must be valid."
 
     def decode(self, z: torch.Tensor, edge_index: torch.Tensor) -> torch.Tensor:
         """Produto escalar entre embeddings de nós conectados."""
         return (z[edge_index[0]] * z[edge_index[1]]).sum(dim=1)
 
-    def reconstruction_loss(self, z: torch.Tensor, pos_edge_index: torch.Tensor) -> torch.Tensor:
-        """Loss de reconstrução com amostragem negativa."""
+    def reconstruction_loss(
+        self, z: torch.Tensor, pos_edge_index: torch.Tensor
+    ) -> torch.Tensor:
         pos_logits = self.decode(z, pos_edge_index)
-        pos_loss = F.binary_cross_entropy_with_logits(pos_logits, z.new_ones(pos_edge_index.size(1)))
+        pos_loss = F.binary_cross_entropy_with_logits(
+            pos_logits, z.new_ones(pos_edge_index.size(1))
+        )
 
-        num_neg_samples = pos_edge_index.size(1)
-        neg_edge_index = torch.randint(0, z.size(0), (2, num_neg_samples), dtype=torch.long, device=z.device)
+        neg_edge_index = negative_sampling(
+            pos_edge_index, num_nodes=z.size(0), num_neg_samples=pos_edge_index.size(1)
+        )
         neg_logits = self.decode(z, neg_edge_index)
-        neg_loss = F.binary_cross_entropy_with_logits(neg_logits, z.new_zeros(num_neg_samples))
-
+        neg_loss = F.binary_cross_entropy_with_logits(
+            neg_logits, z.new_zeros(neg_edge_index.size(1))
+        )
         return pos_loss + neg_loss
 
-    def train_model(self, data: Data, optimizer: optim.Optimizer, epochs: int, early_stopper: EarlyStopper, scheduler) -> Dict[str, Any]:
+    def train_model(
+        self,
+        data: Data,
+        optimizer: optim.Optimizer,
+        epochs: int,
+        early_stopper: EarlyStopper,
+        scheduler,
+    ) -> Dict[str, Any]:
         """Loop de treino genérico, compartilhado entre GAE e VGAE."""
         self.verify_train_input_data(data)
+
+        # Move Data para o mesmo device do modelo
+        device = next(self.parameters()).device
+        data = data.to(device)
+
         edge_index = cast(torch.Tensor, data.edge_index)
         training_history: List[Dict[str, Any]] = []
 
@@ -77,7 +103,9 @@ class BaseGAECommon(BaseModel, nn.Module):
         stop_now: bool = False
         best_epoch: Optional[int] = None
 
-        pbar = tqdm(range(1, epochs + 1), desc=f"Treinando {self.model_name}", leave=False)
+        pbar = tqdm(
+            range(1, epochs + 1), desc=f"Treinando {self.model_name}", leave=False
+        )
 
         start_time = time.process_time()
 
@@ -89,21 +117,24 @@ class BaseGAECommon(BaseModel, nn.Module):
             total_loss.backward()
             optimizer.step()
 
-            # Na última epoch score sera o melhor valor monitorado pelo early stopping
             stop_now, score, best_epoch, report = early_stopper.check(self, epoch=epoch)
-            scheduler.step(score)  # ✅ CORRETO (score vem de val_mask via embeddings_eval)
+            scheduler.step(score)
 
-            training_history.append({
-                "epoch": epoch,
-                "Time_per_epoch": time.process_time() - start_time,
-                "train_total_loss": total_loss.item(),
-                "test_total_loss": None,
-                "learning_rate": scheduler.get_last_lr()[0],
-                "early_stopping_score": score,
-                "early_stopping_report": report
-            })
+            training_history.append(
+                {
+                    "epoch": epoch,
+                    "Time_per_epoch": time.process_time() - start_time,
+                    "train_total_loss": total_loss.item(),
+                    "test_total_loss": None,
+                    "learning_rate": scheduler.get_last_lr()[0],
+                    "early_stopping_score": score,
+                    "early_stopping_report": report,
+                }
+            )
 
-            pbar.set_postfix({"loss": f"{total_loss.item():.4f}", "score": f"{score:.4f}"})
+            pbar.set_postfix(
+                {"loss": f"{total_loss.item():.4f}", "score": f"{score:.4f}"}
+            )
 
             if early_stopper is not None and stop_now:
                 print(f"[EARLY STOPPING] Parando no epoch {epoch}")
@@ -113,7 +144,7 @@ class BaseGAECommon(BaseModel, nn.Module):
         return {
             "total_training_time": time.process_time() - start_time,
             "best_epoch": best_epoch,
-            "best_score": score,
+            "best_score": early_stopper.best_value,
             "training_history": training_history,
         }
 
@@ -123,23 +154,31 @@ class BaseGAECommon(BaseModel, nn.Module):
         raise NotImplementedError("Subclasses must implement the encode method.")
 
     def compute_total_loss(self, z: torch.Tensor, data: Data, edge_index: torch.Tensor):
-        raise NotImplementedError("Subclasses must implement the compute_total_loss method.")
-    
+        raise NotImplementedError(
+            "Subclasses must implement the compute_total_loss method."
+        )
+
     def inference(self, input_data: Data) -> torch.Tensor:
         """
-        Inferência padrão: para modelos determinísticos (GAE),
-        chamamos encode() dentro de no_grad() para obter embeddings.
-        Para modelos variacionais, BaseVGAE sobrescreverá esse método
-        para retornar mu (média) ao invés de uma amostra.
+        Inferência padrão para modelos determinísticos (GAE).
+        Chama encode() dentro de no_grad() e em modo eval() para garantir comportamento determinístico.
         """
-        with torch.no_grad():
-            z = self.encode(input_data)
-            # garante que retornamos um Tensor CPU/GPU consistente e normalizado
-            if isinstance(z, torch.Tensor):
-                return z
-            else:
-                return torch.as_tensor(z)
-    
+        device = next(self.parameters()).device
+        input_data.to(device)
+
+        # ✅ Garante comportamento determinístico (desliga dropout)
+        training_was = self.training
+        self.eval()
+        try:
+            with torch.no_grad():
+                z = self.encode(input_data)
+        finally:
+            # Restaura o modo anterior (train ou eval)
+            if training_was:
+                self.train()
+
+        return z
+
     def evaluate(self, input_data: Data) -> Any:
         """
         Implementação mínima de evaluate para satisfazer a interface da BaseModel.
@@ -151,6 +190,7 @@ class BaseGAECommon(BaseModel, nn.Module):
 
 class BaseGAE(BaseGAECommon):
     """Versão determinística (GAE)."""
+
     def compute_total_loss(self, z, data, edge_index):
         return self.reconstruction_loss(z, edge_index)
 
@@ -171,41 +211,42 @@ class BaseVGAE(BaseGAECommon):
             return torch.tensor(0.0)
         return -0.5 * torch.mean(
             torch.sum(
-                1 + 2 * self.__logstd__ - self.__mu__.pow(2) - self.__logstd__.exp().pow(2),
+                1
+                + 2 * self.__logstd__
+                - self.__mu__.pow(2)
+                - self.__logstd__.exp().pow(2),
                 dim=1,
             )
         )
 
     def compute_total_loss(self, z, data, edge_index):
         assert data.num_nodes is not None, "data.num_nodes must be valid."
-        return self.reconstruction_loss(z, edge_index) + (1.0 / float(data.num_nodes)) * self.kl_loss()
-    
+        return (
+            self.reconstruction_loss(z, edge_index)
+            + (1.0 / float(data.num_nodes)) * self.kl_loss()
+        )
+
     def inference(self, input_data: Data) -> Tensor:
         """
         Inferência para o VGAE: usa a média (mu) em vez de amostragem.
-        Supõe que a subclasse define `conv1` e `conv_mu` (como GCNVGAE ou GraphSageVGAE).
+        Chama o método `encode` da subclasse em modo de avaliação e retorna a média `__mu__`.
         """
-        with torch.no_grad():
-            # Passo 1: gerar embeddings iniciais
-            x = self.feature_embedder(
-                input_data.feature_indices,
-                input_data.feature_offsets,
-                per_sample_weights=input_data.feature_weights,
-            )
-            x = torch.nn.functional.normalize(x, p=2, dim=-1)
+        device = next(self.parameters()).device
+        input_data.to(device)
 
-            # Passo 2: obtém referências seguras e com casting explícito de tipo
-            conv1 = cast(MessagePassing, getattr(self, "conv1", None))
-            conv_mu = cast(MessagePassing, getattr(self, "conv_mu", None))
+        # Garante comportamento determinístico (desliga dropout) e restaura estado
+        training_was = self.training
+        self.eval()
+        try:
+            with torch.no_grad():
+                # Chama o método encode da subclasse (GCNVGAE, etc.)
+                # que irá popular self.__mu__
+                self.encode(input_data)
+        finally:
+            if training_was:
+                self.train()
 
-            if conv1 is None or conv_mu is None:
-                raise AttributeError(
-                    "A subclasse VGAE deve definir camadas `conv1` e `conv_mu` antes de usar inference()."
-                )
+        if self.__mu__ is None:
+            raise RuntimeError("O atributo `__mu__` não foi definido pelo método `encode`.")
 
-            # Passo 3: aplica o encoder determinístico (garantido que o retorno é Tensor)
-            x = torch.nn.functional.relu(conv1(x, input_data.edge_index))
-            mu: Tensor = conv_mu(x, input_data.edge_index)
-
-            # Passo 4: retorna a média latente (Tensor)
-            return mu
+        return self.__mu__

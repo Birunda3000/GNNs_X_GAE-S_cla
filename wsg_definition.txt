@@ -54,6 +54,11 @@ Este objeto define a topologia do grafo e atributos de alto nível dos nós.
     * Se `directed = true`, cada par `(source, target)` representa uma aresta orientada.
     * Se `directed = false`, o par deve ser interpretado como uma aresta **não orientada**; duplicação de arestas em direções opostas deve ser evitada.
 
+  Nota de interoperabilidade:
+  - Algumas bibliotecas (por exemplo, PyTorch Geometric) esperam `edge_index` dirigido mesmo para grafos não direcionados.
+    Nesses casos, é aceitável armazenar cada aresta não dirigida como dois pares dirigidos simétricos `(u, v)` e `(v, u)`.
+    A contagem em `metadata.num_edges` deve refletir exatamente o comprimento de `edge_index[0]`.
+
 * **`y`**:
 
   * **Tipo:** `Array<Integer | null>`

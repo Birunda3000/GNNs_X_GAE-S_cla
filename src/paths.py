@@ -5,6 +5,7 @@ DATA_DIR = os.path.join(BASE_DIR, "data")
 
 OUTPUT_PATH = os.path.join(DATA_DIR, "output")
 
+
 # --- Caminhos para os arquivos do Musae-Github ---
 class musae_github_paths:
     DATASET_NAME = "musae-github"
@@ -18,7 +19,6 @@ class musae_github_paths:
     GITHUB_MUSAE_FEATURES_PATH = os.path.join(
         DATA_DIR, "datasets", "musae-github", "musae_git_features.json"
     )
-
 
 
 # --- Caminhos para os arquivos do Musae-Facebook ---

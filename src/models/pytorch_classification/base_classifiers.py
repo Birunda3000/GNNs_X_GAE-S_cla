@@ -27,22 +27,33 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
         self.model_name = self.__class__.__name__
 
     def verify_train_input_data(self, data: Data):
-        assert data.x is not None, "Os dados de entrada devem conter atributos de nó (data.x)."
-        assert data.y is not None, "Os dados de entrada devem conter rótulos de nó (data.y)."
-        assert data.train_mask is not None, "Os dados de entrada devem conter uma máscara de treino (data.train_mask)."
-        assert data.test_mask is not None, "Os dados de entrada devem conter uma máscara de teste (data.test_mask)."
-
+        assert (
+            data.x is not None
+        ), "Os dados de entrada devem conter atributos de nó (data.x)."
+        assert (
+            data.y is not None
+        ), "Os dados de entrada devem conter rótulos de nó (data.y)."
+        assert (
+            data.train_mask is not None
+        ), "Os dados de entrada devem conter uma máscara de treino (data.train_mask)."
+        assert (
+            data.test_mask is not None
+        ), "Os dados de entrada devem conter uma máscara de teste (data.test_mask)."
 
     @abstractmethod
     def forward(self, *args, **kwargs):
-        raise NotImplementedError("Método forward() deve ser implementado na subclasse.")
+        raise NotImplementedError(
+            "Método forward() deve ser implementado na subclasse."
+        )
 
-    def _train_step(self, optimizer, criterion, use_gnn, x, y, edge_index=None, train_mask=None):
+    def _train_step(
+        self, optimizer, criterion, use_gnn, x, y, edge_index=None, train_mask=None
+    ):
         self.train()
         optimizer.zero_grad()
 
         if use_gnn and edge_index is not None:
-             args = [x, edge_index]
+            args = [x, edge_index]
         else:
             print("[INFO]: Usando classificador sem informações de arestas.")
             args = [x]
@@ -56,17 +67,21 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
         return train_loss.item()
 
     @torch.no_grad()
-    def evaluate(self, x, y, use_gnn, train_or_test_mask, edge_index = None) -> Tuple[float, float, Dict[str, float]]:
+    def evaluate(
+        self, x, y, use_gnn, train_or_test_mask, edge_index=None
+    ) -> Tuple[float, float, Dict[str, Any]]:  # <- ajustar tipagem para Any
         self.eval()
 
         if use_gnn and edge_index is not None:
             args = [x, edge_index]
         elif not use_gnn and edge_index is not None:
-            print("[WARNING]: edge_index fornecido, mas use_gnn está definido como False. Ignorando edge_index.")
+            print(
+                "[WARNING]: edge_index fornecido, mas use_gnn está definido como False. Ignorando edge_index."
+            )
             args = [x]
         else:
             args = [x]
-        
+
         out = self(*args)
         pred = out.argmax(dim=1)
 
@@ -75,19 +90,39 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
 
         acc = float(accuracy_score(y_true.cpu(), y_pred.cpu()))
         f1 = float(f1_score(y_true.cpu(), y_pred.cpu(), average="weighted"))
-        report = cast(Dict[str, float], classification_report(
-            y_true.cpu(), y_pred.cpu(), output_dict=True, zero_division=0
-        ))
+        report = cast(
+            Dict[str, Any],
+            classification_report(
+                y_true.cpu(), y_pred.cpu(), output_dict=True, zero_division=0
+            ),
+        )
 
         return acc, f1, report
-    
 
-
-    def internal_train_model(self, data: Data, use_gnn: bool, epochs: int, optimizer: optim.Optimizer, early_stopper: EarlyStopper, scheduler, criterion=nn.CrossEntropyLoss()):
+    def internal_train_model(
+        self,
+        data: Data,
+        use_gnn: bool,
+        epochs: int,
+        optimizer: optim.Optimizer,
+        early_stopper: EarlyStopper,
+        scheduler,
+        criterion=nn.CrossEntropyLoss(),
+    ):
         self.verify_train_input_data(data)
-        
-        training_history: List[Dict[str, Any]] = []
 
+        # Garante que tensores e máscaras estão no mesmo device do modelo
+        device = next(self.parameters()).device
+        x = data.x.to(device)
+        y = data.y.to(device)
+        edge_index = getattr(data, "edge_index", None)
+        if edge_index is not None:
+            edge_index = edge_index.to(device)
+        train_mask = data.train_mask.to(device)
+        val_mask = data.val_mask.to(device)
+        test_mask = data.test_mask.to(device)
+
+        training_history: List[Dict[str, Any]] = []
         stop_now: bool = False
         best_epoch: Optional[int] = None
 
@@ -98,42 +133,54 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
         )
 
         start_time = time.process_time()
-        
+
         for epoch in pbar:
-            train_loss = self._train_step(optimizer, criterion, use_gnn, x=data.x, y=data.y, edge_index=data.edge_index, train_mask=data.train_mask)
+            train_loss = self._train_step(
+                optimizer,
+                criterion,
+                use_gnn,
+                x=x,
+                y=y,
+                edge_index=edge_index,
+                train_mask=train_mask,
+            )
 
             train_acc, train_f1, _ = self.evaluate(
-                x=data.x, y=data.y, use_gnn=use_gnn, 
-                train_or_test_mask=data.train_mask,
-                edge_index=getattr(data, "edge_index", None)
+                x=x,
+                y=y,
+                use_gnn=use_gnn,
+                train_or_test_mask=train_mask,
+                edge_index=edge_index,
             )
-            
-            # ✅ USAR val_mask para otimização
+
             val_acc, val_f1, _ = self.evaluate(
-                x=data.x, y=data.y, use_gnn=use_gnn, 
-                train_or_test_mask=data.val_mask,  # ✅ CORRETO!
-                edge_index=getattr(data, "edge_index", None)
+                x=x,
+                y=y,
+                use_gnn=use_gnn,
+                train_or_test_mask=val_mask,
+                edge_index=edge_index,
             )
-            
-            # EarlyStopper e scheduler agora monitoram val_f1
+
             stop_now, f1, best_epoch, _ = early_stopper.check(
-                self, epoch=epoch, current_value=val_f1  # ✅ CORRETO!
+                self, epoch=epoch, current_value=val_f1, metric_name="val_f1"
             )
-            scheduler.step(f1)  # ✅ CORRETO!
-            
-            training_history.append({
-                "epoch": epoch,
-                "train_f1": train_f1,
-                "train_accuracy": train_acc,
-                "train_loss": train_loss,
-                "val_f1": val_f1,  # ✅ Adicionar ao histórico
-                "val_accuracy": val_acc,  # ✅ Adicionar ao histórico
-                "Time_per_epoch": time.process_time() - start_time,
-                "learning_rate": scheduler.get_last_lr()[0],
-            })
+            scheduler.step(f1)
+
+            training_history.append(
+                {
+                    "epoch": epoch,
+                    "train_f1": train_f1,
+                    "train_accuracy": train_acc,
+                    "train_loss": train_loss,
+                    "val_f1": val_f1,
+                    "val_accuracy": val_acc,
+                    "Time_per_epoch": time.process_time() - start_time,
+                    "learning_rate": scheduler.get_last_lr()[0],
+                }
+            )
 
             pbar.set_postfix(
-                {"train_loss": f"{train_loss:.4f}", "val_f1": f"{val_f1:.4f}"}  # ✅ Mostrar val_f1
+                {"train_loss": f"{train_loss:.4f}", "val_f1": f"{val_f1:.4f}"}
             )
 
             if early_stopper is not None and stop_now:
@@ -141,22 +188,38 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
                 early_stopper.restore_best_state(self)
                 break
 
-
-        _,_,train_report = self.evaluate(x=data.x, y=data.y, use_gnn=use_gnn, train_or_test_mask=data.train_mask, edge_index=getattr(data, "edge_index", None))
-        _,_,val_report = self.evaluate(x=data.x, y=data.y, use_gnn=use_gnn, train_or_test_mask=data.val_mask, edge_index=getattr(data, "edge_index", None))
-        test_acc, test_f1, test_report = self.evaluate(x=data.x, y=data.y, use_gnn=use_gnn, train_or_test_mask=data.test_mask, edge_index=getattr(data, "edge_index", None))
-
-
+        _, _, train_report = self.evaluate(
+            x=x,
+            y=y,
+            use_gnn=use_gnn,
+            train_or_test_mask=train_mask,
+            edge_index=edge_index,
+        )
+        _, _, val_report = self.evaluate(
+            x=x,
+            y=y,
+            use_gnn=use_gnn,
+            train_or_test_mask=val_mask,
+            edge_index=edge_index,
+        )
+        test_acc, test_f1, test_report = self.evaluate(
+            x=x,
+            y=y,
+            use_gnn=use_gnn,
+            train_or_test_mask=test_mask,
+            edge_index=edge_index,
+        )
 
         return {
             "total_training_time": time.process_time() - start_time,
             "best_epoch": best_epoch,
-            "best_test_f1": test_f1,
-            "best_test_accuracy": test_acc,
-            "test_report": test_report,
+            "test_f1": test_f1,
+            "test_accuracy": test_acc,
             "train_report": train_report,
+            "val_report": val_report,
+            "test_report": test_report,
             "training_history": training_history,
         }
-    
+
     def inference(self, x):
         NotImplementedError("Método inference() não implementado.")

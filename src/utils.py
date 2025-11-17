@@ -11,46 +11,51 @@ from src.data_format_definition import WSG, Metadata, NodeFeaturesEntry
 # 💡 FUNÇÕES AUXILIARES DE MEMÓRIA (corrigidas e seguras)
 # ==========================================================
 
-def _coerce_to_bytes(value: Any) -> Optional[float]:
-    """Converte um valor em bytes, aceitando int, float (MiB) ou string numérica."""
+def _coerce_to_bytes(value: Any, assume_mib: bool = False) -> Optional[float]:
+    """Converte um valor em bytes.
+    
+    Args:
+        value: int (bytes), float (bytes OU MiB se assume_mib=True), ou string
+        assume_mib: se True, trata float como MiB; se False, como bytes
+    """
     if value is None or isinstance(value, bool):
         return None
     if isinstance(value, int):
         return float(value)
     if isinstance(value, float):
-        # Considera float vindo do memory_profiler (MiB)
-        return float(value) * 1024 * 1024
+        if assume_mib:
+            return float(value) * 1024 * 1024
+        else:
+            return float(value)  # já em bytes
     if isinstance(value, str):
         try:
             numeric = float(value)
         except ValueError:
             return None
-        return numeric * 1024 * 1024
+        return numeric * 1024 * 1024 if assume_mib else numeric
     return None
 
 
-def _format_memory_value(value: Any) -> str:
-    """Formata bytes para MB ou GB, retornando 'N/A' em casos inválidos."""
-    bytes_value = _coerce_to_bytes(value)
+def _format_memory_value(value: Any, assume_mib: bool = False) -> str:
+    """Formata bytes para MB ou GB."""
+    bytes_value = _coerce_to_bytes(value, assume_mib=assume_mib)
     if bytes_value is None or bytes_value < 0:
         return "N/A"
-
     gigabytes = bytes_value / (1024 ** 3)
     if gigabytes >= 1:
         return f"{gigabytes:.2f} GB"
-
     megabytes = bytes_value / (1024 ** 2)
     return f"{megabytes:.2f} MB"
 
 
-def format_b(b: Any) -> str:
-    """Alias para compatibilidade retroativa com a versão antiga."""
-    return _format_memory_value(b)
-
-
 def format_bytes(b: Any) -> str:
-    """Mantido para compatibilidade com versões antigas do código."""
-    return _format_memory_value(b)
+    """Formata valores em bytes (int ou float já em bytes)."""
+    return _format_memory_value(b, assume_mib=False)
+
+
+def format_mib(m: Any) -> str:
+    """Formata valores em MiB (ex: do memory_profiler)."""
+    return _format_memory_value(m, assume_mib=True)
 
 
 def fmt(val, precision=6):

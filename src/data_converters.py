@@ -15,7 +15,6 @@ from src.data_format_definition import WSG
 from src.config import Config
 
 
-
 def wsg_to_edge_index(wsg: WSG) -> torch.Tensor:
     """Extracts and validates the edge_index (graph structure) from a WSG object.
 
@@ -26,10 +25,16 @@ def wsg_to_edge_index(wsg: WSG) -> torch.Tensor:
     """
     edge_index_data = wsg.graph_structure.edge_index
     if isinstance(edge_index_data, list):
-        if len(edge_index_data) > 0 and len(edge_index_data[0]) == len(edge_index_data[1]):
+        if len(edge_index_data) > 0 and len(edge_index_data[0]) == len(
+            edge_index_data[1]
+        ):
             # Standard format: [[src...], [dst...]]
             edge_index = torch.tensor(edge_index_data, dtype=torch.long)
-        elif len(edge_index_data) > 0 and isinstance(edge_index_data[0], list) and len(edge_index_data[0]) == 2:
+        elif (
+            len(edge_index_data) > 0
+            and isinstance(edge_index_data[0], list)
+            and len(edge_index_data[0]) == 2
+        ):
             # Format: [[src, dst], [src, dst], ...] -> transpose to (2, E)
             edge_index = torch.tensor(edge_index_data, dtype=torch.long).t()
         else:
@@ -55,7 +60,9 @@ def wsg_to_labels(wsg: WSG) -> torch.Tensor:
     return y
 
 
-def wsg_to_embeddingbag_features(wsg: WSG) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+def wsg_to_embeddingbag_features(
+    wsg: WSG,
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """Converts WSG sparse features into tensors suitable for nn.EmbeddingBag.
 
     Returns:
@@ -94,7 +101,9 @@ def wsg_to_multi_hot_features(wsg: WSG) -> torch.Tensor:
     feature_type = wsg.metadata.feature_type
 
     if feature_type != "sparse_binary":
-        raise ValueError("wsg_to_multi_hot_features only supports 'sparse_binary' features.")
+        raise ValueError(
+            "wsg_to_multi_hot_features only supports 'sparse_binary' features."
+        )
 
     # Naive multi-hot matrix construction
     num_features = wsg.metadata.num_total_features
@@ -123,7 +132,13 @@ def wsg_to_dense_features(wsg: WSG) -> torch.Tensor:
     return x
 
 
-def create_train_test_masks(y: torch.Tensor, labels_list: List, num_nodes: int, train_size: float, config: Config) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+def create_train_test_masks(
+    y: torch.Tensor,
+    labels_list: List,
+    num_nodes: int,
+    train_size: float,
+    config: Config,
+) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """Creates boolean train/test masks for node classification.
 
     Only nodes with non-None labels are considered for stratified splitting.
@@ -139,16 +154,16 @@ def create_train_test_masks(y: torch.Tensor, labels_list: List, num_nodes: int, 
 
     train_idx, temp_idx = train_test_split(
         valid_indices,
-        train_size=Config.TRAIN_SPLIT_RATIO,  # 80%
+        train_size=train_size,  # 80%
         random_state=config.RANDOM_SEED,
-        stratify=y[valid_indices]  # Estratifica usando todos os labels válidos
+        stratify=y[valid_indices],  # Estratifica usando todos os labels válidos
     )
 
     val_idx, test_idx = train_test_split(
         temp_idx,  # Divide apenas os índices temporários
-        train_size=0.5, # 50% de 'temp_idx'
+        train_size=0.5,  # 50% de 'temp_idx'
         random_state=config.RANDOM_SEED,
-        stratify=y[temp_idx]  # Estratifica usando APENAS os labels do conjunto temp
+        stratify=y[temp_idx],  # Estratifica usando APENAS os labels do conjunto temp
     )
 
     train_mask[train_idx] = True
@@ -157,7 +172,9 @@ def create_train_test_masks(y: torch.Tensor, labels_list: List, num_nodes: int, 
 
     return train_mask, val_mask, test_mask
 
+
 # --- Conversion Functions for Different Models ---
+
 
 def wsg_for_vgae(wsg: WSG, config: Config, train_size_ratio: float = 0.8) -> Data:
     """
@@ -185,7 +202,9 @@ def wsg_for_vgae(wsg: WSG, config: Config, train_size_ratio: float = 0.8) -> Dat
         labels, wsg.graph_structure.y, num_nodes, train_size_ratio, config
     )
 
-    feature_indices, feature_weights, feature_offsets = wsg_to_embeddingbag_features(wsg)
+    feature_indices, feature_weights, feature_offsets = wsg_to_embeddingbag_features(
+        wsg
+    )
 
     data = Data(
         edge_index=edge_index,
@@ -194,7 +213,6 @@ def wsg_for_vgae(wsg: WSG, config: Config, train_size_ratio: float = 0.8) -> Dat
         feature_indices=feature_indices,
         feature_weights=feature_weights,
         feature_offsets=feature_offsets,
-
         y=labels,
         train_mask=train_mask,
         val_mask=val_mask,
@@ -205,7 +223,9 @@ def wsg_for_vgae(wsg: WSG, config: Config, train_size_ratio: float = 0.8) -> Dat
     return data
 
 
-def wsg_for_gcn_gat_multi_hot(wsg: WSG, config: Config, train_size_ratio: float = 0.8) -> Data:
+def wsg_for_gcn_gat_multi_hot(
+    wsg: WSG, config: Config, train_size_ratio: float = 0.8
+) -> Data:
     """
     Converts a WSG object into a torch_geometric.data.Data object
     suitable for GCN or GAT models using multi-hot node features.
@@ -248,7 +268,9 @@ def wsg_for_gcn_gat_multi_hot(wsg: WSG, config: Config, train_size_ratio: float 
     return data
 
 
-def wsg_for_dense_classifier(wsg: WSG, config: Config, train_size_ratio: float = 0.8) -> Data:
+def wsg_for_dense_classifier(
+    wsg: WSG, config: Config, train_size_ratio: float = 0.8
+) -> Data:
     """
     Converts a WSG object into a PyTorch Geometric Data object
     suitable for dense classifiers (e.g., MLP).
@@ -288,24 +310,6 @@ def wsg_for_dense_classifier(wsg: WSG, config: Config, train_size_ratio: float =
 
     print("wsg_for_dense_classifier conversion completed successfully.")
     return data
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 # --- Deprecated ---

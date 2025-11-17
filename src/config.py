@@ -20,7 +20,7 @@ class Config:
     )
     # --- Configurações do Ambiente ---
     DEVICE = "cuda" if os.environ.get("NVIDIA_VISIBLE_DEVICES") else "cpu"
-    RANDOM_SEED = int(time.time())
+    RANDOM_SEED = 25369#int(time.time())
 
     TRAIN_SPLIT_RATIO = 0.8  # Proporção de dados para treino vs teste/validação
 

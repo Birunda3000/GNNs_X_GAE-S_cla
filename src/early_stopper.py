@@ -15,7 +15,7 @@ class EarlyStopper:
         patience: int = 10,
         min_delta: float = 1e-4,
         mode: str = "min",
-        metric_name: str = "val_loss",
+        metric_name: str = "metric",
         restore_best: bool = True,
     ):
         assert mode in ["min", "max"], "mode deve ser 'min' ou 'max'."
@@ -79,14 +79,18 @@ class EarlyStopper:
                 f"[EARLY STOPPING] {self.metric_name} não melhorou por {self.patience} épocas. "
                 f"Melhor valor: {self.best_value:.6f} (epoch {self.best_epoch})"
             )
-            return True, self.best_value, self.best_epoch, report
+            # ✅ Retorna True para parar, mas ainda retorna o valor da métrica ATUAL
+            return True, current_value, self.best_epoch, report
 
+        # ✅ Retorno consistente em ambos os casos
         return False, current_value, self.best_epoch, report
 
     def restore_best_state(self, model: torch.nn.Module):
-        """Restaura o melhor estado salvo do modelo."""
+        """Restaura o melhor estado salvo do modelo, se aplicável."""
         if self.restore_best and self.best_state_dict is not None:
+            print(
+                f"Restaurando modelo para o melhor estado (epoch {self.best_epoch}, {self.metric_name}: {self.best_value:.6f})."
+            )
             model.load_state_dict(self.best_state_dict)
-            model.to(next(model.parameters()).device)
-        else:
-            raise ValueError("Nenhum estado salvo para restaurar no modelo.")
+        elif self.restore_best and self.best_state_dict is None:
+            print("[AVISO] restore_best=True, mas nenhum estado foi salvo para restaurar.")

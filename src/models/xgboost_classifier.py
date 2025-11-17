@@ -72,7 +72,7 @@ class XGBoostClassifier(BaseModel):
 
         # Usar as máscaras de treino/teste já definidas no objeto data
         X_train, y_train = X[data.train_mask], y[data.train_mask]
-        X_val, y_val = X[data.val_mask], y[data.val_mask]  # ✅ CORRETO!
+        X_val, y_val = X[data.val_mask], y[data.val_mask]  # ✅
         X_test, y_test = X[data.test_mask], y[data.test_mask]
 
         # Obter o número de classes (considerando todos os labels)
@@ -83,7 +83,7 @@ class XGBoostClassifier(BaseModel):
 
         # Preparar dados no formato DMatrix do XGBoost para maior eficiência
         dtrain = xgb.DMatrix(X_train, label=y_train)
-        dval = xgb.DMatrix(X_val, label=y_val)  # ✅ CORRETO!
+        dval = xgb.DMatrix(X_val, label=y_val)
         dtest = xgb.DMatrix(X_test, label=y_test)
 
         # Medir o tempo de treinamento
@@ -95,15 +95,22 @@ class XGBoostClassifier(BaseModel):
             self.params,
             dtrain,
             self.num_boost_round,
-            evals=[(dtrain, "train"), (dval, "validation")],  # ✅ CORRETO!
+            evals=[(dtrain, "train"), (dval, "validation")],
             evals_result=eval_result,
-            verbose_eval=False,  # Desligado para não poluir o log do runner
+            verbose_eval=False,
         )
         train_time = time.process_time() - start_time
 
-        # ✅ Avaliação final no test_mask (APÓS o treino)
+        # Avaliar em validação E teste
+        y_pred_val_probs = self.model.predict(dval)
+        y_pred_val = np.argmax(y_pred_val_probs, axis=1)
+        val_acc = float(accuracy_score(y_val, y_pred_val))
+        val_f1 = float(f1_score(y_val, y_pred_val, average="weighted"))
+
         y_pred_test_probs = self.model.predict(dtest)
         y_pred_test = np.argmax(y_pred_test_probs, axis=1)
+        test_acc = float(accuracy_score(y_test, y_pred_test))
+        test_f1 = float(f1_score(y_test, y_pred_test, average="weighted"))
 
         # --- Fazer predições de TREINO ---
         y_pred_train_probs = self.model.predict(dtrain)
@@ -134,12 +141,15 @@ class XGBoostClassifier(BaseModel):
             ),
         )
 
+
         return {
             "total_training_time": train_time,
             "best_test_accuracy": test_acc,
             "best_test_f1": test_f1,
+            "val_accuracy": val_acc,
+            "val_f1": val_f1,
             "train_report": train_report,
-            "validation_report": validation_report,
+            "val_report": validation_report,
             "test_report": test_report,
         }
 

@@ -22,7 +22,7 @@ from src.report_manager import ReportManager
 from src.models.embedding_models.autoencoders_models import GraphSageGAE
 from src.early_stopper import EarlyStopper
 from src.embeddings_eval import evaluate_embeddings
-from src.utils import format_b, save_embeddings_to_wsg, salvar_modelo_pytorch_completo
+from src.utils import format_bytes, format_mib  # ✅
 
 
 def run_embedding_generation(WSG_DATASET, emb_dim: int):
@@ -45,7 +45,7 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
 
     process = psutil.Process(os.getpid())
     mem_start = process.memory_info().rss
-    print(f"RAM inicial do processo: {format_b(mem_start)}")
+    print(f"RAM inicial do processo: {format_bytes(mem_start)}")  # ✅
 
     peak_ram_overall_bytes = mem_start
 
@@ -71,7 +71,7 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
     pyg_data = data_converters.wsg_for_vgae(wsg_obj, config)
     mem_after_convert = process.memory_info().rss
     peak_ram_overall_bytes = max(peak_ram_overall_bytes, mem_after_convert)
-    print(f"RAM após conversão: {format_b(mem_after_convert)}")
+    print(f"RAM após conversão: {format_bytes(mem_after_convert)}")  # ✅
 
     # --- Modelo ---
     print("\n[FASE 3] Construindo o modelo GraphSAGE-GAE...")
@@ -103,7 +103,7 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
 
     mem_after_model = process.memory_info().rss
     peak_ram_overall_bytes = max(peak_ram_overall_bytes, mem_after_model)
-    print(f"RAM após instanciar modelo: {format_b(mem_after_model)}")
+    print(f"RAM após instanciar modelo: {format_bytes(mem_after_model)}")  # ✅
 
     # --- Treinamento ---
     print("\n[FASE 4] Treinando modelo...")
@@ -128,10 +128,10 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
     mem_after_train = process.memory_info().rss
     peak_ram_overall_bytes = max(peak_ram_overall_bytes, mem_after_train)
 
-    print(f"Treino concluído. RAM final: {format_b(mem_after_train)}")
+    print(f"Treino concluído. RAM final: {format_bytes(mem_after_train)}")  # ✅
     if torch.cuda.is_available():
         peak_vram_bytes = torch.cuda.max_memory_allocated(device)
-        print(f"VRAM pico: {format_b(peak_vram_bytes)}")
+        print(f"VRAM pico: {format_bytes(peak_vram_bytes)}")  # ✅
     else:
         peak_vram_bytes = 0
 

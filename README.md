@@ -94,7 +94,7 @@ python run_feature_classification.py
 ```
 
 Saída em data/output/CLASSIFICATION_RUNS:
-- <Dataset>-Embeddings__best_tes_<...>__model_<...>__<timestamp>/run_report.json
+- <Dataset>-Embeddings__best_test_<...>__model_<...>__<timestamp>/run_report.json
 
 ### Fluxo 3: Classificação de Grafo Fim-a-Fim (GCN/GAT)
 
@@ -112,7 +112,7 @@ python run_graph_classification.py
 ```
 
 Saída em data/output/GRAPH_CLASSIFICATION_RUNS:
-- <Dataset>-GCN-GAT__best_tes_<...>__model_<...>__<timestamp>/run_report.json
+- <Dataset>-GCN-GAT__best_test_<...>__model_<...>__<timestamp>/run_report.json
 
 ---
 

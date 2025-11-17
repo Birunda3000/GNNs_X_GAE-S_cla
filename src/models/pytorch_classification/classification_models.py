@@ -41,7 +41,7 @@ class MLPClassifier(PyTorchClassifier):
                 patience=self.config.EARLY_STOPPING_PATIENCE,
                 min_delta=self.config.EARLY_STOPPING_MIN_DELTA,
                 mode="max",
-                metric_name="test_f1",
+                metric_name="val_f1",
             )
 
         return self.internal_train_model(
@@ -90,7 +90,7 @@ class GCNClassifier(PyTorchClassifier):
                 patience=self.config.EARLY_STOPPING_PATIENCE,
                 min_delta=self.config.EARLY_STOPPING_MIN_DELTA,
                 mode="max",
-                metric_name="test_f1",
+                metric_name="val_f1",
             )
 
         return self.internal_train_model(
@@ -142,7 +142,7 @@ class GATClassifier(PyTorchClassifier):
                 patience=self.config.EARLY_STOPPING_PATIENCE,
                 min_delta=self.config.EARLY_STOPPING_MIN_DELTA,
                 mode="max",
-                metric_name="test_f1",
+                metric_name="val_f1",
             )
 
         return self.internal_train_model(

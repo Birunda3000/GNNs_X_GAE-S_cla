@@ -56,7 +56,6 @@ class DirectWSGLoader(BaseDatasetLoader):
         return wsg_object
 
 
-
 class CoraLoader(BaseDatasetLoader):
     """Carrega o dataset Cora a partir de arquivos locais."""
 
@@ -98,7 +97,9 @@ class MusaeGithubLoader(BaseDatasetLoader):
         with open(musae_github_paths.GITHUB_MUSAE_FEATURES_PATH, "r") as f:
             features_json: Dict[str, List[int]] = json.load(f)
 
-        print("Arquivos do Github carregados. Iniciando processamento para o formato WSG...")
+        print(
+            "Arquivos do Github carregados. Iniciando processamento para o formato WSG..."
+        )
 
         # --- 1. Preparar dados para os modelos Pydantic ---
 
@@ -180,7 +181,7 @@ class MusaeFacebookLoader(BaseDatasetLoader):
     def load(self) -> WSG:
         """
         Carrega os dados brutos do Musae-Facebook e os transforma para o formato WSG.
-        
+
         O processo consiste em:
         1. Carregar as arestas, alvos (labels) e features dos arquivos CSV e JSON.
         2. Mapear os labels de string (ex: "tvshow") para inteiros (ex: 0).
@@ -197,8 +198,10 @@ class MusaeFacebookLoader(BaseDatasetLoader):
         target_df = pd.read_csv(musae_facebook_paths.FACEBOOK_MUSAE_TARGET_PATH)
         with open(musae_facebook_paths.FACEBOOK_MUSAE_FEATURES_PATH, "r") as f:
             features_json: Dict[str, List[int]] = json.load(f)
-            
-        print("Arquivos do Facebook carregados. Iniciando processamento para o formato WSG...")
+
+        print(
+            "Arquivos do Facebook carregados. Iniciando processamento para o formato WSG..."
+        )
 
         # --- 1. Preparar dados para os modelos Pydantic ---
 
@@ -232,21 +235,15 @@ class MusaeFacebookLoader(BaseDatasetLoader):
             "num_edges": num_edges,
             "num_total_features": num_total_features,
             "processed_at": processed_at,
-            "directed": False, # Conforme README
+            "directed": False,  # Conforme README
         }
 
         # --- DIFERENÇA-CHAVE: Mapeamento de Labels ---
         # As amostras mostram "tvshow", "government", "company", "politician"
-        label_mapping = {
-            "tvshow": 0,
-            "government": 1,
-            "company": 2,
-            "politician": 3
-        }
-        
-        y_labels = target_df["page_type"].map(label_mapping) \
-                                        .where(pd.notnull, None) \
-                                        .tolist()
+        label_mapping = {"tvshow": 0, "government": 1, "company": 2, "politician": 3}
+
+        y_labels = target_df["page_type"].map(label_mapping)
+        y_labels = y_labels.where(y_labels.notnull(), None).tolist()
 
         graph_structure_data = {
             "edge_index": [
@@ -276,7 +273,6 @@ class MusaeFacebookLoader(BaseDatasetLoader):
 
         print("Processamento e validação com Pydantic concluídos com sucesso.")
         return wsg_object
-
 
 
 def save_wsg(wsg_obj: WSG, file_path: str):
