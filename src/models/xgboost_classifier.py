@@ -9,6 +9,7 @@ from torch_geometric.data import Data
 from src.config import Config
 from src.models.base_model import BaseModel
 
+
 class XGBoostClassifier(BaseModel):
     """
     Implementação de um classificador XGBoost que segue a interface BaseModel.
@@ -38,37 +39,51 @@ class XGBoostClassifier(BaseModel):
 
     def verify_train_input_data(self, data: Data):
         """Verifica se os dados de entrada para treino estão corretos."""
-        assert data.x is not None, "Os dados de entrada devem conter atributos de nó (data.x)."
-        assert data.y is not None, "Os dados de entrada devem conter rótulos de nó (data.y)."
-        assert data.train_mask is not None, "Os dados de entrada devem conter uma máscara de treino (data.train_mask)."
-        assert data.test_mask is not None, "Os dados de entrada devem conter uma máscara de teste (data.test_mask)."
+        assert (
+            data.x is not None
+        ), "Os dados de entrada devem conter atributos de nó (data.x)."
+        assert (
+            data.y is not None
+        ), "Os dados de entrada devem conter rótulos de nó (data.y)."
+        assert (
+            data.train_mask is not None
+        ), "Os dados de entrada devem conter uma máscara de treino (data.train.mask)."
+        assert (
+            data.test_mask is not None
+        ), "Os dados de entrada devem conter uma máscara de teste (data.test.mask)."
 
-    def train_model(
-        self, data: Data
-    ) -> Dict[str, Any]:
+    def train_model(self, data: Data) -> Dict[str, Any]:
         """
         Treina o modelo XGBoost e retorna as métricas de acordo com
         o esperado pelo ExperimentRunner.
         """
         print(f"\n--- Avaliando (XGBoost): {self.model_name} ---")
-        self.verify_train_input_data(data) # Verifica os dados de entrada
+        self.verify_train_input_data(data)  # Verifica os dados de entrada
 
-        assert isinstance(data.x, torch.Tensor), f"Esperado torch.Tensor, obtido {type(data.x)}"
-        assert isinstance(data.y, torch.Tensor), f"Esperado torch.Tensor, obtido {type(data.y)}"
-        
+        assert isinstance(
+            data.x, torch.Tensor
+        ), f"Esperado torch.Tensor, obtido {type(data.x)}"
+        assert isinstance(
+            data.y, torch.Tensor
+        ), f"Esperado torch.Tensor, obtido {type(data.y)}"
+
         X = data.x.cpu().numpy()
         y = data.y.cpu().numpy()
 
         # Usar as máscaras de treino/teste já definidas no objeto data
         X_train, y_train = X[data.train_mask], y[data.train_mask]
+        X_val, y_val = X[data.val_mask], y[data.val_mask]  # ✅ CORRETO!
         X_test, y_test = X[data.test_mask], y[data.test_mask]
 
         # Obter o número de classes (considerando todos os labels)
-        num_classes = len(np.unique(y[y != -1])) # Ignora -1 se for usado para nós não rotulados
+        num_classes = len(
+            np.unique(y[y != -1])
+        )  # Ignora -1 se for usado para nós não rotulados
         self.params["num_class"] = num_classes
 
         # Preparar dados no formato DMatrix do XGBoost para maior eficiência
         dtrain = xgb.DMatrix(X_train, label=y_train)
+        dval = xgb.DMatrix(X_val, label=y_val)  # ✅ CORRETO!
         dtest = xgb.DMatrix(X_test, label=y_test)
 
         # Medir o tempo de treinamento
@@ -80,13 +95,13 @@ class XGBoostClassifier(BaseModel):
             self.params,
             dtrain,
             self.num_boost_round,
-            evals=[(dtrain, "train"), (dtest, "eval")],
+            evals=[(dtrain, "train"), (dval, "validation")],  # ✅ CORRETO!
             evals_result=eval_result,
-            verbose_eval=False, # Desligado para não poluir o log do runner
+            verbose_eval=False,  # Desligado para não poluir o log do runner
         )
         train_time = time.process_time() - start_time
 
-        # --- Fazer predições de TESTE ---
+        # ✅ Avaliação final no test_mask (APÓS o treino)
         y_pred_test_probs = self.model.predict(dtest)
         y_pred_test = np.argmax(y_pred_test_probs, axis=1)
 
@@ -99,36 +114,50 @@ class XGBoostClassifier(BaseModel):
         test_f1 = float(f1_score(y_test, y_pred_test, average="weighted"))
 
         # --- Montar Relatório (igual ao SklearnClassifier) ---
-        test_report = cast(
-            Dict[str, Any],
-            classification_report(y_test, y_pred_test, output_dict=True, zero_division=0),
-        )
+
         train_report = cast(
             Dict[str, Any],
-            classification_report(y_train, y_pred_train, output_dict=True, zero_division=0),
+            classification_report(
+                y_train, y_pred_train, output_dict=True, zero_division=0
+            ),
+        )
+        validation_report = cast(
+            Dict[str, Any],
+            classification_report(
+                y_val, np.argmax(self.model.predict(dval), axis=1), output_dict=True, zero_division=0
+            ),
+        )
+        test_report = cast(
+            Dict[str, Any],
+            classification_report(
+                y_test, y_pred_test, output_dict=True, zero_division=0
+            ),
         )
 
         return {
             "total_training_time": train_time,
             "best_test_accuracy": test_acc,
             "best_test_f1": test_f1,
+            "train_report": train_report,
+            "validation_report": validation_report,
             "test_report": test_report,
-            "train_report": train_report
         }
 
     def evaluate(self, x, y: Optional[Any] = None) -> Any:
         """Evaluate the model."""
-        raise NotImplementedError("Use 'train_model' para XGBoostClassifier, pois ele treina e avalia de uma vez.")
-    
+        raise NotImplementedError(
+            "Use 'train_model' para XGBoostClassifier, pois ele treina e avalia de uma vez."
+        )
+
     def inference(self, x):
         """Run inference with the model."""
         if self.model is None:
             raise RuntimeError("Modelo não foi treinado. Chame 'train_model' primeiro.")
-        
+
         # Converte para DMatrix se não for
         if not isinstance(x, xgb.DMatrix):
             x = xgb.DMatrix(x)
-            
+
         y_pred_probs = self.model.predict(x)
         y_pred = np.argmax(y_pred_probs, axis=1)
         return y_pred

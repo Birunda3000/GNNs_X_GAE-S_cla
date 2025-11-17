@@ -123,7 +123,7 @@ def wsg_to_dense_features(wsg: WSG) -> torch.Tensor:
     return x
 
 
-def create_train_test_masks(y: torch.Tensor, labels_list: List, num_nodes: int, train_size: float, config: Config) -> Tuple[torch.Tensor, torch.Tensor]:
+def create_train_test_masks(y: torch.Tensor, labels_list: List, num_nodes: int, train_size: float, config: Config) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """Creates boolean train/test masks for node classification.
 
     Only nodes with non-None labels are considered for stratified splitting.
@@ -134,16 +134,28 @@ def create_train_test_masks(y: torch.Tensor, labels_list: List, num_nodes: int, 
         raise ValueError("No valid (non-None) labels found in the WSG object.")
 
     train_mask = torch.zeros(num_nodes, dtype=torch.bool)
+    val_mask = torch.zeros(num_nodes, dtype=torch.bool)
     test_mask = torch.zeros(num_nodes, dtype=torch.bool)
 
-    train_idx, test_idx = train_test_split(
-        valid_indices, train_size=train_size, random_state=config.RANDOM_SEED, stratify=y[valid_indices]
+    train_idx, temp_idx = train_test_split(
+        valid_indices,
+        train_size=Config.TRAIN_SPLIT_RATIO,  # 80%
+        random_state=config.RANDOM_SEED,
+        stratify=y[valid_indices]  # Estratifica usando todos os labels válidos
+    )
+
+    val_idx, test_idx = train_test_split(
+        temp_idx,  # Divide apenas os índices temporários
+        train_size=0.5, # 50% de 'temp_idx'
+        random_state=config.RANDOM_SEED,
+        stratify=y[temp_idx]  # Estratifica usando APENAS os labels do conjunto temp
     )
 
     train_mask[train_idx] = True
+    val_mask[val_idx] = True
     test_mask[test_idx] = True
 
-    return train_mask, test_mask
+    return train_mask, val_mask, test_mask
 
 # --- Conversion Functions for Different Models ---
 
@@ -169,7 +181,7 @@ def wsg_for_vgae(wsg: WSG, config: Config, train_size_ratio: float = 0.8) -> Dat
 
     # Labels and masks (úteis para avaliação posterior)
     labels = wsg_to_labels(wsg)
-    train_mask, test_mask = create_train_test_masks(
+    train_mask, val_mask, test_mask = create_train_test_masks(
         labels, wsg.graph_structure.y, num_nodes, train_size_ratio, config
     )
 
@@ -185,6 +197,7 @@ def wsg_for_vgae(wsg: WSG, config: Config, train_size_ratio: float = 0.8) -> Dat
 
         y=labels,
         train_mask=train_mask,
+        val_mask=val_mask,
         test_mask=test_mask,
     )
 
@@ -218,7 +231,7 @@ def wsg_for_gcn_gat_multi_hot(wsg: WSG, config: Config, train_size_ratio: float 
     labels = wsg_to_labels(wsg)
     node_features = wsg_to_multi_hot_features(wsg)
 
-    train_mask, test_mask = create_train_test_masks(
+    train_mask, val_mask, test_mask = create_train_test_masks(
         labels, wsg.graph_structure.y, num_nodes, train_size_ratio, config
     )
 
@@ -227,6 +240,7 @@ def wsg_for_gcn_gat_multi_hot(wsg: WSG, config: Config, train_size_ratio: float 
         x=node_features,
         y=labels,
         train_mask=train_mask,
+        val_mask=val_mask,
         test_mask=test_mask,
     )
 
@@ -260,7 +274,7 @@ def wsg_for_dense_classifier(wsg: WSG, config: Config, train_size_ratio: float =
     labels = wsg_to_labels(wsg)
     node_features = wsg_to_dense_features(wsg)
 
-    train_mask, test_mask = create_train_test_masks(
+    train_mask, val_mask, test_mask = create_train_test_masks(
         labels, wsg.graph_structure.y, wsg.metadata.num_nodes, train_size_ratio, config
     )
 
@@ -268,6 +282,7 @@ def wsg_for_dense_classifier(wsg: WSG, config: Config, train_size_ratio: float =
         x=node_features,
         y=labels,
         train_mask=train_mask,
+        val_mask=val_mask,
         test_mask=test_mask,
     )
 

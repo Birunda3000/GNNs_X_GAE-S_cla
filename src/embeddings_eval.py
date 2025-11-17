@@ -26,28 +26,28 @@ def evaluate_embeddings(model, data: Data, device: torch.device) -> Tuple[Dict[s
 
     y = data.y.cpu().numpy() if isinstance(data.y, torch.Tensor) else np.array(data.y)
     train_mask = data.train_mask.cpu().numpy()
-    test_mask = data.test_mask.cpu().numpy()
+    val_mask = data.val_mask.cpu().numpy()  # ✅ USAR val_mask
 
-    X_train, X_test = embeddings[train_mask], embeddings[test_mask]
-    y_train, y_test = y[train_mask], y[test_mask]
+    X_train, X_val = embeddings[train_mask], embeddings[val_mask]
+    y_train, y_val = y[train_mask], y[val_mask]
 
     # --- KNN ---
     knn = KNeighborsClassifier(n_neighbors=5)
     knn.fit(X_train, y_train)
-    test_y_pred_knn = knn.predict(X_test)
-    f1_knn = float(f1_score(y_test, test_y_pred_knn, average="weighted"))
+    val_y_pred_knn = knn.predict(X_val)  # ✅ Predizer em val
+    f1_knn = float(f1_score(y_val, val_y_pred_knn, average="weighted"))
 
     # --- Logistic Regression ---
     logreg = LogisticRegression(max_iter=300)
     logreg.fit(X_train, y_train)
-    test_y_pred_lr = logreg.predict(X_test)
-    f1_lr = float(f1_score(y_test, test_y_pred_lr, average="weighted"))
+    val_y_pred_lr = logreg.predict(X_val)
+    f1_lr = float(f1_score(y_val, val_y_pred_lr, average="weighted"))
 
     # --- Decision Tree ---
     tree = DecisionTreeClassifier(max_depth=5, random_state=42)
     tree.fit(X_train, y_train)
-    test_y_pred_tree = tree.predict(X_test)
-    f1_tree = float(f1_score(y_test, test_y_pred_tree, average="weighted"))
+    val_y_pred_tree = tree.predict(X_val)
+    f1_tree = float(f1_score(y_val, val_y_pred_tree, average="weighted"))
 
     scores = {
         "test_KNN_f1_weighted": f1_knn,
@@ -58,4 +58,3 @@ def evaluate_embeddings(model, data: Data, device: torch.device) -> Tuple[Dict[s
     best_score = max(f1_knn, f1_lr, f1_tree)
 
     return scores, best_score
-    

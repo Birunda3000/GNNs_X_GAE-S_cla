@@ -91,7 +91,7 @@ class BaseGAECommon(BaseModel, nn.Module):
 
             # Na última epoch score sera o melhor valor monitorado pelo early stopping
             stop_now, score, best_epoch, report = early_stopper.check(self, epoch=epoch)
-            scheduler.step(score)
+            scheduler.step(score)  # ✅ CORRETO (score vem de val_mask via embeddings_eval)
 
             training_history.append({
                 "epoch": epoch,

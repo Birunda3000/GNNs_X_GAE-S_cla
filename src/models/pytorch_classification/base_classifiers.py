@@ -102,27 +102,38 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
         for epoch in pbar:
             train_loss = self._train_step(optimizer, criterion, use_gnn, x=data.x, y=data.y, edge_index=data.edge_index, train_mask=data.train_mask)
 
-            train_acc, train_f1, _ = self.evaluate(x=data.x, y=data.y, use_gnn=use_gnn, train_or_test_mask=data.train_mask, edge_index=getattr(data, "edge_index", None))
-
-            test_acc, test_f1, _ = self.evaluate(x=data.x, y=data.y, use_gnn=use_gnn, train_or_test_mask=data.test_mask, edge_index=getattr(data, "edge_index", None))
-
-            # Na última epoch f1 sera o melhor valor monitorado pelo early stopping
-            stop_now, f1, best_epoch, _ = early_stopper.check(self, epoch=epoch, current_value=test_f1)
-            scheduler.step(f1)
-
+            train_acc, train_f1, _ = self.evaluate(
+                x=data.x, y=data.y, use_gnn=use_gnn, 
+                train_or_test_mask=data.train_mask,
+                edge_index=getattr(data, "edge_index", None)
+            )
+            
+            # ✅ USAR val_mask para otimização
+            val_acc, val_f1, _ = self.evaluate(
+                x=data.x, y=data.y, use_gnn=use_gnn, 
+                train_or_test_mask=data.val_mask,  # ✅ CORRETO!
+                edge_index=getattr(data, "edge_index", None)
+            )
+            
+            # EarlyStopper e scheduler agora monitoram val_f1
+            stop_now, f1, best_epoch, _ = early_stopper.check(
+                self, epoch=epoch, current_value=val_f1  # ✅ CORRETO!
+            )
+            scheduler.step(f1)  # ✅ CORRETO!
+            
             training_history.append({
                 "epoch": epoch,
-                "Time_per_epoch": time.process_time() - start_time,
-                "train_loss": train_loss,
-                "train_accuracy": train_acc,
                 "train_f1": train_f1,
-                "test_accuracy": test_acc,
-                "test_f1": test_f1,
+                "train_accuracy": train_acc,
+                "train_loss": train_loss,
+                "val_f1": val_f1,  # ✅ Adicionar ao histórico
+                "val_accuracy": val_acc,  # ✅ Adicionar ao histórico
+                "Time_per_epoch": time.process_time() - start_time,
                 "learning_rate": scheduler.get_last_lr()[0],
             })
 
             pbar.set_postfix(
-                {"train_loss": f"{train_loss:.4f}", "test_f1": f"{test_f1:.4f}"}
+                {"train_loss": f"{train_loss:.4f}", "val_f1": f"{val_f1:.4f}"}  # ✅ Mostrar val_f1
             )
 
             if early_stopper is not None and stop_now:
@@ -131,15 +142,17 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
                 break
 
 
-        last_test_acc, last_test_f1, test_report = self.evaluate(x=data.x, y=data.y, use_gnn=use_gnn, train_or_test_mask=data.test_mask, edge_index=getattr(data, "edge_index", None))
         _,_,train_report = self.evaluate(x=data.x, y=data.y, use_gnn=use_gnn, train_or_test_mask=data.train_mask, edge_index=getattr(data, "edge_index", None))
+        _,_,val_report = self.evaluate(x=data.x, y=data.y, use_gnn=use_gnn, train_or_test_mask=data.val_mask, edge_index=getattr(data, "edge_index", None))
+        test_acc, test_f1, test_report = self.evaluate(x=data.x, y=data.y, use_gnn=use_gnn, train_or_test_mask=data.test_mask, edge_index=getattr(data, "edge_index", None))
+
 
 
         return {
             "total_training_time": time.process_time() - start_time,
             "best_epoch": best_epoch,
-            "best_test_f1": last_test_f1,
-            "best_test_accuracy": last_test_acc,
+            "best_test_f1": test_f1,
+            "best_test_accuracy": test_acc,
             "test_report": test_report,
             "train_report": train_report,
             "training_history": training_history,
