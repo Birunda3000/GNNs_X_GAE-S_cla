@@ -29,6 +29,9 @@ class SklearnClassifier(BaseModel):
             data.train_mask is not None
         ), "Os dados de entrada devem conter uma máscara de treino (data.train_mask)."
         assert (
+            data.val_mask is not None
+        ), "Os dados de entrada devem conter uma máscara de validação (data.val_mask)."
+        assert (
             data.test_mask is not None
         ), "Os dados de entrada devem conter uma máscara de teste (data.test_mask)."
 

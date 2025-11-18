@@ -9,6 +9,7 @@ from typing import List, Tuple
 import torch
 from torch_geometric.data import Data
 from sklearn.model_selection import train_test_split
+from torch_geometric.utils import coalesce
 
 # Local
 from src.data_format_definition import WSG
@@ -24,40 +25,44 @@ def wsg_to_edge_index(wsg: WSG) -> torch.Tensor:
     If the list is empty or unexpected, returns an empty edge_index tensor.
     """
     edge_index_data = wsg.graph_structure.edge_index
+
     if isinstance(edge_index_data, list):
-        if len(edge_index_data) > 0 and len(edge_index_data[0]) == len(
-            edge_index_data[1]
-        ):
-            # Standard format: [[src...], [dst...]]
+        if len(edge_index_data) > 0 and len(edge_index_data[0]) == len(edge_index_data[1]):
             edge_index = torch.tensor(edge_index_data, dtype=torch.long)
-        elif (
-            len(edge_index_data) > 0
-            and isinstance(edge_index_data[0], list)
-            and len(edge_index_data[0]) == 2
-        ):
-            # Format: [[src, dst], [src, dst], ...] -> transpose to (2, E)
+        elif len(edge_index_data) > 0 and isinstance(edge_index_data[0], list) and len(edge_index_data[0]) == 2:
             edge_index = torch.tensor(edge_index_data, dtype=torch.long).t()
         else:
-            # Empty list or unexpected format -> return empty edge_index
             edge_index = torch.zeros((2, 0), dtype=torch.long)
     else:
         raise TypeError(f"edge_index must be a list, got {type(edge_index_data)}")
 
+    # ⭐ AQUI: garante formato canônico COO
+    edge_index = coalesce(edge_index)
+
     return edge_index
 
 
-def wsg_to_labels(wsg: WSG) -> torch.Tensor:
-    """Extracts node label vector (y) from a WSG object.
 
-    None labels are replaced by -1 as a placeholder for unlabeled nodes.
+def wsg_to_labels(wsg: WSG) -> torch.Tensor:
     """
-    num_nodes = wsg.metadata.num_nodes
-    labels_list = wsg.graph_structure.y
-    y = torch.tensor(
-        [-1 if label is None else int(label) for label in labels_list],
-        dtype=torch.long,
-    )
-    return y
+    Extracts node labels and remaps them to consecutive integers starting at 0
+    (as required by PyTorch CrossEntropyLoss), while keeping unlabeled nodes as -1.
+    """
+    raw = [
+        -1 if label is None else int(label)
+        for label in wsg.graph_structure.y
+    ]
+    y = torch.tensor(raw, dtype=torch.long)
+
+    # Only remap valid labels (>=0)
+    valid = y[y >= 0]
+    unique_labels, remapped = torch.unique(valid, sorted=True, return_inverse=True)
+
+    # Create final label vector
+    y_final = y.clone()
+    y_final[y >= 0] = remapped  # unlabeled nodes stay -1
+
+    return y_final
 
 
 def wsg_to_embeddingbag_features(
@@ -132,7 +137,7 @@ def wsg_to_dense_features(wsg: WSG) -> torch.Tensor:
     return x
 
 
-def create_train_test_masks(
+def create_train_val_test_masks(
     y: torch.Tensor,
     labels_list: List,
     num_nodes: int,
@@ -198,7 +203,7 @@ def wsg_for_vgae(wsg: WSG, config: Config, train_size_ratio: float = 0.8) -> Dat
 
     # Labels and masks (úteis para avaliação posterior)
     labels = wsg_to_labels(wsg)
-    train_mask, val_mask, test_mask = create_train_test_masks(
+    train_mask, val_mask, test_mask = create_train_val_test_masks(
         labels, wsg.graph_structure.y, num_nodes, train_size_ratio, config
     )
 
@@ -251,7 +256,7 @@ def wsg_for_gcn_gat_multi_hot(
     labels = wsg_to_labels(wsg)
     node_features = wsg_to_multi_hot_features(wsg)
 
-    train_mask, val_mask, test_mask = create_train_test_masks(
+    train_mask, val_mask, test_mask = create_train_val_test_masks(
         labels, wsg.graph_structure.y, num_nodes, train_size_ratio, config
     )
 
@@ -296,7 +301,7 @@ def wsg_for_dense_classifier(
     labels = wsg_to_labels(wsg)
     node_features = wsg_to_dense_features(wsg)
 
-    train_mask, val_mask, test_mask = create_train_test_masks(
+    train_mask, val_mask, test_mask = create_train_val_test_masks(
         labels, wsg.graph_structure.y, wsg.metadata.num_nodes, train_size_ratio, config
     )
 

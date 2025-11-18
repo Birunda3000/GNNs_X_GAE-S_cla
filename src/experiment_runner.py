@@ -134,14 +134,9 @@ class ExperimentRunner:
             report["results_summary_per_model"][model.model_name] = {
                 "test_accuracy": model_report["best_test_accuracy"],
                 "test_f1_score_weighted": model_report["best_test_f1"],
-                "val_f1_score_weighted": model_report.get(
-                    "val_f1", model_report["best_test_f1"]
-                ),  # ✅ adiciona val_f1
+                "val_f1_score_weighted": model_report["val_f1"],  
                 "training_time_seconds": model_report["total_training_time"],
             }
-            report["detailed_results_per_model"][
-                f"{model.model_name}_model_report"
-            ] = model_report
 
         mem_end_run = process.memory_info().rss
         report["memory_summary"].update(

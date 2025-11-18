@@ -25,6 +25,8 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
         nn.Module.__init__(self)
         self.input_dim = input_dim
         self.model_name = self.__class__.__name__
+        self.device = torch.device(self.config.DEVICE)
+        self.to(self.device)
 
     def verify_train_input_data(self, data: Data):
         assert (
@@ -36,6 +38,9 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
         assert (
             data.train_mask is not None
         ), "Os dados de entrada devem conter uma máscara de treino (data.train_mask)."
+        assert (
+            data.val_mask is not None
+        ), "Os dados de entrada devem conter uma máscara de validação (data.val_mask)."
         assert (
             data.test_mask is not None
         ), "Os dados de entrada devem conter uma máscara de teste (data.test_mask)."
@@ -112,7 +117,7 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
         self.verify_train_input_data(data)
 
         # Garante que tensores e máscaras estão no mesmo device do modelo
-        device = next(self.parameters()).device
+        device = self.device
         x = data.x.to(device)
         y = data.y.to(device)
         edge_index = getattr(data, "edge_index", None)
@@ -162,7 +167,7 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
             )
 
             stop_now, f1, best_epoch, _ = early_stopper.check(
-                self, epoch=epoch, current_value=val_f1, metric_name="val_f1"
+                self, epoch=epoch, current_value=val_f1,
             )
             scheduler.step(f1)
 

@@ -12,17 +12,6 @@ gnn_tcc/
 │   │   │   ├── cora.cites
 │   │   │   ├── cora.content
 │   │   │   └── cora_visualization.html
-│   │   ├── gemsec_facebook_dataset
-│   │   │   └── facebook_clean_data
-│   │   │       ├── artist_edges.csv
-│   │   │       ├── athletes_edges.csv
-│   │   │       ├── company_edges.csv
-│   │   │       ├── dataset_descriptions.txt
-│   │   │       ├── government_edges.csv
-│   │   │       ├── new_sites_edges.csv
-│   │   │       ├── politician_edges.csv
-│   │   │       ├── public_figure_edges.csv
-│   │   │       └── tvshow_edges.csv
 │   │   ├── musae-facebook
 │   │   │   ├── README.txt
 │   │   │   ├── citing.txt
@@ -38,101 +27,77 @@ gnn_tcc/
 │   │       └── musae_git_target.csv
 │   ├── output
 │   │   ├── CLASSIFICATION_RUNS
-│   │   │   ├── Musae-Facebook-Embeddings__best_tes_0_8542__model_kneighbors__17-11-2025_13-07-35
+│   │   │   ├── Musae-Facebook-Embeddings__best_f1__0_9219__model_kneighbors__07-11-2025_07-37-13
 │   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Facebook-Embeddings__best_tes_0_8731__model_xgboost__17-11-2025_13-07-48
+│   │   │   ├── Musae-Facebook-Embeddings__best_tes_0_8677__model_randomforest__09-11-2025_20-03-19
 │   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Facebook-Embeddings__best_tes_0_8753__model_randomforest__17-11-2025_13-08-01
+│   │   │   ├── Musae-Facebook-Embeddings__best_tes_0_8697__model_kneighbors__09-11-2025_20-02-36
 │   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Facebook-Embeddings__best_tes_0_8901__model_xgboost__17-11-2025_13-08-18
+│   │   │   ├── Musae-Facebook-Embeddings__best_tes_0_8719__model_kneighbors__09-11-2025_20-06-03
 │   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Github-Embeddings__best_tes_0_7143__model_logisticregression__17-11-2025_13-08-54
+│   │   │   ├── Musae-Github-Embeddings__best_tes_0_8461__model_xgboost__09-11-2025_19-59-05
 │   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Github-Embeddings__best_tes_0_7932__model_xgboost__17-11-2025_13-09-03
-│   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Github-Embeddings__best_tes_0_7935__model_xgboost__17-11-2025_13-09-13
-│   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Github-Embeddings__best_tes_0_8201__model_xgboost__17-11-2025_13-09-23
-│   │   │   │   └── run_report.json
-│   │   │   ├── _tmp__17-11-2025_13-28-59
-│   │   │   ├── _tmp__17-11-2025_13-29-00
-│   │   │   ├── _tmp__17-11-2025_13-29-01
-│   │   │   ├── _tmp__17-11-2025_13-29-02
-│   │   │   ├── _tmp__17-11-2025_13-29-03
-│   │   │   ├── _tmp__17-11-2025_13-29-04
-│   │   │   ├── _tmp__17-11-2025_13-29-05
-│   │   │   ├── _tmp__17-11-2025_13-29-06
-│   │   │   ├── _tmp__17-11-2025_13-29-07
-│   │   │   └── CLASSIFICATION_RUNS_summary_report.csv
+│   │   │   ├── _tmp__09-11-2025_19-47-05
+│   │   │   ├── _tmp__09-11-2025_19-53-41
+│   │   │   └── _tmp__09-11-2025_19-57-35
 │   │   ├── EMBEDDING_RUNS
-│   │   │   ├── Musae-Facebook__score_0_5413__emb_dim_2__12-11-2025_15-07-52
-│   │   │   │   ├── Musae-Facebook_(2)_embeddings_12-11-2025_15-07-52.wsg.json
-│   │   │   │   ├── Musae-Facebook__GraphSageGAE__12-11-2025_15-07-52.pt
+│   │   │   ├── Musae-Facebook__score_0_4643__emb_dim_2__10-11-2025_09-32-58
+│   │   │   │   ├── Musae-Facebook_(2)_embeddings_epoch_500.wsg.json
+│   │   │   │   ├── Musae-Facebook_(2)_embeddings_epoch_500_scatter.png
+│   │   │   │   ├── Musae-Facebook__GraphSageGAE__10-11-2025_09-32-58.pt
 │   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Facebook__score_0_5917__emb_dim_3__12-11-2025_15-07-59
-│   │   │   │   ├── Musae-Facebook_(3)_embeddings_12-11-2025_15-07-59.wsg.json
-│   │   │   │   ├── Musae-Facebook__GraphSageGAE__12-11-2025_15-07-59.pt
+│   │   │   ├── Musae-Facebook__score_0_5546__emb_dim_2__10-11-2025_09-51-46
+│   │   │   │   ├── Musae-Facebook_(2)_embeddings_epoch_500.wsg.json
+│   │   │   │   ├── Musae-Facebook_(2)_embeddings_epoch_500_scatter.png
+│   │   │   │   ├── Musae-Facebook__GraphSageVGAE__10-11-2025_09-51-46.pt
 │   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Facebook__score_0_5958__emb_dim_4__12-11-2025_15-08-07
-│   │   │   │   ├── Musae-Facebook_(4)_embeddings_12-11-2025_15-08-07.wsg.json
-│   │   │   │   ├── Musae-Facebook__GraphSageGAE__12-11-2025_15-08-07.pt
+│   │   │   ├── Musae-Facebook__score_0_6693__emb_dim_3__10-11-2025_09-34-26
+│   │   │   │   ├── Musae-Facebook_(3)_embeddings_epoch_500.wsg.json
+│   │   │   │   ├── Musae-Facebook_(3)_embeddings_epoch_500_scatter3d.png
+│   │   │   │   ├── Musae-Facebook_(3)_embeddings_epoch_500_scatter3d_interativo.html
+│   │   │   │   ├── Musae-Facebook__GraphSageGAE__10-11-2025_09-34-26.pt
 │   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Facebook__score_0_6048__emb_dim_2__12-11-2025_16-35-37
-│   │   │   │   ├── Musae-Facebook_(2)_embeddings_12-11-2025_16-35-37.wsg.json
-│   │   │   │   ├── Musae-Facebook__GraphSageGAE__12-11-2025_16-35-37.pt
+│   │   │   ├── Musae-Facebook__score_0_7470__emb_dim_3__10-11-2025_09-43-36
+│   │   │   │   ├── Musae-Facebook_(3)_embeddings_epoch_500.wsg.json
+│   │   │   │   ├── Musae-Facebook_(3)_embeddings_epoch_500_scatter3d_interativo.html
+│   │   │   │   ├── Musae-Facebook__GraphSageVGAE__10-11-2025_09-43-36.pt
 │   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Facebook__score_0_6104__emb_dim_3__12-11-2025_16-37-09
-│   │   │   │   ├── Musae-Facebook_(3)_embeddings_12-11-2025_16-37-09.wsg.json
-│   │   │   │   ├── Musae-Facebook__GraphSageGAE__12-11-2025_16-37-09.pt
+│   │   │   ├── Musae-Facebook__score_0_8756__emb_dim_8__09-11-2025_18-57-52
+│   │   │   │   ├── Musae-Facebook_(8)_embeddings_epoch_500.wsg.json
+│   │   │   │   ├── Musae-Facebook__GraphSageGAE__09-11-2025_18-57-52.pt
 │   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Facebook__score_0_7165__emb_dim_8__12-11-2025_15-08-14
-│   │   │   │   ├── Musae-Facebook_(8)_embeddings_12-11-2025_15-08-14.wsg.json
-│   │   │   │   ├── Musae-Facebook__GraphSageGAE__12-11-2025_15-08-14.pt
+│   │   │   ├── Musae-Github__score_0_8379__emb_dim_8__09-11-2025_16-16-03
+│   │   │   │   ├── Musae-Github_(8)_embeddings_epoch_500.wsg.json
+│   │   │   │   ├── Musae-Github__GraphSageGAE__09-11-2025_16-16-03.pt
 │   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Facebook__score_0_7442__emb_dim_4__12-11-2025_16-37-53
-│   │   │   │   ├── Musae-Facebook_(4)_embeddings_12-11-2025_16-37-53.wsg.json
-│   │   │   │   ├── Musae-Facebook__GraphSageGAE__12-11-2025_16-37-53.pt
+│   │   │   ├── Musae-Github__score_0_8407__emb_dim_8__09-11-2025_18-07-02
+│   │   │   │   ├── Musae-Github_(8)_embeddings_epoch_500.wsg.json
+│   │   │   │   ├── Musae-Github__GraphSageGAE__09-11-2025_18-07-02.pt
 │   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Facebook__score_0_8661__emb_dim_8__12-11-2025_16-40-00
-│   │   │   │   ├── Musae-Facebook_(8)_embeddings_12-11-2025_16-40-00.wsg.json
-│   │   │   │   ├── Musae-Facebook__GraphSageGAE__12-11-2025_16-40-00.pt
+│   │   │   ├── Musae-Github__score_0_8414__emb_dim_8__09-11-2025_16-09-38
+│   │   │   │   ├── Musae-Github_(8)_embeddings_epoch_500.wsg.json
+│   │   │   │   ├── Musae-Github__GraphSageGAE__09-11-2025_16-09-38.pt
 │   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Facebook__score_0_8847__emb_dim_32__12-11-2025_16-45-43
-│   │   │   │   ├── Musae-Facebook_(32)_embeddings_12-11-2025_16-45-43.wsg.json
-│   │   │   │   ├── Musae-Facebook__GraphSageGAE__12-11-2025_16-45-43.pt
+│   │   │   ├── Musae-Github__score_0_8415__emb_dim_8__09-11-2025_16-18-50
+│   │   │   │   ├── Musae-Github_(8)_embeddings_epoch_500.wsg.json
+│   │   │   │   ├── Musae-Github__GraphSageGAE__09-11-2025_16-18-50.pt
 │   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Facebook__score_0_8925__emb_dim_16__12-11-2025_16-42-25
-│   │   │   │   ├── Musae-Facebook_(16)_embeddings_12-11-2025_16-42-25.wsg.json
-│   │   │   │   ├── Musae-Facebook__GraphSageGAE__12-11-2025_16-42-25.pt
-│   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Facebook__score_0_8971__emb_dim_64__12-11-2025_16-49-39
-│   │   │   │   ├── Musae-Facebook_(64)_embeddings_12-11-2025_16-49-39.wsg.json
-│   │   │   │   ├── Musae-Facebook__GraphSageGAE__12-11-2025_16-49-39.pt
-│   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Github__score_0_7210__emb_dim_2__12-11-2025_15-08-24
-│   │   │   │   ├── Musae-Github_(2)_embeddings_12-11-2025_15-08-24.wsg.json
-│   │   │   │   ├── Musae-Github__GraphSageGAE__12-11-2025_15-08-24.pt
-│   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Github__score_0_7968__emb_dim_4__12-11-2025_15-08-48
-│   │   │   │   ├── Musae-Github_(4)_embeddings_12-11-2025_15-08-48.wsg.json
-│   │   │   │   ├── Musae-Github__GraphSageGAE__12-11-2025_15-08-48.pt
-│   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Github__score_0_7998__emb_dim_8__12-11-2025_15-09-00
-│   │   │   │   ├── Musae-Github_(8)_embeddings_12-11-2025_15-09-00.wsg.json
-│   │   │   │   ├── Musae-Github__GraphSageGAE__12-11-2025_15-09-00.pt
-│   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Github__score_0_8244__emb_dim_3__12-11-2025_15-08-35
-│   │   │   │   ├── Musae-Github_(3)_embeddings_12-11-2025_15-08-35.wsg.json
-│   │   │   │   ├── Musae-Github__GraphSageGAE__12-11-2025_15-08-35.pt
-│   │   │   │   └── run_report.json
-│   │   │   ├── _tmp__12-11-2025_17-13-55
-│   │   │   └── EMBEDDING_RUNS_summary_report.csv
+│   │   │   └── Musae-Github__score_0_8521__emb_dim_8__09-11-2025_16-11-50
+│   │   │       ├── Musae-Github_(8)_embeddings_epoch_500.wsg.json
+│   │   │       ├── Musae-Github__GraphSageGAE__09-11-2025_16-11-50.pt
+│   │   │       └── run_report.json
 │   │   └── GRAPH_CLASSIFICATION_RUNS
-│   │       ├── Musae-Facebook__best_tes_0_8663__model_gat__12-11-2025_14-24-18
+│   │       ├── Musae-Facebook__best_f1__0_6820__model_gat__07-11-2025_08-01-01
 │   │       │   └── run_report.json
-│   │       ├── Musae-Github__best_tes_0_8462__model_gat__12-11-2025_14-25-01
+│   │       ├── Musae-Facebook__best_f1__0_8642__model_gat__07-11-2025_07-35-13
 │   │       │   └── run_report.json
-│   │       └── GRAPH_CLASSIFICATION_RUNS_summary_report.csv
+│   │       ├── Musae-Facebook__best_tes_0_8044__model_gat__09-11-2025_18-56-17
+│   │       │   └── run_report.json
+│   │       ├── _tmp__09-11-2025_18-32-16
+│   │       ├── _tmp__09-11-2025_18-36-04
+│   │       ├── _tmp__09-11-2025_18-36-57
+│   │       ├── _tmp__09-11-2025_18-37-33
+│   │       └── _tmp__09-11-2025_19-24-34
 │   └── processed
 │       └── cora
 │           ├── cora_cites.csv
