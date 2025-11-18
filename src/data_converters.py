@@ -207,9 +207,7 @@ def wsg_for_vgae(wsg: WSG, config: Config, train_size_ratio: float = 0.8) -> Dat
         labels, wsg.graph_structure.y, num_nodes, train_size_ratio, config
     )
 
-    feature_indices, feature_weights, feature_offsets = wsg_to_embeddingbag_features(
-        wsg
-    )
+    feature_indices, feature_weights, feature_offsets = wsg_to_embeddingbag_features(wsg)
 
     data = Data(
         edge_index=edge_index,
@@ -225,6 +223,7 @@ def wsg_for_vgae(wsg: WSG, config: Config, train_size_ratio: float = 0.8) -> Dat
     )
 
     print("wsg_for_vgae conversion completed successfully.")
+
     return data
 
 

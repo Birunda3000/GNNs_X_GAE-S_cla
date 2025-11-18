@@ -289,3 +289,4 @@ def save_wsg(wsg_obj: WSG, file_path: str):
         json.dump(wsg_obj.model_dump(), f, indent=4)
 
     print(f"Objeto WSG salvo com sucesso em '{file_path}'.")
+
