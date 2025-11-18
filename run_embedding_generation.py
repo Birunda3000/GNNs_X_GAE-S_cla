@@ -19,10 +19,10 @@ import src.data_converters as data_converters
 import src.data_loaders as data_loaders
 from src.directory_manager import DirectoryManager
 from src.report_manager import ReportManager
-from src.models.embedding_models.autoencoders_models import GraphSageGAE
+from src.models.embedding_models.autoencoders_models import GraphSageGAE, GraphSageGAE, GCNGAE, GCNVGAE
 from src.early_stopper import EarlyStopper
 from src.embeddings_eval import evaluate_embeddings
-from src.utils import format_bytes, format_mib  # ✅
+from src.utils import format_bytes, salvar_modelo_pytorch_completo, save_embeddings_to_wsg
 
 
 def run_embedding_generation(WSG_DATASET, emb_dim: int):
@@ -75,7 +75,7 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
 
     # --- Modelo ---
     print("\n[FASE 3] Construindo o modelo GraphSAGE-GAE...")
-    model = GraphSageGAE(
+    model = GCNGAE(
         config=config,
         num_total_features=pyg_data.num_total_features,
         embedding_dim=config.EMBEDDING_DIM,
@@ -185,7 +185,7 @@ if __name__ == "__main__":
         data_loaders.MusaeFacebookLoader(),
         data_loaders.MusaeGithubLoader(),
     ]
-    emb_sizes = [2, 3, 4, 8, 16, 32, 64, 128]
+    emb_sizes = [2, 3, 8, 16, 32, 64, 128]
 
     for dataset in datasets:
         for emb in emb_sizes:
