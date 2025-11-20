@@ -34,3 +34,20 @@ class musae_facebook_paths:
     FACEBOOK_MUSAE_FEATURES_PATH = os.path.join(
         DATA_DIR, "datasets", "musae-facebook", "musae_facebook_features.json"
     )
+
+# --- Caminhos para os arquivos do Flickr ---
+class flickr_paths:
+    DATASET_NAME = "flickr"
+
+    FLICKR_ADJ_PATH = os.path.join(
+        DATA_DIR, "datasets", "Flickr","raw", "adj_full.npz"
+    )
+    FLICKR_FEATS_PATH = os.path.join(
+        DATA_DIR, "datasets", "Flickr", "raw", "feats.npy"
+    )
+    FLICKR_CLASS_MAP_PATH = os.path.join(
+        DATA_DIR, "datasets", "Flickr", "raw", "class_map.json"
+    )
+    FLICKR_ROLE_MAP_PATH = os.path.join(
+        DATA_DIR, "datasets", "Flickr", "raw", "role_map.json"
+    )

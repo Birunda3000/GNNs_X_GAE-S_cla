@@ -8,10 +8,12 @@ from typing import Any, Dict, List
 
 # Third-party
 import pandas as pd
+import numpy as np
+import scipy.sparse as sp
 
 # Local application
 from src.data_format_definition import GraphStructure, Metadata, NodeFeaturesEntry, WSG
-from src.paths import musae_facebook_paths, musae_github_paths
+from src.paths import musae_facebook_paths, musae_github_paths, flickr_paths 
 
 
 class BaseDatasetLoader(ABC):
@@ -273,6 +275,124 @@ class MusaeFacebookLoader(BaseDatasetLoader):
 
         print("Processamento e validação com Pydantic concluídos com sucesso.")
         return wsg_object
+
+
+class FlickrLoader(BaseDatasetLoader):
+    """Carrega o dataset Flickr a partir de arquivos locais (formato GraphSAINT)."""
+
+    dataset_name = "Flickr"
+
+    def load(self) -> WSG:
+        """
+        Carrega os dados brutos do Flickr (npz, npy, json) e transforma para WSG.
+        
+        O processo consiste em:
+        1. Carregar a matriz de adjacência esparsa (CSR).
+        2. Carregar a matriz densa de features e convertê-la para representação esparsa.
+        3. Mapear o class_map para uma lista ordenada de targets.
+        """
+        print("Carregando arquivos do Flickr...")
+        
+        # 1. Carregar Estruturas de Dados
+        # adj_full.npz geralmente é uma matriz CSR salva pelo scipy
+        adj_matrix = sp.load_npz(flickr_paths.FLICKR_ADJ_PATH)
+        feats_matrix = np.load(flickr_paths.FLICKR_FEATS_PATH)
+        
+        with open(flickr_paths.FLICKR_CLASS_MAP_PATH, "r") as f:
+            class_map: Dict[str, int] = json.load(f)
+            
+        # O arquivo role.json existe para splits, mas o WSG foca na estrutura e features.
+        # Os splits são gerenciados posteriormente no pipeline de treino.
+
+        # 2. Processamento de Metadados Básicos
+        num_nodes = feats_matrix.shape[0]
+        num_features = feats_matrix.shape[1]
+        # A matriz CSR conta arestas não-zero. Se for não-direcionado, isso conta (u,v) e (v,u).
+        num_edges = adj_matrix.nnz 
+
+        tz_offset = timedelta(hours=-3)
+        tz_info = timezone(tz_offset)
+        processed_at: str = datetime.now(tz_info).isoformat()
+
+        print(f"Metadados detectados: {num_nodes} nós, {num_edges} arestas, {num_features} features.")
+
+        # 3. Construir GraphStructure (Edge Index)
+        # Converter CSR para COOrdinate format para extrair row/col facilmente
+        coo_adj = adj_matrix.tocoo()
+        row_indices = coo_adj.row.tolist()
+        col_indices = coo_adj.col.tolist()
+
+        # Construir lista de Targets (y)
+        # O class_map é um dicionário {"id_str": label_int}. 
+        # Precisamos garantir a ordem 0..N-1
+        y_labels = [None] * num_nodes
+        for node_id_str, label in class_map.items():
+            idx = int(node_id_str)
+            if 0 <= idx < num_nodes:
+                y_labels[idx] = label
+        
+        # Flickr não tem "nomes" de usuários no dataset público, usamos o ID como nome
+        node_names = [str(i) for i in range(num_nodes)]
+
+        graph_structure_data = {
+            "edge_index": [row_indices, col_indices],
+            "y": y_labels,
+            "node_names": node_names
+        }
+
+        # 4. Construir Node Features (Conversão Densa -> Esparsa)
+        # O formato WSG exige {node_id: {indices: [], weights: []}}
+        # Como iterar 89k linhas em Python puro é lento, usamos lógica vetorial onde possível,
+        # mas para montar o dicionário final, iteramos.
+        
+        print("Convertendo features densas para formato esparso WSG (isso pode levar alguns segundos)...")
+        node_features_data = {}
+        
+        # Otimização: Se a matriz for muito densa, isso fica grande. 
+        # Mas no Flickr as features são bag-of-words (esparsas), então safe.
+        for i in range(num_nodes):
+            # Pega a linha i
+            row_data = feats_matrix[i]
+            # Acha onde não é zero
+            non_zero_indices = np.nonzero(row_data)[0]
+            non_zero_weights = row_data[non_zero_indices]
+            
+            node_features_data[str(i)] = {
+                "indices": non_zero_indices.tolist(),
+                "weights": non_zero_weights.tolist() # float array -> list
+            }
+
+        metadata_data = {
+            "dataset_name": "Flickr",
+            "feature_type": "dense_converted_to_sparse", # Original era npy denso
+            "num_nodes": num_nodes,
+            "num_edges": num_edges,
+            "num_total_features": num_features,
+            "processed_at": processed_at,
+            "directed": False, # Flickr geralmente é tratado como não-direcionado
+        }
+
+        # 5. Instanciar e Validar
+        print("Validando schema WSG...")
+        wsg_object = WSG(
+            metadata=Metadata(**metadata_data),
+            graph_structure=GraphStructure(**graph_structure_data),
+            node_features={
+                k: NodeFeaturesEntry(**v) for k, v in node_features_data.items()
+            },
+        )
+
+        print("Flickr processado com sucesso.")
+        return wsg_object
+
+
+
+
+
+
+
+
+
 
 
 def save_wsg(wsg_obj: WSG, file_path: str):

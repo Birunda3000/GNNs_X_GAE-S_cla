@@ -73,15 +73,17 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
     peak_ram_overall_bytes = max(peak_ram_overall_bytes, mem_after_convert)
     print(f"RAM após conversão: {format_bytes(mem_after_convert)}")  # ✅
 
+
     # --- Modelo ---
     print("\n[FASE 3] Construindo o modelo GraphSAGE-GAE...")
-    model = GCNGAE(
+    model = GraphSageGAE(
         config=config,
         num_total_features=pyg_data.num_total_features,
         embedding_dim=config.EMBEDDING_DIM,
         hidden_dim=config.HIDDEN_DIM,
         out_embedding_dim=config.OUT_EMBEDDING_DIM,
     ).to(device)
+
 
     directory_manager = DirectoryManager(timestamp=config.TIMESTAMP, run_folder_name="EMBEDDING_RUNS")
     report_manager = ReportManager(directory_manager)
@@ -182,8 +184,9 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
 if __name__ == "__main__":
     # Lista de datasets e tamanhos de embedding
     datasets = [
-        data_loaders.MusaeFacebookLoader(),
-        data_loaders.MusaeGithubLoader(),
+        #data_loaders.MusaeFacebookLoader(),
+        #data_loaders.MusaeGithubLoader(),
+        data_loaders.FlickrLoader(),
     ]
     emb_sizes = [2, 3, 8, 16, 32, 64, 128]
 
