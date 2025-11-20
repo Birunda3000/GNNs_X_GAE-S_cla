@@ -38,7 +38,7 @@ class Config:
     EARLY_STOPPING_MIN_DELTA = 1e-6  # Melhora mínima para considerar como progresso
 
     SCHEDULER_PATIENCE = 10  # Épocas sem melhora antes de reduzir LR
-    SCHEDULER_FACTOR = 0.7  # Fator de redução do LR
+    SCHEDULER_FACTOR = 0.6  # Fator de redução do LR
     MIN_LR = 1e-8  # LR mínimo permitido
 
     # --- Configurações de Visualização ---
