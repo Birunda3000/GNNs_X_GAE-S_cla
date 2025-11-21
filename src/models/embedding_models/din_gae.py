@@ -8,29 +8,29 @@ from src.models.embedding_models.base_graph_autoenconders_model import BaseGAE, 
 def get_activation_fn(activation):
     """
     Converte ativação (classe ou instância) para função.
-    
+
     Args:
         activation: nn.Module class (nn.ReLU) ou instância (nn.ReLU())
-    
+
     Returns:
         Função de ativação (F.relu, F.elu, etc.)
     """
     # ✅ Suporta tanto classe quanto instância
     if isinstance(activation, type):
         activation = activation()
-    
+
     mapping = {
         nn.ReLU: F.relu,
         nn.ELU: F.elu,
         nn.LeakyReLU: F.leaky_relu,
         nn.Tanh: torch.tanh,
     }
-    
+
     # Busca por tipo da instância
     for cls, fn in mapping.items():
         if isinstance(activation, cls):
             return fn
-    
+
     # Fallback para ReLU
     print(f"[WARNING] Ativação {type(activation)} não reconhecida, usando ReLU")
     return F.relu
@@ -57,7 +57,9 @@ class DynamicGAE(BaseGAE):
         dropout=0.5,
         normalize_embeddings=True,  # ✅ ADICIONADO
     ):
-        super().__init__(config, num_total_features, embedding_dim, hidden_dim, out_embedding_dim)
+        super().__init__(
+            config, num_total_features, embedding_dim, hidden_dim, out_embedding_dim
+        )
 
         assert num_layers >= 2, "num_layers must be >= 2"
         assert 0.0 <= dropout <= 1.0
@@ -79,7 +81,9 @@ class DynamicGAE(BaseGAE):
 
     def encode(self, data):
         x = self.feature_embedder(
-            data.feature_indices, data.feature_offsets, per_sample_weights=data.feature_weights
+            data.feature_indices,
+            data.feature_offsets,
+            per_sample_weights=data.feature_weights,
         )
 
         x = F.dropout(x, p=self.dropout, training=self.training)
@@ -120,7 +124,9 @@ class DynamicVGAE(BaseVGAE):
         dropout=0.5,
         normalize_embeddings=True,
     ):
-        super().__init__(config, num_total_features, embedding_dim, hidden_dim, out_embedding_dim)
+        super().__init__(
+            config, num_total_features, embedding_dim, hidden_dim, out_embedding_dim
+        )
 
         assert num_layers >= 2
         assert 0.0 <= dropout <= 1.0
@@ -142,7 +148,9 @@ class DynamicVGAE(BaseVGAE):
 
     def encode(self, data):
         x = self.feature_embedder(
-            data.feature_indices, data.feature_offsets, per_sample_weights=data.feature_weights
+            data.feature_indices,
+            data.feature_offsets,
+            per_sample_weights=data.feature_weights,
         )
 
         x = F.dropout(x, p=self.dropout, training=self.training)
