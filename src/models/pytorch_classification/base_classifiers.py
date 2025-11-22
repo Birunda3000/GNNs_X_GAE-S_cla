@@ -11,6 +11,7 @@ from src.config import Config
 from typing import List, Dict, Any, Optional, Tuple, cast
 from src.early_stopper import EarlyStopper
 import torch.optim as optim
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 
 class PyTorchClassifier(basemodel.BaseModel, nn.Module):
@@ -103,6 +104,40 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
         )
 
         return acc, f1, report
+
+    def train_model(self, data: Data, epochs: Optional[int]=None, early_stopper: Optional[EarlyStopper]=None, scheduler: Optional[ReduceLROnPlateau] = None, optimizer: Optional[optim.Optimizer] = None, criterion = nn.CrossEntropyLoss()) -> Dict[str, Any]:
+        """
+        Método de treino padrão unificado para todos os classificadores PyTorch.
+        """
+        if optimizer is None:
+            optimizer = optim.Adam(self.parameters(), lr=self.config.LEARNING_RATE)
+
+        if scheduler is None:
+            scheduler = ReduceLROnPlateau(optimizer, mode="max", patience=self.config.SCHEDULER_PATIENCE, factor=self.config.SCHEDULER_FACTOR, min_lr=self.config.MIN_LR)
+        
+        if epochs is None:
+            epochs = self.config.EPOCHS
+        
+        if early_stopper is None:
+            early_stopper = EarlyStopper(
+                patience=self.config.EARLY_STOPPING_PATIENCE,
+                min_delta=self.config.EARLY_STOPPING_MIN_DELTA,
+                mode="max",
+                metric_name="val_f1",
+            )
+
+        # Assume que self.use_gnn é definido na classe filha ou default False
+        use_gnn = getattr(self, "use_gnn", False)
+
+        return self.internal_train_model(
+            data,
+            optimizer=optimizer,
+            epochs=epochs,
+            early_stopper=early_stopper,
+            scheduler=scheduler,
+            use_gnn=use_gnn,
+            criterion=criterion
+        )
 
     def internal_train_model(
         self,
