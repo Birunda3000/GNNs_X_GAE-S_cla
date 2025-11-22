@@ -137,7 +137,7 @@ def run_grid_search(WSG_DATASET: Any, config: Config, model_class: Any):
         training_report_list.append(training_report)
         results_list.append({
             "params": sanitize_params(params),
-            "best_score": training_report["best_score"],
+            "best_score": round(training_report["best_score"], 6)
         })
 
 
