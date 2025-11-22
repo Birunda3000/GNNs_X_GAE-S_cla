@@ -174,7 +174,6 @@ def run_grid_search(WSG_DATASET: Any, config: Config, model_class: Any):
 if __name__ == "__main__":
     config = Config()
 
-    # Exemplo de execução
     dataset = MusaeGithubLoader()
 
     # Rodar para GAE

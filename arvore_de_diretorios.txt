@@ -84,7 +84,18 @@ gnn_tcc/
 │   │   │   │   └── run_report.json
 │   │   │   ├── _tmp__19-11-2025_19-09-16
 │   │   │   └── _tmp__19-11-2025_21-40-14
-│   │   └── GRAPH_CLASSIFICATION_RUNS
+│   │   ├── GRAPH_CLASSIFICATION_RUNS
+│   │   └── GRID_SEARCH_RUNS
+│   │       └── GAEs
+│   │           ├── DynamicGAE
+│   │           │   └── Musae-Github
+│   │           │       ├── Musae-Github__score_0_8342__best_params_{'activation': 'ReLU', 'dropout': 0.2, 'embedding_dim': 128, 'hidden_dim': 128, 'layer_type': 'SAGEConv', 'normalize_embeddings': True, 'num_layers': 2, 'out_embedding_dim': 64}__22-11-2025_17-51-56
+│   │           │       │   └── run_report.json
+│   │           │       └── _tmp__22-11-2025_17-51-03
+│   │           └── DynamicVGAE
+│   │               └── Musae-Github
+│   │                   └── Musae-Github__score_0_8279__best_params_{'activation': 'ReLU', 'dropout': 0.2, 'embedding_dim': 128, 'hidden_dim': 128, 'layer_type': 'SAGEConv', 'normalize_embeddings': True, 'num_layers': 2, 'out_embedding_dim': 64}__22-11-2025_17-53-19
+│   │                       └── run_report.json
 │   └── processed
 │       └── cora
 │           ├── cora_cites.csv
@@ -103,6 +114,7 @@ gnn_tcc/
 ├── src
 │   ├── grid_search
 │   │   ├── __init__.py
+│   │   ├── grid_search_GAE.py
 │   │   └── grid_search_params.py
 │   ├── models
 │   │   ├── embedding_models
@@ -134,7 +146,6 @@ gnn_tcc/
 ├── .gitattributes
 ├── .gitignore
 ├── README.md
-├── grid_search.py
 ├── requirements.txt
 ├── run_embedding_generation.py
 ├── run_feature_classification.py
