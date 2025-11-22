@@ -83,13 +83,8 @@ def run_grid_search(WSG_DATASET: Any, config: Config, model_class: Any):
 
     for i, params in enumerate(param_grid_list, 1):
         print(f"--- Combinação {i}/{total_combinations} ---")
-        print(sanitize_params(params))
-
-        train_report = {
-            "params": sanitize_params(params),
-            "best_score": None,
-            "training_log": [],
-        }
+        print(f"--- Dataset: {WSG_DATASET.dataset_name} ---")
+        print(f"--- Params: {sanitize_params(params)} ---")
 
         model = model_class(
             config=config,
@@ -186,4 +181,12 @@ if __name__ == "__main__":
     run_grid_search(dataset, config, model_class=DynamicGAE)
 
     # Rodar para VGAE
-    # run_grid_search(dataset, config, emb_dim=128, model_class=DynamicVGAE)
+    run_grid_search(dataset, config, model_class=DynamicVGAE)
+
+    dataset = MusaeFacebookLoader()
+
+    # Rodar para GAE
+    run_grid_search(dataset, config, model_class=DynamicGAE)
+
+    # Rodar para VGAE
+    run_grid_search(dataset, config, model_class=DynamicVGAE)
