@@ -24,7 +24,7 @@ import torch.nn as nn
 # Baseados em: Kipf & Welling (GCN), Hamilton et al. (GraphSAGE)
 
 TRAINING_CONFIG: Dict[str, Any] = {
-    "epochs": 500,
+    "epochs": 3,#500,
     "learning_rate": 1e-3,
     "weight_decay": 5e-4,
     "early_stopping_patience": 32,
@@ -54,21 +54,6 @@ GAE_VGAE_GRID: Dict[str, List[Any]] = {
     "normalize_embeddings": [True, False],
 }
 
-'''GAE_VGAE_GRID: Dict[str, List[Any]] = {
-    # Architecture
-    "layer_type": [SAGEConv],
-    "num_layers": [2, 3],
-    # Dimensions
-    "embedding_dim": [128],  # EmbeddingBag projection
-    "hidden_dim": [128],  # GNN hidden layers
-    "out_embedding_dim": [32, 64],  # Final embedding size
-    # Regularization
-    "activation": [nn.ReLU, nn.LeakyReLU],
-    "dropout": [0.2],
-    # Output normalization
-    "normalize_embeddings": [True],
-}'''
-
 # Aliases para clareza
 GAE_GRID = GAE_VGAE_GRID
 VGAE_GRID = GAE_VGAE_GRID
@@ -81,11 +66,11 @@ VGAE_GRID = GAE_VGAE_GRID
 GNN_CLASSIFIER_GRID: Dict[str, List[Any]] = {
     # Architecture
     "layer_type": [SAGEConv, GCNConv],
-    "num_layers": [2, 3],
-    "hidden_dim": [128, 256],
+    "num_layers": [2], #[2, 3],
+    "hidden_dim": [8], #[128, 256],
     # Regularization
-    "activation": [nn.ReLU, nn.LeakyReLU, nn.ELU],
-    "dropout": [0.0, 0.2, 0.5],
+    "activation": [nn.ReLU, nn.ELU],
+    "dropout": [0.5] #[0.0, 0.2, 0.5],
 }
 
 
