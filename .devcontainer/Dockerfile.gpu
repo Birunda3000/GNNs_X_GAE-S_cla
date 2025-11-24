@@ -1,12 +1,11 @@
-# .devcontainer/Dockerfile
+# .devcontainer/Dockerfile.gpu
 
 # 1. ACEITA UM ARGUMENTO PARA A TAG DA IMAGEM
-# Por padrão, usaremos a imagem de GPU completa.
-# nvcr.io/nvidia/pytorch:25.08-py3-igpu
-ARG BASE_IMAGE_TAG="25.08-py3"
+# Atualizado para Janeiro/2025 (CUDA 12.8) para compatibilidade com driver estável
+ARG BASE_IMAGE_TAG="25.01-py3"
 FROM nvcr.io/nvidia/pytorch:${BASE_IMAGE_TAG}
 
-# O resto do arquivo permanece exatamente o mesmo...
+# Instalação de dependências do sistema
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     git \
@@ -17,9 +16,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app/gnn_tcc
 
-COPY requirements.txt .
+COPY .devcontainer/requirements.txt .
 
-# O requirements.txt será copiado da raiz do projeto, conforme definido no 'context' do docker-compose
+# O requirements.txt será instalado aqui. 
+# Nota: A imagem da NVIDIA já vem com PyTorch, então o pip vai focar nas outras libs.
 RUN pip install --no-cache-dir -r requirements.txt
 
 ENV PATH="/usr/local/bin:${PATH}"

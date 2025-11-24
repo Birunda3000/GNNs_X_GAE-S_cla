@@ -1,9 +1,9 @@
 {
     "name": "TCC GNN PyTorch (NVIDIA Optimized)",
 
-    // GPU
-    //"dockerComposeFile": "docker-compose.gpu.yml",
-    "dockerComposeFile": "docker-compose.cpu.yml",
+
+    "dockerComposeFile": "docker-compose.gpu.yml",
+    // "dockerComposeFile": "docker-compose.cpu.yml",
 
     "service": "gnn_tcc_dev",
     "workspaceFolder": "/app/gnn_tcc",
