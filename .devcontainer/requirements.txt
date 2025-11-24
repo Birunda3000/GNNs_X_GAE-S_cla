@@ -21,6 +21,7 @@ pydantic
 scikit-learn
 xgboost
 plotly
+optuna
 
 # Visualização
 pyvis

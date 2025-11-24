@@ -1,4 +1,5 @@
 import torch
+import optuna
 from typing import Optional, Callable, Tuple, Dict
 
 
@@ -17,6 +18,7 @@ class EarlyStopper:
         mode: str = "min",
         metric_name: str = "metric",
         restore_best: bool = True,
+        trial: Optional[optuna.trial.Trial] = None,
     ):
         assert mode in ["min", "max"], "mode deve ser 'min' ou 'max'."
 
@@ -27,13 +29,18 @@ class EarlyStopper:
         self.restore_best = restore_best
         self.custom_eval = custom_eval
 
+        self.trial = trial
+
         self.best_value = float("inf") if mode == "min" else -float("inf")
         self.best_epoch = 0
         self.best_state_dict = None
         self.epochs_no_improve = 0
 
     def check(
-        self, model: torch.nn.Module, epoch: int, current_value: Optional[float] = None
+        self, 
+        model: torch.nn.Module, 
+        epoch: int, 
+        current_value: Optional[float] = None,
     ) -> Tuple[bool, float, int, Optional[Dict[str, float]]]:
         """
         Avalia se deve parar o treinamento com base na métrica atual.
@@ -51,6 +58,17 @@ class EarlyStopper:
             raise ValueError(
                 "current_value não pode ser None se custom_eval não estiver definido."
             )
+
+        # === NOVO: Integração com Optuna Pruning ===
+        if self.trial is not None:
+            # Reporta o valor atual para o Optuna
+            self.trial.report(current_value, epoch)
+
+            # Verifica se deve podar (mas nunca podar na época 0 ou se estivermos melhorando muito rápido)
+            if self.trial.should_prune():
+                print(f"[OPTUNA PRUNING] Podando trial na epoch {epoch} (Valor: {current_value:.4f})")
+                raise optuna.TrialPruned()
+        # ===========================================
 
         # Calcula melhora
         improvement = (

@@ -21,7 +21,7 @@ RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://
 
 # 4. DIRETÓRIO DE TRABALHO E CÓPIA DOS REQUISITOS
 WORKDIR /app/gnn_tcc
-COPY requirements.txt .
+COPY .devcontainer/requirements.txt .
 
 # 5. INSTALAÇÃO DAS OUTRAS BIBLIOTECAS
 RUN pip install --no-cache-dir -r requirements.txt
