@@ -118,7 +118,7 @@ def objective(trial, pyg_data, config, input_dim, output_dim, dataset_name):
         training_report = model.train_model(
             data=pyg_data,
             optimizer=optimizer,
-            epochs=100, # Dê bastante época para o Optuna explorar
+            epochs=
             early_stopper=early_stopper,
             scheduler=scheduler,
             criterion=torch.nn.CrossEntropyLoss()
