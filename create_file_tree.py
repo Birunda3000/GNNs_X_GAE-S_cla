@@ -1,117 +1,101 @@
 # -*- coding: utf-8 -*-
 import os
 from tqdm import tqdm
+import re
 
-def gerar_arvore_diretorios(path_raiz, nome_arquivo_saida, limite_arquivos, ignorar=None):
-    """
-    Gera uma representação em árvore da estrutura de diretórios, com barra de progresso e otimização.
+def natural_sort_key(s):
+    """Ordenação natural: A1 < A2 < A10 < A11"""
+    return [int(text) if text.isdigit() else text.lower() for text in re.split(r'(\d+)', s)]
 
-    Args:
-        path_raiz (str): O caminho do diretório raiz a ser mapeado.
-        nome_arquivo_saida (str): O nome do arquivo .txt que será gerado.
-        limite_arquivos (int): O número máximo de arquivos a serem listados por pasta.
-        ignorar (list): Lista de nomes de pastas ou arquivos a serem ignorados.
-    """
+def gerar_arvore_diretorios(path_raiz, nome_arquivo_saida, limite_itens, ignorar=None):
     if ignorar is None:
         ignorar = []
 
     caminho_completo_saida = os.path.join(path_raiz, nome_arquivo_saida)
     
-    try:
-        # Primeira passagem: contar o número total de diretórios para a barra de progresso
-        total_diretorios = 0
-        for root, dirs, _ in os.walk(path_raiz):
-            # Exclui as pastas da lista 'ignorar' da contagem
-            dirs[:] = [d for d in dirs if d not in ignorar]
-            total_diretorios += 1
+    # Conta quantas pastas existem (para a barra de progresso)
+    total = sum(1 for _ in os.walk(path_raiz))
 
-        with open(caminho_completo_saida, "w", encoding="utf-8") as f, \
-             tqdm(total=total_diretorios, desc="Mapeando pastas", unit="pasta", ncols=100) as pbar:
-            
-            nome_pasta_pai = os.path.basename(os.path.abspath(path_raiz))
-            f.write(f"{nome_pasta_pai}/\n")
-            
-            _percorrer_e_escrever_otimizado(f, path_raiz, "", limite_arquivos, pbar, ignorar)
-            
-        print(f"\nSucesso! A árvore de diretórios foi salva em: {caminho_completo_saida}")
+    with open(caminho_completo_saida, "w", encoding="utf-8") as f, tqdm(
+        total=total, desc="Gerando árvore", unit="pasta", ncols=100
+    ) as pbar:
 
-    except IOError as e:
-        print(f"Erro ao escrever o arquivo: {e}")
+        nome_raiz = os.path.basename(path_raiz.rstrip("/"))
+        f.write(f"{nome_raiz}/\n")
 
-def _percorrer_e_escrever_otimizado(arquivo_saida, diretorio_atual, prefixo, limite_arquivos, pbar, ignorar):
-    """
-    Função auxiliar recursiva otimizada com os.scandir() e atualização da barra de progresso.
-    """
+        _listar(f, path_raiz, "", limite_itens, ignorar, pbar)
+
+    print(f"\nArquivo gerado: {caminho_completo_saida}")
+
+
+def _listar(arquivo_saida, pasta_atual, prefixo, limite, ignorar, pbar):
     pbar.update(1)
-    
+
+    itens = []
     try:
-        pastas = []
-        arquivos = []
-        
-        # Usa os.scandir() para performance
-        for item in os.scandir(diretorio_atual):
+        for item in os.scandir(pasta_atual):
             if item.name in ignorar:
                 continue
-            
-            if item.is_dir():
-                pastas.append(item.name)
-            elif item.is_file():
-                # Otimização: para de listar arquivos após atingir o limite + 1
-                if len(arquivos) <= limite_arquivos:
-                    arquivos.append(item.name)
-        
-        pastas.sort()
-        arquivos.sort()
+            itens.append((item.name, item.is_dir()))
+    except PermissionError:
+        return
 
-        excedeu_limite = len(arquivos) > limite_arquivos
-        arquivos_para_mostrar = arquivos[:limite_arquivos]
-            
-        elementos = pastas + arquivos_para_mostrar
-        if excedeu_limite:
-            elementos.append("...")
+    # Ordenar: pastas primeiro, depois arquivos (ordem natural)
+    pastas = sorted([n for n, is_d in itens if is_d], key=natural_sort_key)
+    arquivos = sorted([n for n, is_d in itens if not is_d], key=natural_sort_key)
 
-        for i, nome_elemento in enumerate(elementos):
-            conector = "├── " if i < len(elementos) - 1 else "└── "
-            arquivo_saida.write(f"{prefixo}{conector}{nome_elemento}\n")
-            
-            caminho_completo = os.path.join(diretorio_atual, nome_elemento)
-            if os.path.isdir(caminho_completo):
-                extensao_prefixo = "│   " if i < len(elementos) - 1 else "    "
-                _percorrer_e_escrever_otimizado(arquivo_saida, caminho_completo, prefixo + extensao_prefixo, limite_arquivos, pbar, ignorar)
+    itens_ordenados = pastas + arquivos
 
-    except (PermissionError, FileNotFoundError):
-        # Em caso de erro, apenas ignora a pasta e continua
-        pass
+    total_itens = len(itens_ordenados)
+    itens_visiveis = itens_ordenados[:limite]
+    itens_ocultos = total_itens - len(itens_visiveis)
 
+    # Adicionar “... (mais X itens)” se houver ocultos
+    if itens_ocultos > 0:
+        itens_visiveis.append(f"... (mais {itens_ocultos} itens)")
+
+    # Processar cada item visual
+    for i, nome in enumerate(itens_visiveis):
+        is_pasta = os.path.isdir(os.path.join(pasta_atual, nome))
+        ultimo = (i == len(itens_visiveis) - 1)
+
+        conector = "└── " if ultimo else "├── "
+        arquivo_saida.write(f"{prefixo}{conector}{nome}\n")
+
+        # Só recursão se for pasta real (ignorar o item "...")
+        if is_pasta:
+            novo_prefixo = prefixo + ("    " if ultimo else "│   ")
+            _listar(
+                arquivo_saida,
+                os.path.join(pasta_atual, nome),
+                novo_prefixo,
+                limite,
+                ignorar,
+                pbar
+            )
+
+
+# -------------------------------
+# CONFIGURAÇÕES
+# -------------------------------
 if __name__ == "__main__":
-    # --- CONFIGURAÇÕES ---
-    LIMITE_DE_ARQUIVOS_POR_PASTA = 20
-    NOME_DO_ARQUIVO_DE_SAIDA = "arvore_de_diretorios.txt"
-    
-    # Lista de pastas e arquivos a ignorar no mapeamento
-    LISTA_IGNORAR = [
-        '.git', 
-        '.vscode', 
-        '__pycache__', 
-        '.ipynb_checkpoints',
-        'env', 
-        'venv',
-        'node_modules',
-        # Adicione o nome do próprio script para não aparecer na árvore
-        os.path.basename(__file__),
-        NOME_DO_ARQUIVO_DE_SAIDA
-    ]
-    # --- FIM DAS CONFIGURAÇÕES ---
+    LIMITE_POR_PASTA = 7
+    ARQUIVO_SAIDA = "arvore_de_diretorios.txt"
 
-    caminho_do_script = os.path.dirname(os.path.abspath(__file__))
-    
-    print(f"Mapeando a estrutura de diretórios a partir de: {caminho_do_script}")
-    print(f"Limite de arquivos por pasta: {LIMITE_DE_ARQUIVOS_POR_PASTA}")
-    print(f"Ignorando: {LISTA_IGNORAR}")
-    
+    IGNORAR = [
+        ".git",
+        ".vscode",
+        "__pycache__",
+        "node_modules",
+        ARQUIVO_SAIDA,
+        os.path.basename(__file__)
+    ]
+
+    caminho = os.path.dirname(os.path.abspath(__file__))
+
     gerar_arvore_diretorios(
-        path_raiz=caminho_do_script,
-        nome_arquivo_saida=NOME_DO_ARQUIVO_DE_SAIDA,
-        limite_arquivos=LIMITE_DE_ARQUIVOS_POR_PASTA,
-        ignorar=LISTA_IGNORAR
+        path_raiz=caminho,
+        nome_arquivo_saida=ARQUIVO_SAIDA,
+        limite_itens=LIMITE_POR_PASTA,
+        ignorar=IGNORAR
     )

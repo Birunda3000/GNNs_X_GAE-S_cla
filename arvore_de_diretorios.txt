@@ -1,12 +1,18 @@
 gnn_tcc/
 ├── .devcontainer
-│   ├── Dockerfile.cpu
-│   ├── Dockerfile.gpu
 │   ├── devcontainer.json
 │   ├── docker-compose.cpu.yml
-│   └── docker-compose.gpu.yml
+│   ├── docker-compose.gpu.yml
+│   ├── Dockerfile.cpu
+│   ├── Dockerfile.gpu
+│   └── requirements.txt
 ├── data
 │   ├── datasets
+│   │   ├── cora
+│   │   │   ├── cora.cites
+│   │   │   ├── cora.content
+│   │   │   ├── cora_visualization.html
+│   │   │   └── README
 │   │   ├── Flickr
 │   │   │   ├── processed
 │   │   │   │   ├── data.pt
@@ -17,24 +23,19 @@ gnn_tcc/
 │   │   │       ├── class_map.json
 │   │   │       ├── feats.npy
 │   │   │       └── role.json
-│   │   ├── cora
-│   │   │   ├── README
-│   │   │   ├── cora.cites
-│   │   │   ├── cora.content
-│   │   │   └── cora_visualization.html
 │   │   ├── musae-facebook
-│   │   │   ├── README.txt
 │   │   │   ├── citing.txt
 │   │   │   ├── musae_facebook_edges.csv
 │   │   │   ├── musae_facebook_features.json
-│   │   │   └── musae_facebook_target.csv
+│   │   │   ├── musae_facebook_target.csv
+│   │   │   └── README.txt
 │   │   └── musae-github
-│   │       ├── README.txt
 │   │       ├── citing.txt
 │   │       ├── json_lengh.py
 │   │       ├── musae_git_edges.csv
 │   │       ├── musae_git_features.json
-│   │       └── musae_git_target.csv
+│   │       ├── musae_git_target.csv
+│   │       └── README.txt
 │   ├── output
 │   │   ├── CLASSIFICATION_RUNS
 │   │   ├── EMBEDDING_RUNS
@@ -66,36 +67,81 @@ gnn_tcc/
 │   │   │   │   ├── Flickr_(2)_embeddings_19-11-2025_19-10-53.wsg.json
 │   │   │   │   ├── Flickr__GraphSageGAE__19-11-2025_19-10-53.pt
 │   │   │   │   └── run_report.json
-│   │   │   ├── Flickr__score_0_3896__emb_dim_3__19-11-2025_19-29-01
-│   │   │   │   ├── Flickr_(3)_embeddings_19-11-2025_19-29-01.wsg.json
-│   │   │   │   ├── Flickr__GraphSageGAE__19-11-2025_19-29-01.pt
-│   │   │   │   └── run_report.json
-│   │   │   ├── Flickr__score_0_3904__emb_dim_8__19-11-2025_19-55-04
-│   │   │   │   ├── Flickr_(8)_embeddings_19-11-2025_19-55-04.wsg.json
-│   │   │   │   ├── Flickr__GraphSageGAE__19-11-2025_19-55-04.pt
-│   │   │   │   └── run_report.json
-│   │   │   ├── Flickr__score_0_3984__emb_dim_32__19-11-2025_21-05-55
-│   │   │   │   ├── Flickr_(32)_embeddings_19-11-2025_21-05-55.wsg.json
-│   │   │   │   ├── Flickr__GraphSageGAE__19-11-2025_21-05-55.pt
-│   │   │   │   └── run_report.json
-│   │   │   ├── Flickr__score_0_3991__emb_dim_16__19-11-2025_20-31-40
-│   │   │   │   ├── Flickr_(16)_embeddings_19-11-2025_20-31-40.wsg.json
-│   │   │   │   ├── Flickr__GraphSageGAE__19-11-2025_20-31-40.pt
-│   │   │   │   └── run_report.json
-│   │   │   ├── _tmp__19-11-2025_19-09-16
-│   │   │   └── _tmp__19-11-2025_21-40-14
+│   │   │   └── ... (mais 4 itens)
 │   │   ├── GRAPH_CLASSIFICATION_RUNS
-│   │   └── GRID_SEARCH_RUNS
-│   │       └── GAEs
-│   │           ├── DynamicGAE
-│   │           │   └── Musae-Github
-│   │           │       ├── Musae-Github__score_0_8342__best_params_{'activation': 'ReLU', 'dropout': 0.2, 'embedding_dim': 128, 'hidden_dim': 128, 'layer_type': 'SAGEConv', 'normalize_embeddings': True, 'num_layers': 2, 'out_embedding_dim': 64}__22-11-2025_17-51-56
-│   │           │       │   └── run_report.json
-│   │           │       └── _tmp__22-11-2025_17-51-03
-│   │           └── DynamicVGAE
-│   │               └── Musae-Github
-│   │                   └── Musae-Github__score_0_8279__best_params_{'activation': 'ReLU', 'dropout': 0.2, 'embedding_dim': 128, 'hidden_dim': 128, 'layer_type': 'SAGEConv', 'normalize_embeddings': True, 'num_layers': 2, 'out_embedding_dim': 64}__22-11-2025_17-53-19
-│   │                       └── run_report.json
+│   │   ├── GRID_SEARCH_RUNS
+│   │   │   ├── GAEs
+│   │   │   │   ├── DynamicGAE
+│   │   │   │   │   └── Musae-Github
+│   │   │   │   │       ├── _tmp__22-11-2025_17-51-03
+│   │   │   │   │       └── Musae-Github__score_0_8342__best_params_{'activation': 'ReLU', 'dropout': 0.2, 'embedding_dim': 128, 'hidden_dim': 128, 'layer_type': 'SAGEConv', 'normalize_embeddings': True, 'num_layers': 2, 'out_embedding_dim': 64}__22-11-2025_17-51-56
+│   │   │   │   │           └── run_report.json
+│   │   │   │   └── DynamicVGAE
+│   │   │   │       └── Musae-Github
+│   │   │   │           └── Musae-Github__score_0_8279__best_params_{'activation': 'ReLU', 'dropout': 0.2, 'embedding_dim': 128, 'hidden_dim': 128, 'layer_type': 'SAGEConv', 'normalize_embeddings': True, 'num_layers': 2, 'out_embedding_dim': 64}__22-11-2025_17-53-19
+│   │   │   │               └── run_report.json
+│   │   │   └── GNNs
+│   │   │       ├── Musae-Facebook
+│   │   │       │   ├── _tmp__23-11-2025_15-45-21
+│   │   │       │   └── _tmp__23-11-2025_21-33-51
+│   │   │       └── Musae-Github
+│   │   │           ├── _tmp__23-11-2025_15-28-53
+│   │   │           ├── _tmp__23-11-2025_15-39-14
+│   │   │           └── _tmp__23-11-2025_15-40-30
+│   │   └── OPTUNA_RUNS
+│   │       ├── GAEs
+│   │       │   └── Musae-Github
+│   │       │       └── DynamicGAE
+│   │       │           ├── GCNConv
+│   │       │           │   └── 27-11-2025_11-52-52
+│   │       │           │       ├── Trial_0
+│   │       │           │       │   └── Musae-Github__score_0_8343__27-11-2025_14-52-54
+│   │       │           │       │       └── run_report.json
+│   │       │           │       ├── Trial_1
+│   │       │           │       │   └── Musae-Github__score_0_8099__27-11-2025_14-53-13
+│   │       │           │       │       └── run_report.json
+│   │       │           │       ├── Trial_2
+│   │       │           │       │   └── Musae-Github__score_0_8384__27-11-2025_14-53-20
+│   │       │           │       │       └── run_report.json
+│   │       │           │       ├── Trial_6
+│   │       │           │       │   └── Musae-Github__score_0_7931__27-11-2025_14-54-03
+│   │       │           │       │       └── run_report.json
+│   │       │           │       ├── Trial_8
+│   │       │           │       │   └── Musae-Github__score_0_8124__27-11-2025_14-54-22
+│   │       │           │       │       └── run_report.json
+│   │       │           │       ├── Trial_9
+│   │       │           │       │   └── Musae-Github__score_0_8302__27-11-2025_14-54-34
+│   │       │           │       │       └── run_report.json
+│   │       │           │       ├── Trial_10
+│   │       │           │       │   └── Musae-Github__score_0_8474__27-11-2025_14-54-38
+│   │       │           │       │       └── run_report.json
+│   │       │           │       └── ... (mais 17 itens)
+│   │       │           └── SAGEConv
+│   │       │               └── 27-11-2025_11-52-52
+│   │       │                   ├── Trial_3
+│   │       │                   │   └── Musae-Github__score_0_6833__27-11-2025_14-53-36
+│   │       │                   │       └── run_report.json
+│   │       │                   ├── Trial_4
+│   │       │                   │   └── Musae-Github__score_0_8113__27-11-2025_14-53-43
+│   │       │                   │       └── run_report.json
+│   │       │                   ├── Trial_5
+│   │       │                   │   └── Musae-Github__score_0_8152__27-11-2025_14-53-49
+│   │       │                   │       └── run_report.json
+│   │       │                   ├── Trial_7
+│   │       │                   │   └── Musae-Github__score_0_8270__27-11-2025_14-54-07
+│   │       │                   │       └── run_report.json
+│   │       │                   ├── Trial_18
+│   │       │                   │   └── Musae-Github__score_0_8427__27-11-2025_14-56-42
+│   │       │                   │       └── run_report.json
+│   │       │                   └── Trial_26
+│   │       │                       └── Musae-Github__score_0_8345__27-11-2025_14-58-44
+│   │       │                           └── run_report.json
+│   │       └── GNN_Classifiers
+│   │           └── Musae-Github
+│   │               └── SAGEConv
+│   │                   └── 27-11-2025_11-54-10
+│   │                       └── Trial_0
+│   │                           └── _tmp__27-11-2025_14-54-13
 │   └── processed
 │       └── cora
 │           ├── cora_cites.csv
@@ -108,14 +154,17 @@ gnn_tcc/
 │   ├── github_embeddings_visualization_final.png
 │   ├── github_embeddings_visualization_final_2d.png
 │   ├── json_explorer.py
-│   ├── unified_report.py
-│   ├── vgae_mem.py
-│   └── vgae_mem2.py
+│   └── ... (mais 3 itens)
 ├── src
 │   ├── grid_search
+│   │   ├── classification_models
 │   │   ├── __init__.py
+│   │   ├── gae_optuna_grid.py
+│   │   ├── gnn_classifiers_optuna.py
+│   │   ├── grid_search_classifiers.py
 │   │   ├── grid_search_GAE.py
-│   │   └── grid_search_params.py
+│   │   ├── grid_search_gnn.py
+│   │   └── ... (mais 1 itens)
 │   ├── models
 │   │   ├── embedding_models
 │   │   │   ├── __init__.py
@@ -125,7 +174,8 @@ gnn_tcc/
 │   │   ├── pytorch_classification
 │   │   │   ├── __init__.py
 │   │   │   ├── base_classifiers.py
-│   │   │   └── classification_models.py
+│   │   │   ├── classification_models.py
+│   │   │   └── dynamic_gnn.py
 │   │   ├── __init__.py
 │   │   ├── base_model.py
 │   │   ├── sklearn_model.py
@@ -135,21 +185,8 @@ gnn_tcc/
 │   ├── data_converters.py
 │   ├── data_format_definition.py
 │   ├── data_loaders.py
-│   ├── directory_manager.py
-│   ├── early_stopper.py
-│   ├── embeddings_eval.py
-│   ├── experiment_runner.py
-│   ├── paths.py
-│   ├── report_manager.py
-│   ├── utils.py
-│   └── visualization.py
+│   └── ... (mais 8 itens)
 ├── .gitattributes
 ├── .gitignore
 ├── README.md
-├── requirements.txt
-├── run_embedding_generation.py
-├── run_feature_classification.py
-├── run_graph_classification.py
-├── vizualization_emb_2.py
-├── vizualization_emb_3.py
-└── wsg_definition.txt
+└── ... (mais 6 itens)

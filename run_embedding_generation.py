@@ -20,6 +20,7 @@ import src.data_loaders as data_loaders
 from src.directory_manager import DirectoryManager
 from src.report_manager import ReportManager
 from src.models.embedding_models.autoencoders_models import GraphSageGAE, GraphSageGAE, GCNGAE, GCNVGAE
+from src.models.embedding_models.base_gr
 from src.early_stopper import EarlyStopper
 from src.embeddings_eval import evaluate_embeddings
 from src.utils import format_bytes, salvar_modelo_pytorch_completo, save_embeddings_to_wsg
@@ -184,9 +185,9 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
 if __name__ == "__main__":
     # Lista de datasets e tamanhos de embedding
     datasets = [
-        #data_loaders.MusaeFacebookLoader(),
+        data_loaders.MusaeFacebookLoader(),
         #data_loaders.MusaeGithubLoader(),
-        data_loaders.FlickrLoader(),
+        #data_loaders.FlickrLoader(),
     ]
     emb_sizes = [2, 3, 8, 16, 32, 64, 128]
 

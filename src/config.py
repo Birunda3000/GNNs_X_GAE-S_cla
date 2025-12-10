@@ -1,48 +1,63 @@
-# src/config.py (versão atualizada)
+# src/config.py (VERSÃO CORRIGIDA E LIMPA)
+
 import os
+import time
 from datetime import datetime
 from zoneinfo import ZoneInfo
-import time
-
-
 
 
 class Config:
     """
-    Classe centralizada para todas as configurações do projeto.
+    Classe centralizada para todas as configurações globais do projeto.
     """
 
     # --- Timestamp da Execução ---
-    # Gera um timestamp único no momento da inicialização para identificar a execução.
-    # Usa o fuso horário de São Paulo para consistência.
     TIMESTAMP = datetime.now(ZoneInfo("America/Sao_Paulo")).strftime(
         "%d-%m-%Y_%H-%M-%S"
     )
-    # --- Configurações do Ambiente ---
+
+    # --- Ambiente ---
     DEVICE = "cuda" if os.environ.get("NVIDIA_VISIBLE_DEVICES") else "cpu"
-    RANDOM_SEED = 25369#int(time.time())
 
-    TRAIN_SPLIT_RATIO = 0.8  # Proporção de dados para treino vs teste/validação
+    # Semente global (para reprodutibilidade)
+    RANDOM_SEED = 25369  # antes: int(time.time())
 
-    # --- Hiperparâmetros do Modelo VGAE ---
-    EMBEDDING_DIM = 128  # Dimensão do embedding das features de entrada
-    HIDDEN_DIM = 256  # Dimensão da camada GCN oculta
+    # --- Splits ---
+    TRAIN_SPLIT_RATIO = 0.8  # geralmente não usado porque Musae tem split próprio
 
-    OUT_EMBEDDING_DIM: int = 3 # Dimensão do embedding final do nó variar [8,32,64,128]
+    # --- Hiperparâmetros gerais para GAE/VGAE/GNN ---
+    EMBEDDING_DIM = 128
+    HIDDEN_DIM = 256
+    OUT_EMBEDDING_DIM = 3  # variar em [8, 32, 64, 128] no Optuna
 
-    # --- Configurações de Treinamento ---
+    # --- Treinamento ---
     EPOCHS = 500
     LEARNING_RATE = 1e-3
+    WEIGHT_DECAY = 5e-4
 
-    EARLY_STOPPING_PATIENCE = 32  # Épocas sem melhora antes de parar
-    EARLY_STOPPING_MIN_DELTA = 1e-6  # Melhora mínima para considerar como progresso
+    EARLY_STOPPING_PATIENCE = 32
+    EARLY_STOPPING_MIN_DELTA = 1e-6
 
-    SCHEDULER_PATIENCE = 10  # Épocas sem melhora antes de reduzir LR
-    SCHEDULER_FACTOR = 0.6  # Fator de redução do LR
-    MIN_LR = 1e-8  # LR mínimo permitido
+    SCHEDULER_PATIENCE = 5
+    SCHEDULER_FACTOR = 0.6
+    MIN_LR = 1e-8
 
-    # --- Configurações de Visualização ---
-    VIS_SAMPLES = 1500  # Número máximo de nós para incluir na visualização
+    # --- Visualização ---
+    VIS_SAMPLES = 1500
 
 
 print(f"Configurações carregadas. Usando dispositivo: {Config.DEVICE}")
+
+
+'''
+TRAINING_CONFIG: Dict[str, Any] = {
+    "epochs": 500,
+    "learning_rate": 1e-3,
+    "weight_decay": 5e-4,
+    "early_stopping_patience": 32,
+    "early_stopping_min_delta": 1e-6,
+    "scheduler_patience": 5,
+    "scheduler_factor": 0.6,
+    "min_lr": 1e-8,
+}
+'''

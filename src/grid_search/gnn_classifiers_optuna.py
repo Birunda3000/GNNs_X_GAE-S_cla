@@ -34,42 +34,44 @@ def objective(trial, pyg_data, config, input_dim, output_dim, dataset_name):
     
     # Escolha da Arquitetura
     layer_type_str = trial.suggest_categorical("layer_type", ["SAGEConv", "GCNConv", "GATConv"])
-    
     # Mapeamento String -> Classe
     if layer_type_str == "SAGEConv":
         layer_type = SAGEConv
     elif layer_type_str == "GCNConv":
         layer_type = GCNConv
-    else:
+    elif layer_type_str == "GATConv":
         layer_type = GATConv
-
+    else:
+        raise ValueError(f"Unsupported layer_type_str: {layer_type_str}")
+    
     # Hiperparâmetros Gerais
     num_layers = trial.suggest_int("num_layers", 2, 3) # GNNs profundas demais costumam falhar (oversmoothing)
     hidden_dim = trial.suggest_categorical("hidden_dim", [64, 128, 256])
-    dropout = trial.suggest_float("dropout", 0.2, 0.6, step=0.1)
+    dropout = trial.suggest_categorical("dropout", [0.0, 0.2, 0.5])
     
-    # Função de Ativação
     activation_str = trial.suggest_categorical("activation", ["ReLU", "ELU", "LeakyReLU"])
-    if activation_str == "ReLU": activation = nn.ReLU
-    elif activation_str == "ELU": activation = nn.ELU
-    else: activation = nn.LeakyReLU
+    if activation_str == "ReLU":
+        activation = nn.ReLU
+    elif activation_str == "ELU":
+        activation = nn.ELU
+    elif activation_str == "LeakyReLU":
+        activation = nn.LeakyReLU
+    else:
+        raise ValueError(f"Unsupported activation_str: {activation_str}")
 
     # Parâmetros Específicos (GAT)
     heads = 1
     if layer_type_str == "GATConv":
         heads = trial.suggest_int("heads", 1, 4)
-    
-    # Learning Rate Dinâmico (Log Uniforme é melhor para LR)
-    lr = trial.suggest_float("lr", 1e-4, 1e-2, log=True)
-    weight_decay = trial.suggest_float("weight_decay", 1e-5, 1e-3, log=True)
 
     device = torch.device(config.DEVICE)
 
     # 2. GERENCIAMENTO DE DIRETÓRIOS
     # ==============================
+
     directory_manager = DirectoryManager(
         timestamp=datetime.now().strftime("%d-%m-%Y_%H-%M-%S"),
-        run_folder_name=f"OPTUNA_RUNS/GNN_Classifiers/{dataset_name}/Trial_{trial.number}",
+        run_folder_name=f"OPTUNA_RUNS/GNN_Classifiers/{dataset_name}/{layer_type_str}/{config.TIMESTAMP}/Trial_{trial.number}",
     )
 
     try:
@@ -91,8 +93,8 @@ def objective(trial, pyg_data, config, input_dim, output_dim, dataset_name):
         # ==================
         optimizer = torch.optim.Adam(
             model.parameters(),
-            lr=lr,
-            weight_decay=weight_decay,
+            lr=grids.TRAINING_CONFIG["learning_rate"],
+            weight_decay=grids.TRAINING_CONFIG["weight_decay"],
         )
 
         # EarlyStopper com PRUNING ativado
@@ -106,7 +108,7 @@ def objective(trial, pyg_data, config, input_dim, output_dim, dataset_name):
         )
 
         scheduler = lr_scheduler.ReduceLROnPlateau(
-            optimizer,
+            optimizer=optimizer,
             mode="max",
             patience=grids.TRAINING_CONFIG["scheduler_patience"],
             factor=grids.TRAINING_CONFIG["scheduler_factor"],
@@ -118,7 +120,7 @@ def objective(trial, pyg_data, config, input_dim, output_dim, dataset_name):
         training_report = model.train_model(
             data=pyg_data,
             optimizer=optimizer,
-            epochs=
+            epochs=grids.TRAINING_CONFIG["epochs"],
             early_stopper=early_stopper,
             scheduler=scheduler,
             criterion=torch.nn.CrossEntropyLoss()
@@ -153,6 +155,7 @@ def objective(trial, pyg_data, config, input_dim, output_dim, dataset_name):
     except optuna.TrialPruned:
         print(f"[PRUNED] Trial {trial.number}")
         tmp_path = directory_manager.get_run_path()
+
         if os.path.exists(tmp_path) and "_tmp__" in tmp_path:
             try:
                 shutil.rmtree(tmp_path)
@@ -169,6 +172,7 @@ def objective(trial, pyg_data, config, input_dim, output_dim, dataset_name):
         if 'model' in locals(): del model
         if 'optimizer' in locals(): del optimizer
         if 'early_stopper' in locals(): del early_stopper
+        if 'scheduler' in locals(): del scheduler
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
         gc.collect()
@@ -201,7 +205,7 @@ def run_optuna_gnn(WSG_DATASET: Any, config: Config, n_trials=50):
     study = optuna.create_study(
         direction="maximize",
         study_name=f"GNN_{WSG_DATASET.dataset_name}",
-        pruner=optuna.pruners.MedianPruner(n_startup_trials=10, n_warmup_steps=10)
+        pruner=optuna.pruners.MedianPruner(n_startup_trials=10, n_warmup_steps=25)
     )
 
     # Função Lambda para injetar os dados estáticos
@@ -221,7 +225,7 @@ if __name__ == "__main__":
     
     # Exemplo de execução
     dataset_github = MusaeGithubLoader()
-    run_optuna_gnn(dataset_github, config, n_trials=50)
+    run_optuna_gnn(dataset_github, config, n_trials=20)
     
-    # dataset_fb = MusaeFacebookLoader()
-    # run_optuna_gnn(dataset_fb, config, n_trials=50)
+    dataset_fb = MusaeFacebookLoader()
+    run_optuna_gnn(dataset_fb, config, n_trials=20)

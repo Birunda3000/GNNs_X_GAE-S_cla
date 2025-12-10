@@ -17,7 +17,6 @@ class GCNGAE(BaseGAE):
             data.feature_offsets,
             per_sample_weights=data.feature_weights,
         )
-        # ❌ REMOVIDO: x = F.normalize(x, p=2, dim=-1)
         x = F.dropout(
             F.relu(self.conv1(x, data.edge_index)),
             p=0.5,
@@ -110,4 +109,7 @@ class GraphSageVGAE(BaseVGAE):
         z = self.__mu__ + torch.randn_like(self.__mu__) * torch.exp(self.__logstd__)
 
         return F.normalize(z, p=2, dim=-1)
+
+
+# modelos
 

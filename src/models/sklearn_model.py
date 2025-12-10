@@ -1,22 +1,50 @@
 import time
-from typing import Any, Dict, Tuple, cast
+from typing import Any, Dict, Optional, cast
+
+import numpy as np
+import torch
 from sklearn.metrics import accuracy_score, f1_score, classification_report
+from torch_geometric.data import Data
+
 from src.config import Config
 from src.models.base_model import BaseModel
-import torch
-from torch_geometric.data import Data
 
 
 class SklearnClassifier(BaseModel):
-    """Wrapper para modelos Scikit-learn que contém sua própria lógica de treino."""
+    """
+    Wrapper genérico para modelos compatíveis com a interface Scikit-Learn.
+
+    Suporta nativamente:
+    - sklearn.linear_model.LogisticRegression
+    - sklearn.neighbors.KNeighborsClassifier
+    - sklearn.ensemble.RandomForestClassifier
+    - sklearn.svm.SVC
+    - sklearn.naive_bayes.GaussianNB
+    - sklearn.neural_network.MLPClassifier
+    - xgboost.XGBClassifier (interface sklearn)
+
+    Exemplo de uso:
+        model = SklearnClassifier(config, model_class=LogisticRegression, max_iter=1000)
+        model = SklearnClassifier(config, model_class=XGBClassifier, n_estimators=100)
+    """
 
     def __init__(self, config: Config, model_class, **model_params):
         super().__init__(config)
+        self.model_class = model_class
         self.model_name = model_class.__name__
+        self.model_params = model_params
+
+        # Tenta passar random_state se o modelo suportar
         try:
             self.model = model_class(random_state=config.RANDOM_SEED, **model_params)
         except TypeError:
+            # Alguns modelos (ex: KNeighborsClassifier, GaussianNB) não têm random_state
             self.model = model_class(**model_params)
+
+        # Flag para identificar se é XGBoost (tem comportamento especial no fit)
+        self._is_xgboost = (
+            "XGB" in self.model_name or "xgboost" in str(model_class).lower()
+        )
 
     def verify_train_input_data(self, data: Data):
         assert (
@@ -37,6 +65,7 @@ class SklearnClassifier(BaseModel):
 
     def train_model(self, data: Data) -> Dict[str, Any]:
         print(f"\n--- Avaliando (Sklearn): {self.model_name} ---")
+        self.verify_train_input_data(data)
 
         assert isinstance(
             data.x, torch.Tensor
@@ -50,11 +79,17 @@ class SklearnClassifier(BaseModel):
 
         # Usar as máscaras de treino/teste já definidas no objeto data
         X_train, y_train = X[data.train_mask], y[data.train_mask]
-        X_val, y_val = X[data.val_mask], y[data.val_mask]  # ✅ usar validação
+        X_val, y_val = X[data.val_mask], y[data.val_mask]
         X_test, y_test = X[data.test_mask], y[data.test_mask]
 
         start_time = time.process_time()
-        self.model.fit(X_train, y_train)
+
+        # Fit com suporte especial para XGBoost (eval_set para early stopping)
+        if self._is_xgboost:
+            self.model.fit(X_train, y_train, eval_set=[(X_val, y_val)], verbose=False)
+        else:
+            self.model.fit(X_train, y_train)
+
         train_time = time.process_time() - start_time
 
         # Avaliar em validação (para early stopping/seleção)
@@ -87,21 +122,46 @@ class SklearnClassifier(BaseModel):
 
         return {
             "total_training_time": train_time,
-            "best_test_accuracy": test_acc,  # ✅ mantém nome por compatibilidade com runner
+            "best_test_accuracy": test_acc,
             "best_test_f1": test_f1,
-            "val_accuracy": val_acc,  # ✅ adiciona métricas de validação
+            "val_accuracy": val_acc,
             "val_f1": val_f1,
             "train_report": train_report,
             "val_report": val_report,
             "test_report": test_report,
         }
 
-    def evaluate(self, data: Data) -> None:
-        raise NotImplementedError(
-            "Método 'evaluate' não implementado para SklearnClassifier."
-        )
+    def evaluate(self, data: Data) -> Dict[str, Any]:
+        """Avalia o modelo em um conjunto de dados."""
+        if not hasattr(self.model, "predict"):
+            raise RuntimeError("Modelo não foi treinado. Chame 'train_model' primeiro.")
 
-    def inference(self, x):
-        raise NotImplementedError(
-            "Método 'inference' não implementado para SklearnClassifier."
-        )
+        X = data.x.cpu().numpy() if isinstance(data.x, torch.Tensor) else data.x
+        y = data.y.cpu().numpy() if isinstance(data.y, torch.Tensor) else data.y
+
+        y_pred = self.model.predict(X)
+
+        return {
+            "accuracy": float(accuracy_score(y, y_pred)),
+            "f1_weighted": float(f1_score(y, y_pred, average="weighted")),
+        }
+
+    def inference(self, x) -> np.ndarray:
+        """Executa inferência no modelo treinado."""
+        if not hasattr(self.model, "predict"):
+            raise RuntimeError("Modelo não foi treinado. Chame 'train_model' primeiro.")
+
+        if isinstance(x, torch.Tensor):
+            x = x.cpu().numpy()
+
+        return self.model.predict(x)
+
+    def predict_proba(self, x) -> Optional[np.ndarray]:
+        """Retorna probabilidades se o modelo suportar."""
+        if not hasattr(self.model, "predict_proba"):
+            return None
+
+        if isinstance(x, torch.Tensor):
+            x = x.cpu().numpy()
+
+        return self.model.predict_proba(x)

@@ -13,24 +13,32 @@ from zoneinfo import ZoneInfo
 # === IMPORTS DE TERCEIROS ===
 import torch
 import numpy as np
+import psutil
+
+# Sklearn classifiers
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
-import psutil
+from sklearn.svm import LinearSVC
+from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis # <--- Otimizado (Gaussiano)
+from sklearn.neural_network import MLPClassifier
+
+# XGBoost (interface sklearn)
+from xgboost import XGBClassifier
 
 # === IMPORTS INTERNOS DO PROJETO ===
 from src.config import Config
 import src.data_loaders as data_loaders
 import src.data_converters as data_converters
 from src.models.sklearn_model import SklearnClassifier
-from src.models.pytorch_classification.classification_models import MLPClassifier
-from src.models.xgboost_classifier import XGBoostClassifier
 from src.experiment_runner import ExperimentRunner
 
 
 def main(wsg_file_path: str):
     # --- 1. Configuração Inicial ---
     config = Config()
+    
+    # Garante reprodutibilidade
     torch.manual_seed(config.RANDOM_SEED)
     np.random.seed(config.RANDOM_SEED)
     random.seed(config.RANDOM_SEED)
@@ -38,35 +46,88 @@ def main(wsg_file_path: str):
     config.TIMESTAMP = datetime.now(ZoneInfo("America/Sao_Paulo")).strftime(
         "%d-%m-%Y_%H-%M-%S"
     )
+    
+    # Extrai parâmetros de consistência do Config
+    PATIENCE = config.EARLY_STOPPING_PATIENCE
+    MIN_DELTA = config.EARLY_STOPPING_MIN_DELTA
 
     # --- 2. Carregar Dados ---
-
     print("=" * 65, "\nINICIANDO TAREFA DE CLASSIFICAÇÃO DE EMBEDDINGS")
     print(f"Arquivo de entrada: {wsg_file_path}\n", "=" * 65)
-
 
     WSG_DATASET = data_loaders.DirectWSGLoader(file_path=wsg_file_path)
     wsg_obj = WSG_DATASET.load()
 
-    # --- 3. Definir Modelos ---
-    input_dim = len(wsg_obj.node_features["0"].weights)
-    output_dim = len(set(y for y in wsg_obj.graph_structure.y if y is not None))
-    
+    # --- 3. Definir Modelos (A Lista de Ouro do TCC) ---
     models_to_run = [
+        # 1. Família Linear (Probabilística)
         SklearnClassifier(
             config,
             model_class=LogisticRegression,
             max_iter=1000,
+            tol=MIN_DELTA,
             class_weight="balanced",
         ),
-        SklearnClassifier(config, model_class=KNeighborsClassifier, n_neighbors=5),
+        
+        # 2. Família Baseada em Instância (Topológica)
         SklearnClassifier(
-            config, model_class=RandomForestClassifier, class_weight="balanced"
+            config, 
+            model_class=KNeighborsClassifier, 
+            n_neighbors=5,
+            n_jobs=-1
         ),
-        MLPClassifier(
-            config, input_dim=input_dim, hidden_dim=128, output_dim=output_dim
+        
+        # 3. Família Ensemble Bagging (Árvores Paralelas)
+        SklearnClassifier(
+            config, 
+            model_class=RandomForestClassifier, 
+            n_estimators=100,
+            class_weight="balanced",
+            n_jobs=-1
         ),
-        XGBoostClassifier(config),
+        
+        # 4. Família Linear Geométrica (Margem / SVM)
+        SklearnClassifier(
+            config,
+            model_class=LinearSVC, # <--- Rápido e Eficiente
+            class_weight="balanced",
+            dual=False,            # Crucial para não travar
+            loss="squared_hinge",
+            tol=MIN_DELTA,
+            max_iter=2000
+        ),
+        
+        # 5. Família Gaussiana / Radial (Substitui Naive Bayes)
+        SklearnClassifier(
+            config,
+            model_class=QuadraticDiscriminantAnalysis,
+            reg_param=0.01 # Regularização para evitar instabilidade
+        ),
+        
+        # 6. Família Redes Neurais (Universal)
+        SklearnClassifier(
+            config,
+            model_class=MLPClassifier,
+            hidden_layer_sizes=(128, 64),
+            max_iter=500,
+            early_stopping=True,
+            n_iter_no_change=PATIENCE,
+            tol=MIN_DELTA,
+            validation_fraction=0.1,
+        ),
+        
+        # 7. Família Ensemble Boosting (Estado da Arte Tabular)
+        SklearnClassifier(
+            config,
+            model_class=XGBClassifier,
+            n_estimators=config.EPOCHS, # Limite superior (usa paciência real)
+            learning_rate=0.1,
+            max_depth=6,
+            use_label_encoder=False,
+            n_jobs=-1,
+            early_stopping_rounds=PATIENCE, # Consistência de parada
+            eval_metric="mlogloss"
+        ),
     ]
 
     # --- 4. Executar o Experimento ---
@@ -75,7 +136,7 @@ def main(wsg_file_path: str):
         run_folder_name="CLASSIFICATION_RUNS",
         wsg_obj=wsg_obj,
         data_source_name=os.path.basename(WSG_DATASET.file_path),
-        data_converter=data_converters.wsg_for_dense_classifier
+        data_converter=data_converters.wsg_for_dense_classifier,
     )
 
     process = psutil.Process(os.getpid())
@@ -85,9 +146,8 @@ def main(wsg_file_path: str):
 
 
 if __name__ == "__main__":
-
-    base_path = "data/output/EMBEDDING_RUNS"  # caminho fixo
-    pattern = "*.wsg.json"                    # extensão que você usa
+    base_path = "data/output/EMBEDDING_RUNS"
+    pattern = "*.wsg.json"
     list_of_files = glob.glob(os.path.join(base_path, "**", pattern), recursive=True)
 
     print(f"Encontrados {len(list_of_files)} arquivos para processar.")
@@ -98,5 +158,3 @@ if __name__ == "__main__":
             main(file_path)
         except Exception as e:
             print(f"Erro ao processar {file_path}: {e}")
-
-

@@ -5,226 +5,214 @@ import numpy as np
 import random
 import gc
 import optuna
-import shutil
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from torch.optim import lr_scheduler
 import torch.nn as nn
-from torch_geometric.nn import GCNConv, SAGEConv, GATConv
 from typing import Any
+import shutil
 
 # Imports do projeto
 from src.config import Config
 from src.data_loaders import MusaeGithubLoader, MusaeFacebookLoader
-from src.models.pytorch_classification.dynamic_gnn import DynamicGNNClassifier
+from src.models.embedding_models.din_gae import DynamicGAE, DynamicVGAE
 from src.directory_manager import DirectoryManager
 from src.report_manager import ReportManager
 from src.early_stopper import EarlyStopper
+from src.embeddings_eval import evaluate_embeddings
 import src.data_converters as data_converters
 import src.grid_search.grid_search_params as grids
 
+
 # ============================================================
-# FUNÇÃO OBJETIVO (GNN CLASSIFIER / BASELINE)
+# FUNÇÃO OBJETIVO DO OPTUNA
 # ============================================================
 
-def objective(trial, pyg_data, config, input_dim, output_dim, dataset_name):
-    
-    # 1. DEFINIÇÃO DO ESPAÇO DE BUSCA
-    # ===============================
-    
-    # Escolha da Arquitetura
-    layer_type_str = trial.suggest_categorical("layer_type", ["SAGEConv", "GCNConv", "GATConv"])
-    
-    # Mapeamento String -> Classe
+def objective(trial, pyg_data, config, model_class, dataset_name):
+
+    # --------- 1. ESPAÇO DE BUSCA FINAL RECOMENDADO ----------
+
+    layer_type_str = trial.suggest_categorical("layer_type", ["SAGEConv", "GCNConv"])
     if layer_type_str == "SAGEConv":
-        layer_type = SAGEConv
+        layer_type = grids.SAGEConv
     elif layer_type_str == "GCNConv":
-        layer_type = GCNConv
+        layer_type = grids.GCNConv
     else:
-        layer_type = GATConv
+        raise ValueError(f"Unsupported layer_type_str: {layer_type_str}")
 
-    # Hiperparâmetros Gerais
-    num_layers = trial.suggest_int("num_layers", 2, 3) 
-    hidden_dim = trial.suggest_categorical("hidden_dim", [64, 128, 256])
-    dropout = trial.suggest_float("dropout", 0.2, 0.6, step=0.1)
-    
-    # Função de Ativação
+    num_layers = trial.suggest_int("num_layers", 2, 3)
+    hidden_dim = trial.suggest_categorical("hidden_dim", [128, 256])
+    dropout = trial.suggest_categorical("dropout", [0.0, 0.2, 0.5])
+
     activation_str = trial.suggest_categorical("activation", ["ReLU", "ELU", "LeakyReLU"])
-    if activation_str == "ReLU": activation = nn.ReLU
-    elif activation_str == "ELU": activation = nn.ELU
-    else: activation = nn.LeakyReLU
+    if activation_str == "ReLU":
+        activation = nn.ReLU
+    elif activation_str == "ELU":
+        activation = nn.ELU
+    elif activation_str == "LeakyReLU":
+        activation = nn.LeakyReLU
+    else:
+        raise ValueError(f"Unsupported activation_str: {activation_str}")
 
-    # Parâmetros Específicos (GAT) - Heads
-    heads = 1
-    if layer_type_str == "GATConv":
-        heads = trial.suggest_int("heads", 1, 4)
-    
-    # Learning Rate Dinâmico
-    lr = trial.suggest_float("lr", 1e-4, 1e-2, log=True)
-    weight_decay = trial.suggest_float("weight_decay", 1e-5, 1e-3, log=True)
+    # Parametros de embedding
+    embedding_dim = trial.suggest_categorical("embedding_dim", [128, 256])
+    out_embedding_dim = trial.suggest_categorical("out_embedding_dim", [8, 16, 64])
+    normalize_embeddings = trial.suggest_categorical("normalize_embeddings", [True, False])
 
     device = torch.device(config.DEVICE)
 
-    # 2. GERENCIAMENTO DE DIRETÓRIOS
-    # ==============================
+    # --------- 2. DIRETÓRIO -------------------------------
     directory_manager = DirectoryManager(
         timestamp=datetime.now().strftime("%d-%m-%Y_%H-%M-%S"),
-        run_folder_name=f"OPTUNA_RUNS/GNN_Classifiers/{dataset_name}/Trial_{trial.number}",
+        run_folder_name=f"OPTUNA_RUNS/GAEs/{dataset_name}/{model_class.__name__}/{layer_type_str}/{config.TIMESTAMP}/Trial_{trial.number}",
     )
 
     try:
-        # 3. INSTANCIAÇÃO DO MODELO
-        # =========================
-        model = DynamicGNNClassifier(
+        # --------- 3. INSTANCIAR MODELO ---------------------
+        model = model_class(
             config=config,
-            input_dim=input_dim,
-            output_dim=output_dim,
+            num_total_features=pyg_data.num_total_features,
+            embedding_dim=embedding_dim,
+            hidden_dim=hidden_dim,
+            out_embedding_dim=out_embedding_dim,
             layer_type=layer_type,
             num_layers=num_layers,
-            hidden_dim=hidden_dim,
-            dropout=dropout,
             activation=activation,
-            heads=heads
+            dropout=dropout,
+            normalize_embeddings=normalize_embeddings,
         ).to(device)
 
-        # 4. SETUP DE TREINO
-        # ==================
+        # --------- 4. OPTIMIZER / SCHEDULER / STOPPER --------
         optimizer = torch.optim.Adam(
             model.parameters(),
-            lr=lr,
-            weight_decay=weight_decay,
+            lr=grids.TRAINING_CONFIG["learning_rate"],
+            weight_decay=grids.TRAINING_CONFIG["weight_decay"],
         )
 
-        # EarlyStopper com PRUNING ativado
-        # IMPORTANTE: Usamos "val_f1" para guiar a otimização
         early_stopper = EarlyStopper(
             patience=grids.TRAINING_CONFIG["early_stopping_patience"],
             min_delta=grids.TRAINING_CONFIG["early_stopping_min_delta"],
             mode="max",
-            metric_name="val_f1", 
-            trial=trial # <--- Ativa o Pruning do Optuna
+            metric_name="max_val_f1",
+            custom_eval=lambda m: evaluate_embeddings(m, pyg_data, device),
+            trial=trial
         )
 
         scheduler = lr_scheduler.ReduceLROnPlateau(
-            optimizer,
+            optimizer=optimizer,
             mode="max",
             patience=grids.TRAINING_CONFIG["scheduler_patience"],
             factor=grids.TRAINING_CONFIG["scheduler_factor"],
             min_lr=grids.TRAINING_CONFIG["min_lr"],
         )
 
-        # 5. LOOP DE TREINAMENTO
-        # ======================
+        # --------- 5. TREINAMENTO ---------------------------
         training_report = model.train_model(
             data=pyg_data,
             optimizer=optimizer,
-            # ✅ CORREÇÃO: Usar o valor do config, não deixar vazio
-            epochs=grids.TRAINING_CONFIG["epochs"], 
+            epochs=grids.TRAINING_CONFIG["epochs"],
             early_stopper=early_stopper,
             scheduler=scheduler,
-            criterion=torch.nn.CrossEntropyLoss()
         )
+        
+        best_score = training_report["best_score"]
 
-        # Métricas Finais
-        best_val_f1 = training_report["val_report"]["weighted avg"]["f1-score"]
-        test_f1 = training_report["test_f1"] # Apenas informativo
-
-        # 6. SALVAR RELATÓRIO
-        # ===================
+        # --------- 6. SALVAR RELATÓRIO -----------------------
         report_manager = ReportManager(directory_manager)
         full_report = {
             "params": trial.params,
-            "best_val_f1": best_val_f1,
-            "test_f1": test_f1,
+            "best_score": best_score,
             "training_history": training_report["training_history"]
         }
         report_manager.create_report(full_report)
         report_manager.save_report()
         
-        # Renomeia pasta final com o score de VALIDAÇÃO (critério de escolha)
         directory_manager.finalize_run_directory(
             dataset_name=dataset_name,
-            metrics={"val_f1": best_val_f1, "test_f1": test_f1}
+            metrics={"score": best_score}
         )
 
-        return best_val_f1
+        return best_score
 
-    # 7. TRATAMENTO DE PRUNING E ERROS
-    # ================================
     except optuna.TrialPruned:
         print(f"[PRUNED] Trial {trial.number}")
         tmp_path = directory_manager.get_run_path()
+
         if os.path.exists(tmp_path) and "_tmp__" in tmp_path:
             try:
                 shutil.rmtree(tmp_path)
             except Exception as e:
-                print(f"Erro ao limpar pasta: {e}")
+                print(f"Erro removendo pasta: {e}")
         raise
 
     except Exception as e:
         print(f"[ERRO] Trial {trial.number}: {e}")
         raise e
-    
+
     finally:
-        # Limpeza Segura (Idêntica ao GAE Script para evitar UnboundLocalError)
+        # Limpeza Segura
         if 'model' in locals(): del model
         if 'optimizer' in locals(): del optimizer
         if 'early_stopper' in locals(): del early_stopper
         if 'scheduler' in locals(): del scheduler
-        
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
         gc.collect()
+
 
 
 # ============================================================
 # FUNÇÃO PRINCIPAL
 # ============================================================
 
-def run_optuna_gnn(WSG_DATASET: Any, config: Config, n_trials=50):
+def run_optuna_optimization(WSG_DATASET: Any, config: Config, model_class: Any, n_trials=40):
     config.TIMESTAMP = datetime.now(ZoneInfo("America/Sao_Paulo")).strftime("%d-%m-%Y_%H-%M-%S")
     device = torch.device(config.DEVICE)
     
-    print(f"\n--- Iniciando Optuna (GNN Classifier) para {WSG_DATASET.dataset_name} ---")
+    print(f"\n--- Iniciando Optuna para {model_class.__name__} em {WSG_DATASET.dataset_name} ---")
 
-    # 1. Carregar Dados
+    # 1. Carregar WSG
     wsg_obj = WSG_DATASET.load()
 
-    # 2. Converter para PyG (Supervisionado)
-    pyg_data = data_converters.wsg_for_gcn_gat_multi_hot(wsg_obj, config).to(device)
+    # 2. Converter para PyG
+    pyg_data = data_converters.wsg_for_vgae(wsg_obj, config).to(device)
 
-    # 3. Calcular Dimensões
-    input_dim = wsg_obj.metadata.num_total_features
-    output_dim = len(set(y for y in wsg_obj.graph_structure.y if y is not None))
-    
-    print(f"Input Dim: {input_dim} | Output Classes: {output_dim}")
-
-    # 4. Criar Estudo
+    # 3. CRIAR ESTUDO OPTUNA
     study = optuna.create_study(
         direction="maximize",
-        study_name=f"GNN_Baseline_{WSG_DATASET.dataset_name}",
-        pruner=optuna.pruners.MedianPruner(n_startup_trials=10, n_warmup_steps=10)
+        study_name=f"{model_class.__name__}_{WSG_DATASET.dataset_name}",
+        pruner=optuna.pruners.MedianPruner(
+            n_startup_trials=10,
+            n_warmup_steps=25
+        )
     )
 
-    func = lambda trial: objective(trial, pyg_data, config, input_dim, output_dim, WSG_DATASET.dataset_name)
-    
+    func = lambda trial: objective(trial, pyg_data, config, model_class, WSG_DATASET.dataset_name)
     study.optimize(func, n_trials=n_trials)
 
     print("\n" + "="*50)
-    print(f"📌 MELHOR RESULTADO GNN ({WSG_DATASET.dataset_name}):")
-    print(f"Best Val F1: {study.best_value}")
-    print(f"Best Params: {study.best_params}")
+    print(f"📌 MELHOR RESULTADO ({model_class.__name__}):")
+    print(f"Score: {study.best_value}")
+    print(f"Params: {study.best_params}")
     print("="*50 + "\n")
 
 
+
+# ============================================================
+# EXECUÇÃO DIRETA
+# ============================================================
+
 if __name__ == "__main__":
     config = Config()
-    
-    # Ajuste de épocas para o Optuna
-    grids.TRAINING_CONFIG["epochs"] = 200 # Deixe alto, o Pruning corta o excesso
-    
+
     dataset_github = MusaeGithubLoader()
-    run_optuna_gnn(dataset_github, config, n_trials=30)
     
+    run_optuna_optimization(dataset_github, config, DynamicGAE, n_trials=30)
+    #run_optuna_optimization(dataset_github, config, DynamicVGAE, n_trials=30)
+
+
+
+    # Dataset 2
     # dataset_fb = MusaeFacebookLoader()
-    # run_optuna_gnn(dataset_fb, config, n_trials=30)
+    # run_optuna_optimization(dataset_fb, config, DynamicGAE, n_trials=20)
+    run_optuna_optimization(dataset_fb, config, DynamicVGAE, n_trials=20)
