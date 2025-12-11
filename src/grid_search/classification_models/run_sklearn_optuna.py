@@ -163,7 +163,9 @@ def run_sklearn_optimization(wsg_file_path: str, n_trials=30):
 
 if __name__ == "__main__":
     # Ajuste para o seu caminho do GitHub ou Facebook
-    WSG_PATH = "/app/gnn_tcc/data/output/EMBEDDING_RUNS/Musae-Facebook__score_1_7161__emb_dim_32__10-12-2025_15-33-25/Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25.wsg.json" 
+    WSG_PATH = "/app/gnn_tcc/data/output/EMBEDDING_RUNS/Musae-Github__score_1_6792__emb_dim_32__10-12-2025_15-59-55/Musae-Github_(32)_embeddings_10-12-2025_15-59-55.wsg.json"
+
+    #WSG_PATH = "/app/gnn_tcc/data/output/EMBEDDING_RUNS/Musae-Facebook__score_1_7161__emb_dim_32__10-12-2025_15-33-25/Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25.wsg.json" 
     
     if os.path.exists(WSG_PATH):
         run_sklearn_optimization(WSG_PATH, n_trials=30)
