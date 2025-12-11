@@ -124,8 +124,9 @@ MLP_SKLEARN_GRID = {
         (128, 64, 32),
         (16, 16, 16, 16),
         (64, 64, 32, 16),
+        (256, 128, 64, 32),
     ],
-    "activation": ["relu", "tanh", "identity"],
+    "activation": ["relu", "tanh", "identity"],  # <--- sem "logistic"
     "alpha": [0.0001, 0.001, 0.01],
     "learning_rate_init": [0.001, 0.01],
     "solver": ["adam", "sgd"],                 # <--- muito relevante
@@ -143,6 +144,7 @@ XGBOOST_GRID: Dict[str, List[Any]] = {
     "gamma": [0, 0.1, 0.5],
     "min_child_weight": [1, 3, 5],
     "scale_pos_weight": [1.0, 1.5, 2.0],
+    "n_estimators": [100, 200, 300],
 }
 
 
