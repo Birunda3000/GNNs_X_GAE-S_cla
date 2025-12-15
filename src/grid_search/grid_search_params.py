@@ -76,7 +76,7 @@ GNN_CLASSIFIER_GRID: Dict[str, List[Any]] = {
 LOGISTIC_REGRESSION_GRID: Dict[str, List[Any]] = {
     "C": [0.001, 0.01, 0.1, 1.0, 10.0, 100.0],
     "solver": ["lbfgs", "liblinear", "saga"],
-    "class_weight": [None, "balanced"],
+    "class_weight": ["balanced"],
 }
 
 # --- 2. KNN (Família: Vizinhança) ---
@@ -93,7 +93,7 @@ RANDOM_FOREST_GRID: Dict[str, List[Any]] = {
     "min_samples_split": [2, 5, 10],
     "max_features": ["sqrt", "log2"],
     "criterion": ["gini", "entropy"],
-    "class_weight": [None, "balanced", "balanced_subsample"],
+    "class_weight": ["balanced", "balanced_subsample"],
 }
 
 # --- 4. Linear SVM (Família: Linear Geométrica/Margem) ---
@@ -103,7 +103,7 @@ SVM_GRID: Dict[str, List[Any]] = {
     "loss": ["squared_hinge"],
     "dual": [False],
     "tol": [1e-4, 1e-5],
-    "class_weight": ["balanced", None],
+    "class_weight": ["balanced"],
 }
 
 # --- 5. QDA (Família: Gaussiana/Radial/Curva) ---
@@ -123,14 +123,13 @@ MLP_SKLEARN_GRID = {
         (128, 64),
         (128, 64, 32),
         (16, 16, 16, 16),
-        (64, 64, 32, 16),
-        (256, 128, 64, 32),
+        (128, 64, 32, 16),
     ],
     "activation": ["relu", "tanh", "identity"],  # <--- sem "logistic"
     "alpha": [0.0001, 0.001, 0.01],
-    "learning_rate_init": [0.001, 0.01],
+    "learning_rate_init": [0.0001, 0.001, 0.01],
     "solver": ["adam", "sgd"],                 # <--- muito relevante
-    "learning_rate": ["constant", "adaptive"], # <--- sem "invscaling"
+    "learning_rate": ["constant", "adaptive", "invscaling"],
     "batch_size": ["auto", 64, 128],           # <--- bom e leve
 }
 
@@ -143,7 +142,7 @@ XGBOOST_GRID: Dict[str, List[Any]] = {
     "colsample_bytree": [0.6, 0.8, 1.0],
     "gamma": [0, 0.1, 0.5],
     "min_child_weight": [1, 3, 5],
-    "scale_pos_weight": [1.0, 1.5, 2.0],
+    "scale_pos_weight": [1.0, 1.5, 2.0, 3.0],
     "n_estimators": [100, 200, 300],
 }
 
