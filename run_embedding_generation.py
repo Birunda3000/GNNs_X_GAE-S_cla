@@ -20,7 +20,7 @@ import src.data_loaders as data_loaders
 from src.directory_manager import DirectoryManager
 from src.report_manager import ReportManager
 from src.models.embedding_models.autoencoders_models import GraphSageGAE, GraphSageGAE, GCNGAE, GCNVGAE
-from src.models.embedding_models.base_gr
+from src.models.embedding_models.din_gae import GithubVGAE, FacebookGAE
 from src.early_stopper import EarlyStopper
 from src.embeddings_eval import evaluate_embeddings
 from src.utils import format_bytes, salvar_modelo_pytorch_completo, save_embeddings_to_wsg
@@ -77,13 +77,25 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
 
     # --- Modelo ---
     print("\n[FASE 3] Construindo o modelo GraphSAGE-GAE...")
-    model = GraphSageGAE(
+    '''model = GraphSageGAE(
         config=config,
         num_total_features=pyg_data.num_total_features,
         embedding_dim=config.EMBEDDING_DIM,
         hidden_dim=config.HIDDEN_DIM,
         out_embedding_dim=config.OUT_EMBEDDING_DIM,
-    ).to(device)
+    ).to(device)'''
+    
+    '''model = FacebookGAE(
+        config=config,
+        num_total_features=pyg_data.num_total_features,
+        out_embedding_dim=config.OUT_EMBEDDING_DIM,
+    )'''
+
+    model = GithubVGAE(
+        config=config,
+        num_total_features=pyg_data.num_total_features,
+        out_embedding_dim=config.OUT_EMBEDDING_DIM,
+    )
 
 
     directory_manager = DirectoryManager(timestamp=config.TIMESTAMP, run_folder_name="EMBEDDING_RUNS")
@@ -95,7 +107,7 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
         metric_name="max_f1",
         custom_eval=lambda m: evaluate_embeddings(m, pyg_data, device),
     )
-    optimizer = optim.Adam(model.parameters(), lr=config.LEARNING_RATE)
+    optimizer = optim.Adam(model.parameters(), lr=config.LEARNING_RATE, weight_decay=config.WEIGHT_DECAY)
     scheduler = lr_scheduler.ReduceLROnPlateau(
         optimizer,
         mode="max",
@@ -185,8 +197,8 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
 if __name__ == "__main__":
     # Lista de datasets e tamanhos de embedding
     datasets = [
-        data_loaders.MusaeFacebookLoader(),
-        #data_loaders.MusaeGithubLoader(),
+        #data_loaders.MusaeFacebookLoader(),
+        data_loaders.MusaeGithubLoader(),
         #data_loaders.FlickrLoader(),
     ]
     emb_sizes = [2, 3, 8, 16, 32, 64, 128]

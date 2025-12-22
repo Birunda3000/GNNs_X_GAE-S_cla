@@ -121,9 +121,6 @@ class DynamicVGAE(BaseVGAE):
             z = F.normalize(z, p=2, dim=-1)
         return z
 
-
-
-
 # Classe otimizada para Facebook
 class FacebookGAE(DynamicGAE):
     """
@@ -141,14 +138,14 @@ class FacebookGAE(DynamicGAE):
     - Normalize Embeddings: True (Crítico para qualidade dos embeddings)
     """
 
-    def __init__(self, config, num_total_features: int):
+    def __init__(self, config, num_total_features: int, out_embedding_dim):
         super().__init__(
             config=config,
             num_total_features=num_total_features,
             # Dimensões
             embedding_dim=64,           # Input embedding
             hidden_dim=256,             # Camadas ocultas
-            out_embedding_dim=32,       # Latente Z
+            out_embedding_dim=out_embedding_dim,       # Latente Z
             # Arquitetura
             layer_type=GATConv,         # Mecanismo de atenção
             num_layers=4,               # Profundidade
@@ -179,14 +176,14 @@ class GithubVGAE(DynamicVGAE):
     - Normalize Embeddings: True (Importante para qualidade dos embeddings)
     """
 
-    def __init__(self, config, num_total_features: int):
+    def __init__(self, config, num_total_features: int, out_embedding_dim):
         super().__init__(
             config=config,
             num_total_features=num_total_features,
             # Dimensões
             embedding_dim=256,          # Input embedding
             hidden_dim=256,             # Camadas ocultas
-            out_embedding_dim=32,       # Latente Z
+            out_embedding_dim=out_embedding_dim,       # Latente Z
             # Arquitetura
             layer_type=SAGEConv,        # GraphSAGE
             num_layers=4,               # Profundidade
