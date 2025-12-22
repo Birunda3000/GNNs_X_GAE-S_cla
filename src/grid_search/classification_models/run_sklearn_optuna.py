@@ -71,9 +71,6 @@ def objective(trial, X, y, masks, config, model_name, dataset_name):
             fixed_args["max_iter"] = 2000
         elif model_name == "LogisticRegression":
             fixed_args["max_iter"] = 2000
-        elif model_name == "XGBoost":
-            fixed_args["eval_metric"] = "mlogloss"
-            fixed_args["use_label_encoder"] = False
 
         model = model_class(**params, **fixed_args)
 

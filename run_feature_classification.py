@@ -123,10 +123,10 @@ def main(wsg_file_path: str):
             n_estimators=config.EPOCHS, # Limite superior (usa paciência real)
             learning_rate=0.1,
             max_depth=6,
-            use_label_encoder=False,
+            #use_label_encoder=False,
             n_jobs=-1,
             early_stopping_rounds=PATIENCE, # Consistência de parada
-            eval_metric="mlogloss"
+            #eval_metric="mlogloss"
         ),
     ]
 
