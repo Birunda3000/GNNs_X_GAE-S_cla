@@ -6,6 +6,8 @@ import time
 from typing import Any, cast
 from datetime import datetime
 from zoneinfo import ZoneInfo
+import gc
+
 
 from memory_profiler import memory_usage
 import numpy as np
@@ -85,17 +87,17 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
         out_embedding_dim=config.OUT_EMBEDDING_DIM,
     ).to(device)'''
     
-    '''model = FacebookGAE(
-        config=config,
-        num_total_features=pyg_data.num_total_features,
-        out_embedding_dim=config.OUT_EMBEDDING_DIM,
-    )'''
-
-    model = GithubVGAE(
+    model = FacebookGAE(
         config=config,
         num_total_features=pyg_data.num_total_features,
         out_embedding_dim=config.OUT_EMBEDDING_DIM,
     )
+
+    '''model = GithubVGAE(
+        config=config,
+        num_total_features=pyg_data.num_total_features,
+        out_embedding_dim=config.OUT_EMBEDDING_DIM,
+    )'''
 
 
     directory_manager = DirectoryManager(timestamp=config.TIMESTAMP, run_folder_name="EMBEDDING_RUNS")
@@ -197,8 +199,8 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
 if __name__ == "__main__":
     # Lista de datasets e tamanhos de embedding
     datasets = [
-        #data_loaders.MusaeFacebookLoader(),
-        data_loaders.MusaeGithubLoader(),
+        data_loaders.MusaeFacebookLoader(),
+        #data_loaders.MusaeGithubLoader(),
         #data_loaders.FlickrLoader(),
     ]
     emb_sizes = [2, 3, 8, 16, 32, 64, 128]
@@ -206,3 +208,4 @@ if __name__ == "__main__":
     for dataset in datasets:
         for emb in emb_sizes:
             run_embedding_generation(dataset, emb)
+            gc.collect()
