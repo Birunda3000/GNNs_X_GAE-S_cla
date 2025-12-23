@@ -11,6 +11,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 # === IMPORTS DE TERCEIROS ===
+from requests import get
 import torch
 import numpy as np
 import psutil
@@ -32,6 +33,7 @@ import src.data_loaders as data_loaders
 import src.data_converters as data_converters
 from src.models.sklearn_model import SklearnClassifier
 from src.experiment_runner import ExperimentRunner
+from src.model_args import get_github_models, get_facebook_models
 
 
 def main(wsg_file_path: str):
@@ -58,77 +60,26 @@ def main(wsg_file_path: str):
     WSG_DATASET = data_loaders.DirectWSGLoader(file_path=wsg_file_path)
     wsg_obj = WSG_DATASET.load()
 
+
+
+
     # --- 3. Definir Modelos (A Lista de Ouro do TCC) ---
-    models_to_run = [
-        # 1. Família Linear (Probabilística)
-        SklearnClassifier(
-            config,
-            model_class=LogisticRegression,
-            max_iter=1000,
-            tol=MIN_DELTA,
-            class_weight="balanced",
-        ),
-        
-        # 2. Família Baseada em Instância (Topológica)
-        SklearnClassifier(
-            config, 
-            model_class=KNeighborsClassifier, 
-            n_neighbors=5,
-            n_jobs=-1
-        ),
-        
-        # 3. Família Ensemble Bagging (Árvores Paralelas)
-        SklearnClassifier(
-            config, 
-            model_class=RandomForestClassifier, 
-            n_estimators=100,
-            class_weight="balanced",
-            n_jobs=-1
-        ),
-        
-        # 4. Família Linear Geométrica (Margem / SVM)
-        SklearnClassifier(
-            config,
-            model_class=LinearSVC, # <--- Rápido e Eficiente
-            class_weight="balanced",
-            dual=False,            # Crucial para não travar
-            loss="squared_hinge",
-            tol=MIN_DELTA,
-            max_iter=2000
-        ),
-        
-        # 5. Família Gaussiana / Radial (Substitui Naive Bayes)
-        SklearnClassifier(
-            config,
-            model_class=QuadraticDiscriminantAnalysis,
-            reg_param=0.01 # Regularização para evitar instabilidade
-        ),
-        
-        # 6. Família Redes Neurais (Universal)
-        SklearnClassifier(
-            config,
-            model_class=MLPClassifier,
-            hidden_layer_sizes=(128, 64),
-            max_iter=500,
-            early_stopping=True,
-            n_iter_no_change=PATIENCE,
-            tol=MIN_DELTA,
-            validation_fraction=0.1,
-        ),
-        
-        # 7. Família Ensemble Boosting (Estado da Arte Tabular)
-        SklearnClassifier(
-            config,
-            model_class=XGBClassifier,
-            n_estimators=config.EPOCHS, # Limite superior (usa paciência real)
-            learning_rate=0.1,
-            max_depth=6,
-            #use_label_encoder=False,
-            n_jobs=-1,
-            early_stopping_rounds=PATIENCE, # Consistência de parada
-            #eval_metric="mlogloss"
-        ),
-    ]
+    # --- 3. Definir Modelos (Seleção Dinâmica) ---
+    filename_lower = os.path.basename(wsg_file_path).lower()
+
+    if "github" in filename_lower:
+        print(f">> Dataset identificado: MUSAE-GitHub. Carregando parâmetros otimizados.")
+        models_to_run = get_github_models(config=config)
+    elif "facebook" in filename_lower:
+        print(f">> Dataset identificado: MUSAE-Facebook. Carregando parâmetros otimizados.")
+        models_to_run = get_facebook_models(config=config)
+    else:
+        # Fallback de segurança (ou lançar erro)
+        print("!! AVISO: Dataset não identificado no nome. Usando GitHub como padrão.")
+        models_to_run = get_github_models(config=config)
+
+
+
 
     # --- 4. Executar o Experimento ---
     runner = ExperimentRunner(
