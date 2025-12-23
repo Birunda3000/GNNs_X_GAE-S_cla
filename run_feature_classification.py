@@ -15,6 +15,7 @@ from requests import get
 import torch
 import numpy as np
 import psutil
+import gc
 
 # Sklearn classifiers
 from sklearn.linear_model import LogisticRegression
@@ -109,3 +110,4 @@ if __name__ == "__main__":
             main(file_path)
         except Exception as e:
             print(f"Erro ao processar {file_path}: {e}")
+        gc.collect()

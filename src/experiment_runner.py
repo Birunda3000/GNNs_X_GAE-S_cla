@@ -3,6 +3,7 @@ from typing import List, Dict, Any, cast
 import psutil
 import torch
 from torch_geometric.data import Data
+import gc
 
 # from functools import partial  # <- opcional: remover se não usar
 
@@ -137,6 +138,7 @@ class ExperimentRunner:
                 "val_f1_score_weighted": model_report["val_f1"],  
                 "training_time_seconds": model_report["total_training_time"],
             }
+            gc.collect()
 
         mem_end_run = process.memory_info().rss
         report["memory_summary"].update(
