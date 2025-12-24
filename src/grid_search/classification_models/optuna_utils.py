@@ -60,7 +60,7 @@ class SklearnObjective:
             return self.model_class(
                 **params,
                 n_estimators=200,
-                eval_metric="mlogloss",
+                #eval_metric="mlogloss",
                 use_label_encoder=False,
                 n_jobs=1,
                 random_state=self.config.RANDOM_SEED,

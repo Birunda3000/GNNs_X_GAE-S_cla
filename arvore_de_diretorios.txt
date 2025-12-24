@@ -36,53 +36,7 @@ gnn_tcc/
 │   │       ├── musae_git_features.json
 │   │       ├── musae_git_target.csv
 │   │       └── README.txt
-│   ├── output
-│   │   ├── CLASSIFICATION_RUNS
-│   │   │   ├── Musae-Facebook-Embeddings__best_val_f1_0_5950__test_f1_0_5918__model_xgb__30-11-2025_12-11-00
-│   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Facebook-Embeddings__best_val_f1_0_7609__test_f1_0_7588__model_xgb__30-11-2025_12-11-17
-│   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Facebook-Embeddings__best_val_f1_0_8669__test_f1_0_8704__model_kneighbors__30-11-2025_12-11-41
-│   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Facebook-Embeddings__best_val_f1_0_9071__test_f1_0_9071__model_mlp__30-11-2025_12-12-10
-│   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Facebook-Embeddings__best_val_f1_0_9082__test_f1_0_9099__model_xgb__30-11-2025_12-13-15
-│   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Facebook-Embeddings__best_val_f1_0_9088__test_f1_0_9152__model_xgb__30-11-2025_12-13-52
-│   │   │   │   └── run_report.json
-│   │   │   └── Musae-Facebook-Embeddings__best_val_f1_0_9137__test_f1_0_9075__model_xgb__30-11-2025_12-14-33
-│   │   │       └── run_report.json
-│   │   ├── EMBEDDING_RUNS
-│   │   │   ├── Musae-Facebook__score_0_7750__emb_dim_2__10-12-2025_15-24-48
-│   │   │   │   ├── Musae-Facebook_(2)_embeddings_10-12-2025_15-24-48.wsg.json
-│   │   │   │   ├── Musae-Facebook__FacebookGAE__10-12-2025_15-24-48.pt
-│   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Facebook__score_0_9964__emb_dim_3__10-12-2025_15-26-40
-│   │   │   │   ├── Musae-Facebook_(3)_embeddings_10-12-2025_15-26-40.wsg.json
-│   │   │   │   ├── Musae-Facebook__FacebookGAE__10-12-2025_15-26-40.pt
-│   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Facebook__score_1_5708__emb_dim_8__10-12-2025_15-28-44
-│   │   │   │   ├── Musae-Facebook_(8)_embeddings_10-12-2025_15-28-44.wsg.json
-│   │   │   │   ├── Musae-Facebook__FacebookGAE__10-12-2025_15-28-44.pt
-│   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Facebook__score_1_7161__emb_dim_32__10-12-2025_15-33-25
-│   │   │   │   ├── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25.wsg.json
-│   │   │   │   ├── Musae-Facebook__FacebookGAE__10-12-2025_15-33-25.pt
-│   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Facebook__score_1_7175__emb_dim_64__10-12-2025_15-36-15
-│   │   │   │   ├── Musae-Facebook_(64)_embeddings_10-12-2025_15-36-15.wsg.json
-│   │   │   │   ├── Musae-Facebook__FacebookGAE__10-12-2025_15-36-15.pt
-│   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Facebook__score_1_7286__emb_dim_16__10-12-2025_15-31-07
-│   │   │   │   ├── Musae-Facebook_(16)_embeddings_10-12-2025_15-31-07.wsg.json
-│   │   │   │   ├── Musae-Facebook__FacebookGAE__10-12-2025_15-31-07.pt
-│   │   │   │   └── run_report.json
-│   │   │   ├── Musae-Facebook__score_1_7497__emb_dim_128__10-12-2025_15-43-11
-│   │   │   │   ├── Musae-Facebook_(128)_embeddings_10-12-2025_15-43-11.wsg.json
-│   │   │   │   ├── Musae-Facebook__FacebookGAE__10-12-2025_15-43-11.pt
-│   │   │   │   └── run_report.json
-│   │   │   └── ... (mais 7 itens)
-│   │   ├── GRAPH_CLASSIFICATION_RUNS
+│   ├── old
 │   │   ├── GRID_SEARCH_RUNS
 │   │   │   ├── GAEs
 │   │   │   │   ├── DynamicGAE
@@ -413,669 +367,1906 @@ gnn_tcc/
 │   │       │   │       │       └── run_report.json
 │   │       │   │       └── ... (mais 93 itens)
 │   │       │   └── ... (mais 10 itens)
-│   │       └── SKLEARN_Classifiers
-│   │           ├── 10-12-2025_18-00-18
+│   │       ├── SKLEARN_Classifiers
+│   │       │   ├── 10-12-2025_18-00-18
+│   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25
+│   │       │   │       ├── KNN
+│   │       │   │       │   ├── Trial_0
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_9133__10-12-2025_21-01-22
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_1
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_9258__10-12-2025_21-01-25
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_2
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_9057__10-12-2025_21-01-28
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_3
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_9279__10-12-2025_21-01-31
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_4
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_9256__10-12-2025_21-01-32
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_5
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_9155__10-12-2025_21-01-32
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_6
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_9227__10-12-2025_21-01-35
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   └── ... (mais 23 itens)
+│   │       │   │       ├── LogisticRegression
+│   │       │   │       │   ├── Trial_0
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_7131__10-12-2025_21-00-20
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_1
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_7107__10-12-2025_21-00-26
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_2
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_7513__10-12-2025_21-00-28
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_3
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_7505__10-12-2025_21-00-32
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_4
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_5725__10-12-2025_21-00-33
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_5
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_7462__10-12-2025_21-00-34
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_6
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_5271__10-12-2025_21-00-36
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   └── ... (mais 23 itens)
+│   │       │   │       ├── MLP
+│   │       │   │       │   ├── Trial_0
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_7514__10-12-2025_21-44-36
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_1
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_8397__10-12-2025_21-44-52
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_2
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_9037__10-12-2025_21-46-10
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_3
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_7465__10-12-2025_21-51-47
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_4
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_7522__10-12-2025_21-52-14
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_5
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_8871__10-12-2025_21-52-28
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_6
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_7485__10-12-2025_21-52-56
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   └── ... (mais 8 itens)
+│   │       │   │       ├── QDA
+│   │       │   │       │   ├── Trial_0
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_6157__10-12-2025_21-44-22
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_1
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_3717__10-12-2025_21-44-23
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_2
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_2126__10-12-2025_21-44-24
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_3
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_6157__10-12-2025_21-44-24
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_4
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_7489__10-12-2025_21-44-25
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_5
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_2126__10-12-2025_21-44-25
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_6
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_7489__10-12-2025_21-44-26
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   └── ... (mais 23 itens)
+│   │       │   │       ├── RandomForest
+│   │       │   │       │   ├── Trial_0
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_8855__10-12-2025_21-02-49
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_1
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_9042__10-12-2025_21-03-28
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_2
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_8712__10-12-2025_21-04-07
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_3
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_9096__10-12-2025_21-05-34
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_4
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_9083__10-12-2025_21-05-54
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_5
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_9105__10-12-2025_21-06-12
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_6
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_8893__10-12-2025_21-06-30
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   └── ... (mais 23 itens)
+│   │       │   │       ├── SVM
+│   │       │   │       │   ├── Trial_0
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_7385__10-12-2025_21-30-53
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_1
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_7417__10-12-2025_21-30-55
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_2
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_1435__10-12-2025_21-31-28
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_3
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_7313__10-12-2025_21-31-28
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_4
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_6887__10-12-2025_21-31-31
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_5
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_7417__10-12-2025_21-31-33
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_6
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_7385__10-12-2025_21-31-33
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   └── ... (mais 23 itens)
+│   │       │   │       ├── XGBoost
+│   │       │   │       │   ├── Trial_0
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_8812__10-12-2025_22-23-29
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_1
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_8778__10-12-2025_22-23-47
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_2
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_8315__10-12-2025_22-23-52
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_3
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_9154__10-12-2025_22-23-56
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_4
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_8759__10-12-2025_22-24-23
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_5
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_8758__10-12-2025_22-24-25
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_6
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_9128__10-12-2025_22-24-47
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   └── ... (mais 23 itens)
+│   │       │   │       └── ... (mais 1 itens)
+│   │       │   ├── 10-12-2025_18-54-11
+│   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55
+│   │       │   │       ├── KNN
+│   │       │   │       │   ├── Trial_0
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8414__10-12-2025_21-56-05
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_1
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8382__10-12-2025_21-56-06
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_2
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8378__10-12-2025_21-56-08
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_3
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8471__10-12-2025_21-56-24
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_4
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8456__10-12-2025_21-56-25
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_5
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8429__10-12-2025_21-56-35
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_6
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8414__10-12-2025_21-56-45
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   └── ... (mais 23 itens)
+│   │       │   │       ├── LogisticRegression
+│   │       │   │       │   ├── Trial_0
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8399__10-12-2025_21-54-13
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_1
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8475__10-12-2025_21-54-19
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_2
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8479__10-12-2025_21-54-24
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_3
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8476__10-12-2025_21-54-25
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_4
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8432__10-12-2025_21-54-29
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_5
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8352__10-12-2025_21-54-30
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_6
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8364__10-12-2025_21-54-29
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   └── ... (mais 23 itens)
+│   │       │   │       ├── MLP
+│   │       │   │       │   ├── Trial_0
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8478__10-12-2025_23-10-38
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_1
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8479__10-12-2025_23-11-36
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_2
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8499__10-12-2025_23-11-54
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_3
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8480__10-12-2025_23-12-08
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_4
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8341__10-12-2025_23-12-32
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_5
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8505__10-12-2025_23-14-41
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_6
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8469__10-12-2025_23-15-45
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   └── ... (mais 8 itens)
+│   │       │   │       ├── QDA
+│   │       │   │       │   ├── Trial_0
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8419__10-12-2025_23-10-24
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_1
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8356__10-12-2025_23-10-25
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_2
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8440__10-12-2025_23-10-25
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_3
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8356__10-12-2025_23-10-26
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_4
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8459__10-12-2025_23-10-26
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_5
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8356__10-12-2025_23-10-27
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_6
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8419__10-12-2025_23-10-27
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   └── ... (mais 23 itens)
+│   │       │   │       ├── RandomForest
+│   │       │   │       │   ├── Trial_0
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8504__10-12-2025_22-00-11
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_1
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8513__10-12-2025_22-02-12
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_2
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8510__10-12-2025_22-04-18
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_3
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8501__10-12-2025_22-07-14
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_4
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8506__10-12-2025_22-09-18
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_5
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8503__10-12-2025_22-10-03
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_6
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8496__10-12-2025_22-12-09
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   └── ... (mais 23 itens)
+│   │       │   │       ├── SVM
+│   │       │   │       │   ├── Trial_0
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8440__10-12-2025_23-05-03
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_1
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8404__10-12-2025_23-05-03
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_2
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8457__10-12-2025_23-05-04
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_3
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8377__10-12-2025_23-05-06
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_4
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8378__10-12-2025_23-05-08
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_5
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8375__10-12-2025_23-05-26
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_6
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8377__10-12-2025_23-05-43
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   └── ... (mais 23 itens)
+│   │       │   │       ├── XGBoost
+│   │       │   │       │   ├── Trial_0
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8517__10-12-2025_23-29-33
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_1
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8478__10-12-2025_23-29-44
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_2
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8466__10-12-2025_23-29-46
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_3
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8461__10-12-2025_23-29-54
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_4
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8479__10-12-2025_23-29-56
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_5
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8504__10-12-2025_23-30-04
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_6
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8493__10-12-2025_23-30-06
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   └── ... (mais 23 itens)
+│   │       │   │       └── ... (mais 1 itens)
+│   │       │   ├── 11-12-2025_06-39-40
+│   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55
+│   │       │   │       ├── KNN
+│   │       │   │       │   ├── Trial_0
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08280__09-40-48
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_1
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08469__09-40-57
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_2
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08448__09-40-59
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_3
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08457__09-41-19
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_4
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08422__09-41-20
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_5
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08269__09-41-30
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_6
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08380__09-41-32
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   └── ... (mais 23 itens)
+│   │       │   │       ├── LogisticRegression
+│   │       │   │       │   ├── Trial_0
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08475__09-39-42
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_1
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08475__09-39-49
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_2
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08476__09-39-53
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_3
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08477__09-39-58
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_4
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08366__09-40-02
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_5
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08477__09-40-07
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_6
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08477__09-40-11
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   └── ... (mais 23 itens)
+│   │       │   │       ├── MLP
+│   │       │   │       │   ├── Trial_0
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08452__10-49-33
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_1
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08480__10-51-10
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_2
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08511__10-57-53
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_3
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08489__11-00-18
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_4
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08456__11-01-19
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_5
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08514__11-01-36
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_6
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08479__11-02-06
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   └── ... (mais 8 itens)
+│   │       │   │       ├── QDA
+│   │       │   │       │   ├── Trial_0
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08318__10-48-05
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_1
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08419__10-48-08
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_2
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08440__10-48-11
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_3
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08419__10-48-13
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_4
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08318__10-48-16
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_5
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08356__10-48-19
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_6
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08440__10-48-21
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   └── ... (mais 23 itens)
+│   │       │   │       ├── RandomForest
+│   │       │   │       │   ├── Trial_0
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08501__09-45-35
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_1
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08447__09-47-33
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_2
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08497__09-48-01
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_3
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08513__09-48-45
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_4
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08482__09-49-59
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_5
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08498__09-50-44
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_6
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08500__09-53-48
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   └── ... (mais 23 itens)
+│   │       │   │       ├── SVM
+│   │       │   │       │   ├── Trial_0
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08461__10-43-18
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_1
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08457__10-43-20
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_2
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08375__10-43-22
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_3
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08456__10-43-26
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_4
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08416__10-43-28
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_5
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08457__10-43-30
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_6
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08376__10-43-32
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   └── ... (mais 8 itens)
+│   │       │   │       ├── XGBoost
+│   │       │   │       │   ├── Trial_0
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08490__11-17-19
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_1
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08512__11-17-31
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_2
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08461__11-17-49
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_3
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08368__11-17-52
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_4
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08520__11-17-56
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_5
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08508__11-17-58
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_6
+│   │       │   │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08481__11-18-15
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   └── ... (mais 23 itens)
+│   │       │   │       └── ... (mais 1 itens)
+│   │       │   ├── 11-12-2025_06-40-31
+│   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25
+│   │       │   │       ├── KNN
+│   │       │   │       │   ├── Trial_0
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09297__09-41-43
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_1
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09023__09-41-51
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_2
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09083__09-41-53
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_3
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09305__09-41-53
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_4
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_08938__09-41-58
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_5
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_08707__09-42-00
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_6
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09053__09-42-05
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   └── ... (mais 23 itens)
+│   │       │   │       ├── LogisticRegression
+│   │       │   │       │   ├── Trial_0
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07505__09-40-33
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_1
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_06611__09-40-38
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_2
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_06180__09-40-40
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_3
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07378__09-40-38
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_4
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07462__09-40-39
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_5
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07107__09-40-42
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_6
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_06611__09-40-44
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   └── ... (mais 23 itens)
+│   │       │   │       ├── MLP
+│   │       │   │       │   ├── Trial_0
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_08058__10-14-55
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_1
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07541__10-15-44
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_2
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07519__10-17-54
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_3
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_08358__10-18-42
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_4
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07543__10-19-22
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_5
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07541__10-20-10
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_6
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07983__10-20-17
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   └── ... (mais 8 itens)
+│   │       │   │       ├── QDA
+│   │       │   │       │   ├── Trial_0
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_02126__10-13-51
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_1
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07489__10-13-53
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_2
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_02126__10-13-56
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_3
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_06157__10-13-58
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_4
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_03717__10-14-00
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_5
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_03717__10-14-02
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_6
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07820__10-14-05
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   └── ... (mais 23 itens)
+│   │       │   │       ├── RandomForest
+│   │       │   │       │   ├── Trial_0
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09110__09-43-45
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_1
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09054__09-44-06
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_2
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_08819__09-46-18
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_3
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09079__09-46-36
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_4
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_08823__09-48-00
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_5
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09107__09-49-12
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_6
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09116__09-49-56
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   └── ... (mais 23 itens)
+│   │       │   │       ├── SVM
+│   │       │   │       │   ├── Trial_0
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07385__10-10-26
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_1
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07383__10-10-28
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_2
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07417__10-10-31
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_3
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07382__10-10-33
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_4
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07428__10-11-27
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_5
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_01435__10-11-29
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_6
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07383__10-11-29
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   └── ... (mais 8 itens)
+│   │       │   │       ├── XGBoost
+│   │       │   │       │   ├── Trial_0
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07455__10-58-50
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_1
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09093__10-59-16
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_2
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09151__10-59-30
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_3
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09187__10-59-52
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_4
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09180__11-00-19
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_5
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07426__11-00-43
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_6
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09012__11-00-56
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   └── ... (mais 23 itens)
+│   │       │   │       └── ... (mais 1 itens)
+│   │       │   ├── 12-12-2025_08-15-41
+│   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25
+│   │       │   │       ├── KNN
+│   │       │   │       │   ├── Trial_0
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09256__11-16-32
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_1
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09237__11-16-33
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_2
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09142__11-16-33
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_3
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09157__11-16-34
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_4
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09258__11-16-34
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_5
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09279__11-16-37
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_6
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09258__11-16-38
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   └── ... (mais 23 itens)
+│   │       │   │       ├── LogisticRegression
+│   │       │   │       │   ├── Trial_0
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07468__11-15-42
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_1
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07430__11-15-47
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_2
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07462__11-15-50
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_3
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07466__11-15-51
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_4
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07192__11-15-51
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_5
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_06611__11-15-53
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_6
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_05888__11-15-54
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   └── ... (mais 23 itens)
+│   │       │   │       ├── MLP
+│   │       │   │       │   ├── Trial_0
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07536__13-05-31
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_1
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_08352__13-06-12
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   └── Trial_2
+│   │       │   │       │       └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_05770__13-10-19
+│   │       │   │       │           └── run_report.json
+│   │       │   │       ├── QDA
+│   │       │   │       │   ├── Trial_0
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07820__13-04-30
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_1
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_06157__13-04-31
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_2
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_03717__13-04-32
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_3
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_02126__13-04-32
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_4
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_03717__13-04-34
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_5
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07820__13-04-34
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_6
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07820__13-04-35
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   └── ... (mais 23 itens)
+│   │       │   │       ├── RandomForest
+│   │       │   │       │   ├── Trial_0
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09042__11-17-39
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_1
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09099__11-18-19
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_2
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_08675__11-19-30
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_3
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09110__11-19-59
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_4
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09128__11-20-52
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_5
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09095__11-22-13
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   ├── Trial_6
+│   │       │   │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_08828__11-22-34
+│   │       │   │       │   │       └── run_report.json
+│   │       │   │       │   └── ... (mais 23 itens)
+│   │       │   │       └── SVM
+│   │       │   │           ├── Trial_0
+│   │       │   │           │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07108__12-57-26
+│   │       │   │           │       └── run_report.json
+│   │       │   │           ├── Trial_1
+│   │       │   │           │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07378__12-57-26
+│   │       │   │           │       └── run_report.json
+│   │       │   │           ├── Trial_2
+│   │       │   │           │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07383__12-57-28
+│   │       │   │           │       └── run_report.json
+│   │       │   │           ├── Trial_3
+│   │       │   │           │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07385__12-58-39
+│   │       │   │           │       └── run_report.json
+│   │       │   │           ├── Trial_4
+│   │       │   │           │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_05735__12-58-42
+│   │       │   │           │       └── run_report.json
+│   │       │   │           ├── Trial_5
+│   │       │   │           │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07417__12-58-44
+│   │       │   │           │       └── run_report.json
+│   │       │   │           ├── Trial_6
+│   │       │   │           │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07429__12-58-47
+│   │       │   │           │       └── run_report.json
+│   │       │   │           └── ... (mais 8 itens)
+│   │       │   └── 12-12-2025_08-18-49
+│   │       │       └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55
+│   │       │           ├── KNN
+│   │       │           │   ├── Trial_0
+│   │       │           │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08382__11-19-51
+│   │       │           │   │       └── run_report.json
+│   │       │           │   ├── Trial_1
+│   │       │           │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08467__11-19-52
+│   │       │           │   │       └── run_report.json
+│   │       │           │   ├── Trial_2
+│   │       │           │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08283__11-20-10
+│   │       │           │   │       └── run_report.json
+│   │       │           │   ├── Trial_3
+│   │       │           │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08271__11-20-20
+│   │       │           │   │       └── run_report.json
+│   │       │           │   ├── Trial_4
+│   │       │           │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08452__11-20-22
+│   │       │           │   │       └── run_report.json
+│   │       │           │   ├── Trial_5
+│   │       │           │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08487__11-20-28
+│   │       │           │   │       └── run_report.json
+│   │       │           │   ├── Trial_6
+│   │       │           │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08487__11-20-40
+│   │       │           │   │       └── run_report.json
+│   │       │           │   └── ... (mais 23 itens)
+│   │       │           ├── LogisticRegression
+│   │       │           │   ├── Trial_0
+│   │       │           │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08365__11-18-52
+│   │       │           │   │       └── run_report.json
+│   │       │           │   ├── Trial_1
+│   │       │           │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08476__11-18-56
+│   │       │           │   │       └── run_report.json
+│   │       │           │   ├── Trial_2
+│   │       │           │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08475__11-19-02
+│   │       │           │   │       └── run_report.json
+│   │       │           │   ├── Trial_3
+│   │       │           │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08379__11-19-06
+│   │       │           │   │       └── run_report.json
+│   │       │           │   ├── Trial_4
+│   │       │           │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08460__11-19-04
+│   │       │           │   │       └── run_report.json
+│   │       │           │   ├── Trial_5
+│   │       │           │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08477__11-19-05
+│   │       │           │   │       └── run_report.json
+│   │       │           │   ├── Trial_6
+│   │       │           │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08465__11-19-06
+│   │       │           │   │       └── run_report.json
+│   │       │           │   └── ... (mais 23 itens)
+│   │       │           ├── MLP
+│   │       │           │   ├── Trial_0
+│   │       │           │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08488__15-14-16
+│   │       │           │   │       └── run_report.json
+│   │       │           │   ├── Trial_1
+│   │       │           │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08510__15-16-00
+│   │       │           │   │       └── run_report.json
+│   │       │           │   ├── Trial_2
+│   │       │           │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08473__15-16-24
+│   │       │           │   │       └── run_report.json
+│   │       │           │   ├── Trial_3
+│   │       │           │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08507__15-18-46
+│   │       │           │   │       └── run_report.json
+│   │       │           │   ├── Trial_4
+│   │       │           │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08451__15-23-22
+│   │       │           │   │       └── run_report.json
+│   │       │           │   └── Trial_5
+│   │       │           │       └── _tmp__12-12-2025_15-34-08
+│   │       │           ├── QDA
+│   │       │           │   ├── Trial_0
+│   │       │           │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08459__15-11-17
+│   │       │           │   │       └── run_report.json
+│   │       │           │   ├── Trial_1
+│   │       │           │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08356__15-11-22
+│   │       │           │   │       └── run_report.json
+│   │       │           │   ├── Trial_2
+│   │       │           │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08318__15-11-30
+│   │       │           │   │       └── run_report.json
+│   │       │           │   ├── Trial_3
+│   │       │           │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08318__15-11-39
+│   │       │           │   │       └── run_report.json
+│   │       │           │   ├── Trial_4
+│   │       │           │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08318__15-11-42
+│   │       │           │   │       └── run_report.json
+│   │       │           │   ├── Trial_5
+│   │       │           │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08440__15-11-48
+│   │       │           │   │       └── run_report.json
+│   │       │           │   ├── Trial_6
+│   │       │           │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08419__15-11-52
+│   │       │           │   │       └── run_report.json
+│   │       │           │   └── ... (mais 23 itens)
+│   │       │           ├── RandomForest
+│   │       │           │   ├── Trial_0
+│   │       │           │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08494__11-23-46
+│   │       │           │   │       └── run_report.json
+│   │       │           │   ├── Trial_1
+│   │       │           │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08513__11-24-25
+│   │       │           │   │       └── run_report.json
+│   │       │           │   ├── Trial_2
+│   │       │           │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08500__11-26-14
+│   │       │           │   │       └── run_report.json
+│   │       │           │   ├── Trial_3
+│   │       │           │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08505__11-27-52
+│   │       │           │   │       └── run_report.json
+│   │       │           │   ├── Trial_4
+│   │       │           │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08515__11-31-25
+│   │       │           │   │       └── run_report.json
+│   │       │           │   ├── Trial_5
+│   │       │           │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08490__11-34-57
+│   │       │           │   │       └── run_report.json
+│   │       │           │   ├── Trial_6
+│   │       │           │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08493__11-36-18
+│   │       │           │   │       └── run_report.json
+│   │       │           │   └── ... (mais 23 itens)
+│   │       │           └── SVM
+│   │       │               ├── Trial_0
+│   │       │               │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08376__14-57-41
+│   │       │               │       └── run_report.json
+│   │       │               ├── Trial_1
+│   │       │               │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08457__14-57-44
+│   │       │               │       └── run_report.json
+│   │       │               ├── Trial_2
+│   │       │               │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08456__14-57-46
+│   │       │               │       └── run_report.json
+│   │       │               ├── Trial_3
+│   │       │               │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08406__14-57-49
+│   │       │               │       └── run_report.json
+│   │       │               ├── Trial_4
+│   │       │               │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08440__14-58-11
+│   │       │               │       └── run_report.json
+│   │       │               ├── Trial_5
+│   │       │               │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08457__14-58-13
+│   │       │               │       └── run_report.json
+│   │       │               ├── Trial_6
+│   │       │               │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08377__14-59-49
+│   │       │               │       └── run_report.json
+│   │       │               └── ... (mais 8 itens)
+│   │       └── SKLEARN_Classifiers-nokfold
+│   │           ├── 12-12-2025_13-43-00
+│   │           │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25
+│   │           │       └── LogisticRegression
+│   │           │           └── Trial_0
+│   │           ├── 12-12-2025_13-44-43
 │   │           │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25
 │   │           │       ├── KNN
 │   │           │       │   ├── Trial_0
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_9133__10-12-2025_21-01-22
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_08953__16-45-11
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_1
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_9258__10-12-2025_21-01-25
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_09138__16-45-13
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_2
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_9057__10-12-2025_21-01-28
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_09149__16-45-13
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_3
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_9279__10-12-2025_21-01-31
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_09181__16-45-15
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_4
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_9256__10-12-2025_21-01-32
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_09116__16-45-15
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_5
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_9155__10-12-2025_21-01-32
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_09068__16-45-15
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_6
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_9227__10-12-2025_21-01-35
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_08798__16-45-16
 │   │           │       │   │       └── run_report.json
 │   │           │       │   └── ... (mais 23 itens)
 │   │           │       ├── LogisticRegression
 │   │           │       │   ├── Trial_0
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_7131__10-12-2025_21-00-20
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_05320__16-44-45
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_1
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_7107__10-12-2025_21-00-26
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07365__16-44-45
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_2
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_7513__10-12-2025_21-00-28
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_06291__16-44-46
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_3
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_7505__10-12-2025_21-00-32
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07400__16-44-46
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_4
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_5725__10-12-2025_21-00-33
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07400__16-44-47
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_5
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_7462__10-12-2025_21-00-34
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07416__16-44-47
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_6
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_5271__10-12-2025_21-00-36
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07399__16-44-48
 │   │           │       │   │       └── run_report.json
 │   │           │       │   └── ... (mais 23 itens)
 │   │           │       ├── MLP
 │   │           │       │   ├── Trial_0
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_7514__10-12-2025_21-44-36
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_08089__16-54-28
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_1
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_8397__10-12-2025_21-44-52
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_08775__16-54-57
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_2
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_9037__10-12-2025_21-46-10
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_09022__16-55-30
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_3
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_7465__10-12-2025_21-51-47
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07493__16-56-45
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_4
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_7522__10-12-2025_21-52-14
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07526__16-57-17
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_5
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_8871__10-12-2025_21-52-28
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_01926__16-58-28
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_6
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_7485__10-12-2025_21-52-56
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07492__16-58-35
 │   │           │       │   │       └── run_report.json
-│   │           │       │   └── ... (mais 8 itens)
+│   │           │       │   └── ... (mais 20 itens)
 │   │           │       ├── QDA
 │   │           │       │   ├── Trial_0
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_6157__10-12-2025_21-44-22
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_03508__16-54-11
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_1
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_3717__10-12-2025_21-44-23
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_01967__16-54-11
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_2
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_2126__10-12-2025_21-44-24
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_01967__16-54-12
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_3
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_6157__10-12-2025_21-44-24
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07300__16-54-14
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_4
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_7489__10-12-2025_21-44-25
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07697__16-54-15
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_5
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_2126__10-12-2025_21-44-25
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07697__16-54-17
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_6
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_7489__10-12-2025_21-44-26
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07300__16-54-15
 │   │           │       │   │       └── run_report.json
 │   │           │       │   └── ... (mais 23 itens)
 │   │           │       ├── RandomForest
 │   │           │       │   ├── Trial_0
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_8855__10-12-2025_21-02-49
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_09035__16-45-39
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_1
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_9042__10-12-2025_21-03-28
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_09052__16-45-48
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_2
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_8712__10-12-2025_21-04-07
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_08717__16-46-00
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_3
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_9096__10-12-2025_21-05-34
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_09000__16-46-08
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_4
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_9083__10-12-2025_21-05-54
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_09021__16-46-13
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_5
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_9105__10-12-2025_21-06-12
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_08772__16-46-15
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_6
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_8893__10-12-2025_21-06-30
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_09036__16-46-24
 │   │           │       │   │       └── run_report.json
 │   │           │       │   └── ... (mais 23 itens)
-│   │           │       ├── SVM
-│   │           │       │   ├── Trial_0
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_7385__10-12-2025_21-30-53
-│   │           │       │   │       └── run_report.json
-│   │           │       │   ├── Trial_1
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_7417__10-12-2025_21-30-55
-│   │           │       │   │       └── run_report.json
-│   │           │       │   ├── Trial_2
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_1435__10-12-2025_21-31-28
-│   │           │       │   │       └── run_report.json
-│   │           │       │   ├── Trial_3
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_7313__10-12-2025_21-31-28
-│   │           │       │   │       └── run_report.json
-│   │           │       │   ├── Trial_4
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_6887__10-12-2025_21-31-31
-│   │           │       │   │       └── run_report.json
-│   │           │       │   ├── Trial_5
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_7417__10-12-2025_21-31-33
-│   │           │       │   │       └── run_report.json
-│   │           │       │   ├── Trial_6
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_7385__10-12-2025_21-31-33
-│   │           │       │   │       └── run_report.json
-│   │           │       │   └── ... (mais 23 itens)
-│   │           │       ├── XGBoost
-│   │           │       │   ├── Trial_0
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_8812__10-12-2025_22-23-29
-│   │           │       │   │       └── run_report.json
-│   │           │       │   ├── Trial_1
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_8778__10-12-2025_22-23-47
-│   │           │       │   │       └── run_report.json
-│   │           │       │   ├── Trial_2
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_8315__10-12-2025_22-23-52
-│   │           │       │   │       └── run_report.json
-│   │           │       │   ├── Trial_3
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_9154__10-12-2025_22-23-56
-│   │           │       │   │       └── run_report.json
-│   │           │       │   ├── Trial_4
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_8759__10-12-2025_22-24-23
-│   │           │       │   │       └── run_report.json
-│   │           │       │   ├── Trial_5
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_8758__10-12-2025_22-24-25
-│   │           │       │   │       └── run_report.json
-│   │           │       │   ├── Trial_6
-│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_f1_0_9128__10-12-2025_22-24-47
-│   │           │       │   │       └── run_report.json
-│   │           │       │   └── ... (mais 23 itens)
-│   │           │       └── ... (mais 1 itens)
-│   │           ├── 10-12-2025_18-54-11
+│   │           │       └── SVM
+│   │           │           ├── Trial_0
+│   │           │           │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_01490__16-50-06
+│   │           │           │       └── run_report.json
+│   │           │           ├── Trial_1
+│   │           │           │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_06256__16-50-06
+│   │           │           │       └── run_report.json
+│   │           │           ├── Trial_2
+│   │           │           │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07409__16-50-07
+│   │           │           │       └── run_report.json
+│   │           │           ├── Trial_3
+│   │           │           │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07409__16-50-09
+│   │           │           │       └── run_report.json
+│   │           │           ├── Trial_4
+│   │           │           │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07409__16-50-10
+│   │           │           │       └── run_report.json
+│   │           │           ├── Trial_5
+│   │           │           │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07413__16-50-35
+│   │           │           │       └── run_report.json
+│   │           │           ├── Trial_6
+│   │           │           │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07346__16-50-56
+│   │           │           │       └── run_report.json
+│   │           │           └── ... (mais 23 itens)
+│   │           ├── 12-12-2025_13-45-06
 │   │           │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55
 │   │           │       ├── KNN
 │   │           │       │   ├── Trial_0
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8414__10-12-2025_21-56-05
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08480__16-45-55
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_1
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8382__10-12-2025_21-56-06
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08443__16-46-08
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_2
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8378__10-12-2025_21-56-08
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08413__16-46-09
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_3
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8471__10-12-2025_21-56-24
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08475__16-46-09
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_4
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8456__10-12-2025_21-56-25
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08471__16-46-13
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_5
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8429__10-12-2025_21-56-35
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08289__16-46-12
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_6
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8414__10-12-2025_21-56-45
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08424__16-46-13
 │   │           │       │   │       └── run_report.json
 │   │           │       │   └── ... (mais 23 itens)
 │   │           │       ├── LogisticRegression
 │   │           │       │   ├── Trial_0
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8399__10-12-2025_21-54-13
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08312__16-45-08
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_1
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8475__10-12-2025_21-54-19
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08355__16-45-11
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_2
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8479__10-12-2025_21-54-24
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08314__16-45-12
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_3
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8476__10-12-2025_21-54-25
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08408__16-45-15
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_4
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8432__10-12-2025_21-54-29
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08403__16-45-19
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_5
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8352__10-12-2025_21-54-30
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08306__16-45-19
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_6
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8364__10-12-2025_21-54-29
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08355__16-45-22
 │   │           │       │   │       └── run_report.json
 │   │           │       │   └── ... (mais 23 itens)
 │   │           │       ├── MLP
 │   │           │       │   ├── Trial_0
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8478__10-12-2025_23-10-38
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08488__16-57-30
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_1
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8479__10-12-2025_23-11-36
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08490__18-33-13
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_2
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8499__10-12-2025_23-11-54
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08454__18-33-16
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_3
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8480__10-12-2025_23-12-08
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08028__18-33-24
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_4
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8341__10-12-2025_23-12-32
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08486__18-33-52
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_5
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8505__10-12-2025_23-14-41
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08478__18-34-13
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_6
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8469__10-12-2025_23-15-45
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08500__18-34-20
 │   │           │       │   │       └── run_report.json
-│   │           │       │   └── ... (mais 8 itens)
+│   │           │       │   └── ... (mais 4 itens)
 │   │           │       ├── QDA
 │   │           │       │   ├── Trial_0
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8419__10-12-2025_23-10-24
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08372__16-57-01
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_1
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8356__10-12-2025_23-10-25
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08319__16-57-02
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_2
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8440__10-12-2025_23-10-25
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08334__16-57-03
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_3
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8356__10-12-2025_23-10-26
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08458__16-57-04
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_4
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8459__10-12-2025_23-10-26
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08439__16-57-06
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_5
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8356__10-12-2025_23-10-27
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08372__16-57-07
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_6
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8419__10-12-2025_23-10-27
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08319__16-57-08
 │   │           │       │   │       └── run_report.json
 │   │           │       │   └── ... (mais 23 itens)
 │   │           │       ├── RandomForest
 │   │           │       │   ├── Trial_0
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8504__10-12-2025_22-00-11
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08426__16-47-19
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_1
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8513__10-12-2025_22-02-12
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08442__16-47-40
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_2
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8510__10-12-2025_22-04-18
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08450__16-48-20
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_3
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8501__10-12-2025_22-07-14
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08482__16-48-31
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_4
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8506__10-12-2025_22-09-18
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08429__16-48-38
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_5
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8503__10-12-2025_22-10-03
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08438__16-49-06
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_6
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8496__10-12-2025_22-12-09
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08416__16-49-18
 │   │           │       │   │       └── run_report.json
 │   │           │       │   └── ... (mais 23 itens)
-│   │           │       ├── SVM
-│   │           │       │   ├── Trial_0
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8440__10-12-2025_23-05-03
-│   │           │       │   │       └── run_report.json
-│   │           │       │   ├── Trial_1
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8404__10-12-2025_23-05-03
-│   │           │       │   │       └── run_report.json
-│   │           │       │   ├── Trial_2
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8457__10-12-2025_23-05-04
-│   │           │       │   │       └── run_report.json
-│   │           │       │   ├── Trial_3
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8377__10-12-2025_23-05-06
-│   │           │       │   │       └── run_report.json
-│   │           │       │   ├── Trial_4
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8378__10-12-2025_23-05-08
-│   │           │       │   │       └── run_report.json
-│   │           │       │   ├── Trial_5
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8375__10-12-2025_23-05-26
-│   │           │       │   │       └── run_report.json
-│   │           │       │   ├── Trial_6
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8377__10-12-2025_23-05-43
-│   │           │       │   │       └── run_report.json
-│   │           │       │   └── ... (mais 23 itens)
-│   │           │       ├── XGBoost
-│   │           │       │   ├── Trial_0
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8517__10-12-2025_23-29-33
-│   │           │       │   │       └── run_report.json
-│   │           │       │   ├── Trial_1
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8478__10-12-2025_23-29-44
-│   │           │       │   │       └── run_report.json
-│   │           │       │   ├── Trial_2
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8466__10-12-2025_23-29-46
-│   │           │       │   │       └── run_report.json
-│   │           │       │   ├── Trial_3
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8461__10-12-2025_23-29-54
-│   │           │       │   │       └── run_report.json
-│   │           │       │   ├── Trial_4
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8479__10-12-2025_23-29-56
-│   │           │       │   │       └── run_report.json
-│   │           │       │   ├── Trial_5
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8504__10-12-2025_23-30-04
-│   │           │       │   │       └── run_report.json
-│   │           │       │   ├── Trial_6
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_f1_0_8493__10-12-2025_23-30-06
-│   │           │       │   │       └── run_report.json
-│   │           │       │   └── ... (mais 23 itens)
-│   │           │       └── ... (mais 1 itens)
-│   │           ├── 11-12-2025_06-39-40
+│   │           │       └── SVM
+│   │           │           ├── Trial_0
+│   │           │           │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08368__16-54-22
+│   │           │           │       └── run_report.json
+│   │           │           ├── Trial_1
+│   │           │           │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08408__16-54-23
+│   │           │           │       └── run_report.json
+│   │           │           ├── Trial_2
+│   │           │           │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08365__16-54-29
+│   │           │           │       └── run_report.json
+│   │           │           ├── Trial_3
+│   │           │           │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08437__16-54-38
+│   │           │           │       └── run_report.json
+│   │           │           ├── Trial_4
+│   │           │           │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08441__16-54-42
+│   │           │           │       └── run_report.json
+│   │           │           ├── Trial_5
+│   │           │           │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08368__16-54-49
+│   │           │           │       └── run_report.json
+│   │           │           ├── Trial_6
+│   │           │           │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08450__16-54-50
+│   │           │           │       └── run_report.json
+│   │           │           └── ... (mais 23 itens)
+│   │           ├── 12-12-2025_16-04-40
 │   │           │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55
 │   │           │       ├── KNN
 │   │           │       │   ├── Trial_0
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08280__09-40-48
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08430__19-07-32
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_1
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08469__09-40-57
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08471__19-07-38
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_2
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08448__09-40-59
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08480__19-07-57
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_3
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08457__09-41-19
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08452__19-08-08
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_4
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08422__09-41-20
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08422__19-08-15
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_5
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08269__09-41-30
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08435__19-08-16
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_6
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08380__09-41-32
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08430__19-08-21
 │   │           │       │   │       └── run_report.json
 │   │           │       │   └── ... (mais 23 itens)
 │   │           │       ├── LogisticRegression
 │   │           │       │   ├── Trial_0
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08475__09-39-42
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08306__19-04-49
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_1
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08475__09-39-49
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08314__19-05-06
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_2
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08476__09-39-53
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08355__19-05-16
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_3
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08477__09-39-58
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08403__19-05-27
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_4
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08366__09-40-02
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08408__19-05-28
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_5
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08477__09-40-07
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08316__19-05-30
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_6
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08477__09-40-11
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08312__19-05-40
 │   │           │       │   │       └── run_report.json
 │   │           │       │   └── ... (mais 23 itens)
 │   │           │       ├── MLP
 │   │           │       │   ├── Trial_0
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08452__10-49-33
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08466__19-33-26
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_1
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08480__10-51-10
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08450__20-36-03
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_2
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08511__10-57-53
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08424__20-36-25
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_3
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08489__11-00-18
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08449__20-37-16
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_4
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08456__11-01-19
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08501__20-37-22
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_5
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08514__11-01-36
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08508__20-37-26
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_6
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08479__11-02-06
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08483__20-41-13
 │   │           │       │   │       └── run_report.json
-│   │           │       │   └── ... (mais 8 itens)
+│   │           │       │   └── ... (mais 23 itens)
 │   │           │       ├── QDA
 │   │           │       │   ├── Trial_0
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08318__10-48-05
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08372__19-31-52
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_1
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08419__10-48-08
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08439__19-31-55
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_2
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08440__10-48-11
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08439__19-31-57
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_3
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08419__10-48-13
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08372__19-31-59
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_4
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08318__10-48-16
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08372__19-32-00
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_5
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08356__10-48-19
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08319__19-32-04
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_6
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08440__10-48-21
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08439__19-32-08
 │   │           │       │   │       └── run_report.json
 │   │           │       │   └── ... (mais 23 itens)
 │   │           │       ├── RandomForest
 │   │           │       │   ├── Trial_0
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08501__09-45-35
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08450__19-10-35
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_1
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08447__09-47-33
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08449__19-11-03
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_2
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08497__09-48-01
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08449__19-12-04
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_3
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08513__09-48-45
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08449__19-12-48
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_4
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08482__09-49-59
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08451__19-13-27
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_5
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08498__09-50-44
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08460__19-14-19
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_6
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08500__09-53-48
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08447__19-14-52
 │   │           │       │   │       └── run_report.json
 │   │           │       │   └── ... (mais 23 itens)
 │   │           │       ├── SVM
 │   │           │       │   ├── Trial_0
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08461__10-43-18
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08408__19-30-00
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_1
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08457__10-43-20
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08365__19-30-07
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_2
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08375__10-43-22
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08368__19-30-28
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_3
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08456__10-43-26
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08365__19-30-30
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_4
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08416__10-43-28
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08450__19-30-47
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_5
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08457__10-43-30
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08341__19-30-48
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_6
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08376__10-43-32
+│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08450__19-30-49
 │   │           │       │   │       └── run_report.json
-│   │           │       │   └── ... (mais 8 itens)
+│   │           │       │   └── ... (mais 23 itens)
+│   │           │       └── XGBoost
+│   │           │           └── Trial_0
+│   │           ├── 12-12-2025_16-04-55
+│   │           │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25
+│   │           │       ├── KNN
+│   │           │       │   ├── Trial_0
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_08811__19-06-29
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_1
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_08989__19-06-31
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_2
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_08785__19-06-33
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_3
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_09172__19-06-35
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_4
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_08953__19-06-36
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_5
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_08621__19-06-38
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_6
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_08449__19-06-41
+│   │           │       │   │       └── run_report.json
+│   │           │       │   └── ... (mais 23 itens)
+│   │           │       ├── LogisticRegression
+│   │           │       │   ├── Trial_0
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07365__19-05-00
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_1
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07087__19-05-02
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_2
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_06619__19-05-02
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_3
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07451__19-05-12
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_4
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07087__19-05-14
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_5
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_06291__19-05-16
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_6
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_06618__19-05-17
+│   │           │       │   │       └── run_report.json
+│   │           │       │   └── ... (mais 23 itens)
+│   │           │       ├── MLP
+│   │           │       │   ├── Trial_0
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07475__19-27-40
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_1
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07696__19-28-22
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_2
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07864__20-45-54
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_3
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_08870__20-46-04
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_4
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_08779__20-46-48
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_5
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07394__20-46-59
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_6
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_08880__20-47-06
+│   │           │       │   │       └── run_report.json
+│   │           │       │   └── ... (mais 23 itens)
+│   │           │       ├── QDA
+│   │           │       │   ├── Trial_0
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07697__19-25-23
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_1
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07300__19-25-27
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_2
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_03508__19-25-30
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_3
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07697__19-25-36
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_4
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_01967__19-25-41
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_5
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_03508__19-25-44
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_6
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_03508__19-25-50
+│   │           │       │   │       └── run_report.json
+│   │           │       │   └── ... (mais 23 itens)
+│   │           │       ├── RandomForest
+│   │           │       │   ├── Trial_0
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_09011__19-07-44
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_1
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_09032__19-08-00
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_2
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_08742__19-08-37
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_3
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_09051__19-08-44
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_4
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_08731__19-09-40
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_5
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_08800__19-09-47
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_6
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_09036__19-10-14
+│   │           │       │   │       └── run_report.json
+│   │           │       │   └── ... (mais 23 itens)
+│   │           │       ├── SVM
+│   │           │       │   ├── Trial_0
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_01490__19-17-16
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_1
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07361__19-17-16
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_2
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_02296__19-17-47
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_3
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07409__19-17-48
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_4
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07346__19-18-16
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_5
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07324__19-18-44
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_6
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07359__19-19-26
+│   │           │       │   │       └── run_report.json
+│   │           │       │   └── ... (mais 23 itens)
 │   │           │       ├── XGBoost
 │   │           │       │   ├── Trial_0
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08490__11-17-19
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_09141__20-55-56
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_1
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08512__11-17-31
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_09061__20-56-02
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_2
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08461__11-17-49
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_09132__20-56-07
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_3
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08368__11-17-52
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_09124__20-56-14
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_4
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08520__11-17-56
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_09056__20-56-22
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_5
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08508__11-17-58
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_08120__20-56-23
 │   │           │       │   │       └── run_report.json
 │   │           │       │   ├── Trial_6
-│   │           │       │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__cv_08481__11-18-15
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_09107__20-56-24
 │   │           │       │   │       └── run_report.json
 │   │           │       │   └── ... (mais 23 itens)
 │   │           │       └── ... (mais 1 itens)
-│   │           └── 11-12-2025_06-40-31
-│   │               └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25
+│   │           ├── 12-12-2025_17-59-32
+│   │           │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25
+│   │           │       ├── KNN
+│   │           │       │   ├── Trial_0
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_09138__21-00-05
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_1
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_08501__21-00-07
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_2
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_08785__21-00-07
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_3
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_09198__21-00-08
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_4
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_09068__21-00-09
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_5
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_09258__21-00-09
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_6
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_08998__21-00-11
+│   │           │       │   │       └── run_report.json
+│   │           │       │   └── ... (mais 23 itens)
+│   │           │       ├── LogisticRegression
+│   │           │       │   ├── Trial_0
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07100__20-59-33
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_1
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_06618__20-59-36
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_2
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_05320__20-59-37
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_3
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07416__20-59-37
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_4
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_06156__20-59-38
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_5
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07108__20-59-41
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_6
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_06619__20-59-41
+│   │           │       │   │       └── run_report.json
+│   │           │       │   └── ... (mais 23 itens)
+│   │           │       ├── MLP
+│   │           │       │   ├── Trial_0
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_08564__21-11-42
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_1
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07444__21-11-58
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_2
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_02734__21-12-02
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_3
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_08191__21-12-08
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_4
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07853__21-12-12
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_5
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_09068__21-12-30
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_6
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07568__21-14-30
+│   │           │       │   │       └── run_report.json
+│   │           │       │   └── ... (mais 23 itens)
+│   │           │       ├── QDA
+│   │           │       │   ├── Trial_0
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07697__21-11-17
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_1
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_03508__21-11-18
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_2
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07697__21-11-18
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_3
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07300__21-11-19
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_4
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07300__21-11-19
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_5
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_05940__21-11-20
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_6
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07300__21-11-21
+│   │           │       │   │       └── run_report.json
+│   │           │       │   └── ... (mais 23 itens)
+│   │           │       ├── RandomForest
+│   │           │       │   ├── Trial_0
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_08950__21-00-25
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_1
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_09013__21-00-27
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_2
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_09030__21-00-32
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_3
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_09036__21-00-40
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_4
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_08693__21-00-43
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_5
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_09069__21-00-45
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_6
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_08754__21-00-56
+│   │           │       │   │       └── run_report.json
+│   │           │       │   └── ... (mais 23 itens)
+│   │           │       ├── SVM
+│   │           │       │   ├── Trial_0
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07409__21-05-54
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_1
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07413__21-06-07
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_2
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07409__21-06-24
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_3
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07409__21-06-25
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_4
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_05748__21-06-37
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_5
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07346__21-06-39
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_6
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_07413__21-06-55
+│   │           │       │   │       └── run_report.json
+│   │           │       │   └── ... (mais 23 itens)
+│   │           │       ├── XGBoost
+│   │           │       │   ├── Trial_0
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_09088__23-33-04
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_1
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_06939__23-33-07
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_2
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_09169__23-33-08
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_3
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_06957__23-33-17
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_4
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_09096__23-33-18
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_5
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_08144__23-33-26
+│   │           │       │   │       └── run_report.json
+│   │           │       │   ├── Trial_6
+│   │           │       │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__f1_08972__23-33-27
+│   │           │       │   │       └── run_report.json
+│   │           │       │   └── ... (mais 23 itens)
+│   │           │       └── ... (mais 1 itens)
+│   │           └── 12-12-2025_18-00-01
+│   │               └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55
 │   │                   ├── KNN
 │   │                   │   ├── Trial_0
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09297__09-41-43
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08464__21-00-54
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_1
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09023__09-41-51
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08384__21-00-55
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_2
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09083__09-41-53
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08368__21-00-55
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_3
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09305__09-41-53
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08409__21-00-56
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_4
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_08938__09-41-58
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08465__21-00-57
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_5
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_08707__09-42-00
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08404__21-01-05
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_6
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09053__09-42-05
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08368__21-01-06
 │   │                   │   │       └── run_report.json
 │   │                   │   └── ... (mais 23 itens)
 │   │                   ├── LogisticRegression
 │   │                   │   ├── Trial_0
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07505__09-40-33
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08369__21-00-03
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_1
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_06611__09-40-38
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08355__21-00-05
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_2
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_06180__09-40-40
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08408__21-00-09
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_3
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07378__09-40-38
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08314__21-00-12
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_4
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07462__09-40-39
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08403__21-00-15
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_5
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07107__09-40-42
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08316__21-00-15
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_6
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_06611__09-40-44
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08320__21-00-18
 │   │                   │   │       └── run_report.json
 │   │                   │   └── ... (mais 23 itens)
 │   │                   ├── MLP
 │   │                   │   ├── Trial_0
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_08058__10-14-55
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08455__21-09-41
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_1
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07541__10-15-44
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08470__21-09-54
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_2
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07519__10-17-54
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08452__21-10-12
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_3
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_08358__10-18-42
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08497__21-10-20
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_4
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07543__10-19-22
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08477__21-10-24
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_5
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07541__10-20-10
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08467__21-10-30
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_6
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07983__10-20-17
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08460__21-10-59
 │   │                   │   │       └── run_report.json
-│   │                   │   └── ... (mais 8 itens)
+│   │                   │   └── ... (mais 23 itens)
 │   │                   ├── QDA
 │   │                   │   ├── Trial_0
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_02126__10-13-51
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08319__21-09-31
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_1
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07489__10-13-53
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08319__21-09-31
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_2
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_02126__10-13-56
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08372__21-09-32
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_3
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_06157__10-13-58
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08372__21-09-32
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_4
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_03717__10-14-00
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08319__21-09-32
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_5
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_03717__10-14-02
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08458__21-09-33
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_6
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07820__10-14-05
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08372__21-09-33
 │   │                   │   │       └── run_report.json
 │   │                   │   └── ... (mais 23 itens)
 │   │                   ├── RandomForest
 │   │                   │   ├── Trial_0
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09110__09-43-45
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08448__21-02-06
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_1
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09054__09-44-06
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08462__21-02-27
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_2
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_08819__09-46-18
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08445__21-02-34
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_3
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09079__09-46-36
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08459__21-02-57
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_4
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_08823__09-48-00
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08426__21-03-31
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_5
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09107__09-49-12
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08449__21-03-45
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_6
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09116__09-49-56
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08463__21-04-10
 │   │                   │   │       └── run_report.json
 │   │                   │   └── ... (mais 23 itens)
 │   │                   ├── SVM
 │   │                   │   ├── Trial_0
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07385__10-10-26
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08368__21-08-08
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_1
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07383__10-10-28
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08341__21-08-09
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_2
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07417__10-10-31
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08441__21-08-09
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_3
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07382__10-10-33
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08376__21-08-10
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_4
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07428__10-11-27
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08437__21-08-16
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_5
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_01435__10-11-29
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08341__21-08-23
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_6
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07383__10-11-29
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08386__21-08-23
 │   │                   │   │       └── run_report.json
-│   │                   │   └── ... (mais 8 itens)
+│   │                   │   └── ... (mais 23 itens)
 │   │                   ├── XGBoost
 │   │                   │   ├── Trial_0
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07455__10-58-50
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08458__21-14-37
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_1
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09093__10-59-16
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08490__21-14-38
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_2
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09151__10-59-30
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08387__21-14-40
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_3
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09187__10-59-52
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08347__21-14-40
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_4
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09180__11-00-19
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08416__21-14-41
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_5
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_07426__11-00-43
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08449__21-14-43
 │   │                   │   │       └── run_report.json
 │   │                   │   ├── Trial_6
-│   │                   │   │   └── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25__cv_09012__11-00-56
+│   │                   │   │   └── Musae-Github_(32)_embeddings_10-12-2025_15-59-55__f1_08430__21-14-44
 │   │                   │   │       └── run_report.json
 │   │                   │   └── ... (mais 23 itens)
 │   │                   └── ... (mais 1 itens)
+│   ├── output
+│   │   ├── CLASSIFICATION_RUNS
+│   │   │   ├── Musae-Facebook-Embeddings__best_f1_04075_f1_04038_model_xgb__13-51-06
+│   │   │   │   └── run_report.json
+│   │   │   ├── Musae-Facebook-Embeddings__best_f1_05355_f1_05418_model_xgb__13-51-40
+│   │   │   │   └── run_report.json
+│   │   │   ├── Musae-Facebook-Embeddings__best_f1_08320_f1_08369_model_kneighbors__13-52-50
+│   │   │   │   └── run_report.json
+│   │   │   ├── Musae-Facebook-Embeddings__best_f1_08811_f1_08811_model_kneighbors__13-58-38
+│   │   │   │   └── run_report.json
+│   │   │   ├── Musae-Facebook-Embeddings__best_f1_09188_f1_09196_model_xgb__13-56-47
+│   │   │   │   └── run_report.json
+│   │   │   ├── Musae-Facebook-Embeddings__best_f1_09285_f1_09277_model_kneighbors__13-54-22
+│   │   │   │   └── run_report.json
+│   │   │   ├── Musae-Facebook-Embeddings__best_f1_09305_f1_09349_model_kneighbors__14-00-15
+│   │   │   │   └── run_report.json
+│   │   │   └── ... (mais 14 itens)
+│   │   ├── EMBEDDING_RUNS
+│   │   │   ├── Musae-Facebook__score_0_7750__emb_dim_2__10-12-2025_15-24-48
+│   │   │   │   ├── Musae-Facebook_(2)_embeddings_10-12-2025_15-24-48.wsg.json
+│   │   │   │   ├── Musae-Facebook__FacebookGAE__10-12-2025_15-24-48.pt
+│   │   │   │   └── run_report.json
+│   │   │   ├── Musae-Facebook__score_0_9964__emb_dim_3__10-12-2025_15-26-40
+│   │   │   │   ├── Musae-Facebook_(3)_embeddings_10-12-2025_15-26-40.wsg.json
+│   │   │   │   ├── Musae-Facebook__FacebookGAE__10-12-2025_15-26-40.pt
+│   │   │   │   └── run_report.json
+│   │   │   ├── Musae-Facebook__score_1_5708__emb_dim_8__10-12-2025_15-28-44
+│   │   │   │   ├── Musae-Facebook_(8)_embeddings_10-12-2025_15-28-44.wsg.json
+│   │   │   │   ├── Musae-Facebook__FacebookGAE__10-12-2025_15-28-44.pt
+│   │   │   │   └── run_report.json
+│   │   │   ├── Musae-Facebook__score_1_7161__emb_dim_32__10-12-2025_15-33-25
+│   │   │   │   ├── Musae-Facebook_(32)_embeddings_10-12-2025_15-33-25.wsg.json
+│   │   │   │   ├── Musae-Facebook__FacebookGAE__10-12-2025_15-33-25.pt
+│   │   │   │   └── run_report.json
+│   │   │   ├── Musae-Facebook__score_1_7175__emb_dim_64__10-12-2025_15-36-15
+│   │   │   │   ├── Musae-Facebook_(64)_embeddings_10-12-2025_15-36-15.wsg.json
+│   │   │   │   ├── Musae-Facebook__FacebookGAE__10-12-2025_15-36-15.pt
+│   │   │   │   └── run_report.json
+│   │   │   ├── Musae-Facebook__score_1_7286__emb_dim_16__10-12-2025_15-31-07
+│   │   │   │   ├── Musae-Facebook_(16)_embeddings_10-12-2025_15-31-07.wsg.json
+│   │   │   │   ├── Musae-Facebook__FacebookGAE__10-12-2025_15-31-07.pt
+│   │   │   │   └── run_report.json
+│   │   │   ├── Musae-Facebook__score_1_7497__emb_dim_128__10-12-2025_15-43-11
+│   │   │   │   ├── Musae-Facebook_(128)_embeddings_10-12-2025_15-43-11.wsg.json
+│   │   │   │   ├── Musae-Facebook__FacebookGAE__10-12-2025_15-43-11.pt
+│   │   │   │   └── run_report.json
+│   │   │   └── ... (mais 7 itens)
+│   │   └── GRAPH_CLASSIFICATION_RUNS
+│   │       ├── _tmp__24-12-2025_14-57-27
+│   │       ├── Musae-Facebook__best_f1_06618_f1_06751_model_facebookgnn__15-14-26
+│   │       │   └── run_report.json
+│   │       └── Musae-Github__best_f1_06316_f1_06316_model_githubgnn__15-14-47
+│   │           └── run_report.json
 │   └── processed
 │       └── cora
 │           ├── cora_cites.csv
 │           └── cora_content.csv
 ├── data_explore
-│   └── explore_optuna_structure.py
+│   ├── consolidate_results.py
+│   ├── consolidate_results_nokfold.py
+│   ├── consolidated_sklearn_results_nokfold.csv
+│   └── explore_unique_structures.py
 ├── old
 │   ├── distribuicao_classes.png
 │   ├── distribuicao_embeddings.png
@@ -1090,13 +2281,13 @@ gnn_tcc/
 │   │   ├── classification_models
 │   │   │   ├── optuna_utils.py
 │   │   │   └── run_sklearn_optuna.py
+│   │   ├── old
+│   │   │   ├── grid_search_GAE.py
+│   │   │   └── grid_search_gnn.py
 │   │   ├── __init__.py
 │   │   ├── gae_optuna_grid.py
 │   │   ├── gnn_classifiers_optuna.py
-│   │   ├── grid_search_classifiers.py
-│   │   ├── grid_search_GAE.py
-│   │   ├── grid_search_gnn.py
-│   │   └── ... (mais 1 itens)
+│   │   └── grid_search_params.py
 │   ├── models
 │   │   ├── embedding_models
 │   │   │   ├── __init__.py
@@ -1117,7 +2308,7 @@ gnn_tcc/
 │   ├── data_converters.py
 │   ├── data_format_definition.py
 │   ├── data_loaders.py
-│   └── ... (mais 8 itens)
+│   └── ... (mais 9 itens)
 ├── .gitattributes
 ├── .gitignore
 └── ... (mais 7 itens)
