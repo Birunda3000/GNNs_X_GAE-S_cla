@@ -133,9 +133,9 @@ class ExperimentRunner:
                     peak_vram_bytes = current_vram_peak
 
             report["results_summary_per_model"][model.model_name] = {
-                "test_accuracy": model_report["best_test_accuracy"],
-                "test_f1_score_weighted": model_report["best_test_f1"],
-                "val_f1_score_weighted": model_report["val_f1"],  
+                "test_accuracy": model_report.get("best_test_accuracy", model_report.get("test_accuracy")),
+                "test_f1_score_weighted": model_report.get("best_test_f1", model_report.get("test_f1")),
+                "val_f1_score_weighted": model_report.get("val_f1", model_report.get("val_report", {}).get("weighted avg", {}).get("f1-score", 0.0)),
                 "training_time_seconds": model_report["total_training_time"],
             }
             gc.collect()

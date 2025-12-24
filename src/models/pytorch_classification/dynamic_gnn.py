@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_geometric.nn import MessagePassing, GATConv
+from torch_geometric.nn import GCNConv, GATConv, SAGEConv, MessagePassing
 from src.models.pytorch_classification.base_classifiers import PyTorchClassifier
 
 def get_activation_fn(activation):
@@ -90,3 +90,61 @@ class DynamicGNNClassifier(PyTorchClassifier):
         # Chama verificação da base e adiciona verificação de arestas
         super().verify_train_input_data(data)
         assert data.edge_index is not None, "DynamicGNN requer edge_index."
+
+
+
+
+
+
+'''Tabela 16 – D1 (MUSAE-Facebook): Top-1 por família em GNN end-to-end (baseline
+supervisionado).
+Arquitetura
+(E2E)
+F1-weighted
+(Val.)
+Configuração Top-1 (principais hiperparâ-
+metros)
+SAGEConv 0.9559 
+camadas: 4; hidden: 256; ativação: ReLU;
+dropout: 0.5; agregador: mean
+
+Tabela 20 – D2 (MUSAE-GitHub): Top-1 por família em GNN end-to-end (baseline
+supervisionado).
+Arquitetura
+(E2E)
+F1-weighted
+(Val.)
+Configuração Top-1 (principais hiperparâ-
+metros)
+SAGEConv 0.8705 
+camadas: 3; hidden: 256; ativação: Leaky-
+ReLU; dropout: 0.5; agregador: mean'''
+
+
+class FacebookGNNClassifier(DynamicGNNClassifier):
+    def __init__(self, config, input_dim, output_dim):
+        super().__init__(
+            config=config,
+            input_dim=input_dim,
+            output_dim=output_dim,
+            layer_type=SAGEConv,
+            num_layers=4,
+            hidden_dim=256,
+            dropout=0.5,
+            activation=nn.ReLU,
+            aggr='mean'
+        )
+
+class GitHubGNNClassifier(DynamicGNNClassifier):
+    def __init__(self, config, input_dim, output_dim):
+        super().__init__(
+            config=config,
+            input_dim=input_dim,
+            output_dim=output_dim,
+            layer_type=SAGEConv,
+            num_layers=3,
+            hidden_dim=256,
+            dropout=0.5,
+            activation=nn.LeakyReLU,
+            aggr='mean'
+        )

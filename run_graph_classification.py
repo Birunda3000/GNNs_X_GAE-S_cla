@@ -12,9 +12,9 @@ import src.data_converters as data_converters
 import src.data_loaders as data_loaders
 from src.config import Config
 from src.experiment_runner import ExperimentRunner
-from src.models.pytorch_classification.classification_models import (
-    GCNClassifier,
-    GATClassifier,
+from src.models.pytorch_classification.dynamic_gnn import (
+    FacebookGNNClassifier,
+    GitHubGNNClassifier,
 )
 
 
@@ -43,20 +43,34 @@ def run_graph_classification(WSG_DATASET):
     input_dim = wsg_obj.metadata.num_total_features
     output_dim = len(set(y for y in wsg_obj.graph_structure.y if y is not None))
 
-    models_to_run = [
-        GCNClassifier(
-            config,
-            input_dim=input_dim,
-            hidden_dim=config.HIDDEN_DIM,
-            output_dim=output_dim,
-        ),
-        GATClassifier(
-            config,
-            input_dim=input_dim,
-            hidden_dim=config.HIDDEN_DIM,
-            output_dim=output_dim,
-        ),
-    ]
+    dataset_name = WSG_DATASET.dataset_name.lower()  # Normaliza para minúsculas
+
+    if "facebook" in dataset_name:
+        print(
+            f">> Dataset identificado: MUSAE-Facebook. Carregando parâmetros otimizados."
+        )
+        models_to_run = [
+            FacebookGNNClassifier(
+                config,
+                input_dim=input_dim,
+                output_dim=output_dim,
+            ),
+        ]
+    elif "github" in dataset_name:
+        print(
+            f">> Dataset identificado: MUSAE-GitHub. Carregando parâmetros otimizados."
+        )
+        models_to_run = [
+            GitHubGNNClassifier(
+                config,
+                input_dim=input_dim,
+                output_dim=output_dim,
+            ),
+        ]
+    else:
+        raise ValueError(
+            f"Dataset não reconhecido para classificação de grafo: '{WSG_DATASET.dataset_name}'"
+        )
 
     # --- 4. Executar o Experimento ---
     runner = ExperimentRunner(
