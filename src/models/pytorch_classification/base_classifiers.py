@@ -105,7 +105,15 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
 
         return acc, f1, report
 
-    def train_model(self, data: Data, epochs: Optional[int]=None, early_stopper: Optional[EarlyStopper]=None, scheduler: Optional[ReduceLROnPlateau] = None, optimizer: Optional[optim.Optimizer] = None, criterion = nn.CrossEntropyLoss()) -> Dict[str, Any]:
+    def train_model(
+        self,
+        data: Data,
+        epochs: Optional[int] = None,
+        early_stopper: Optional[EarlyStopper] = None,
+        scheduler: Optional[ReduceLROnPlateau] = None,
+        optimizer: Optional[optim.Optimizer] = None,
+        criterion=nn.CrossEntropyLoss(),
+    ) -> Dict[str, Any]:
         """
         Método de treino padrão unificado para todos os classificadores PyTorch.
         """
@@ -113,11 +121,17 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
             optimizer = optim.Adam(self.parameters(), lr=self.config.LEARNING_RATE)
 
         if scheduler is None:
-            scheduler = ReduceLROnPlateau(optimizer, mode="max", patience=self.config.SCHEDULER_PATIENCE, factor=self.config.SCHEDULER_FACTOR, min_lr=self.config.MIN_LR)
-        
+            scheduler = ReduceLROnPlateau(
+                optimizer,
+                mode="max",
+                patience=self.config.SCHEDULER_PATIENCE,
+                factor=self.config.SCHEDULER_FACTOR,
+                min_lr=self.config.MIN_LR,
+            )
+
         if epochs is None:
             epochs = self.config.EPOCHS
-        
+
         if early_stopper is None:
             early_stopper = EarlyStopper(
                 patience=self.config.EARLY_STOPPING_PATIENCE,
@@ -136,7 +150,7 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
             early_stopper=early_stopper,
             scheduler=scheduler,
             use_gnn=use_gnn,
-            criterion=criterion
+            criterion=criterion,
         )
 
     def internal_train_model(
@@ -172,7 +186,7 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
             leave=False,
         )
 
-        start_time = time.process_time()
+        start_time = time.perf_counter()
 
         for epoch in pbar:
             train_loss = self._train_step(
@@ -202,7 +216,9 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
             )
 
             stop_now, f1, best_epoch, _ = early_stopper.check(
-                self, epoch=epoch, current_value=val_f1,
+                self,
+                epoch=epoch,
+                current_value=val_f1,
             )
             scheduler.step(f1)
 
@@ -214,7 +230,7 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
                     "train_loss": train_loss,
                     "val_f1": val_f1,
                     "val_accuracy": val_acc,
-                    "Time_per_epoch": time.process_time() - start_time,
+                    "Time_per_epoch": time.perf_counter() - start_time,
                     "learning_rate": scheduler.get_last_lr()[0],
                 }
             )
@@ -251,7 +267,7 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
         )
 
         return {
-            "total_training_time": time.process_time() - start_time,
+            "total_training_time": time.perf_counter() - start_time,
             "best_epoch": best_epoch,
             "test_f1": test_f1,
             "test_accuracy": test_acc,
@@ -261,5 +277,38 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
             "training_history": training_history,
         }
 
-    def inference(self, x):
-        NotImplementedError("Método inference() não implementado.")
+    def inference(self, data: Data) -> torch.Tensor:
+            """
+            Executa a inferência no modelo (GNN ou MLP).
+            Segue estritamente o padrão do modelo de Embedding:
+            1. Recebe 'data'.
+            2. Move para device.
+            3. Configura eval/no_grad.
+            4. Retorna Logits.
+            """
+            # Garante device
+            device = self.device
+            data = data.to(device)
+
+            # Garante comportamento determinístico (desliga dropout) e restaura estado anterior
+            training_was = self.training
+            self.eval()
+            
+            try:
+                with torch.no_grad():
+                    use_gnn = getattr(self, "use_gnn", False)
+                    
+                    # Seleciona argumentos baseado na arquitetura
+                    if use_gnn:
+                        # GNN: precisa de X e Arestas
+                        out = self(data.x, data.edge_index)
+                    else:
+                        # MLP: precisa apenas de X
+                        out = self(data.x)
+                        
+            finally:
+                # Restaura o modo anterior (se estava treinando, volta a treinar)
+                if training_was:
+                    self.train()
+
+            return out

@@ -86,18 +86,25 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
         hidden_dim=config.HIDDEN_DIM,
         out_embedding_dim=config.OUT_EMBEDDING_DIM,
     ).to(device)'''
-    
-    model = FacebookGAE(
-        config=config,
-        num_total_features=pyg_data.num_total_features,
-        out_embedding_dim=config.OUT_EMBEDDING_DIM,
-    )
 
-    '''model = GithubVGAE(
-        config=config,
-        num_total_features=pyg_data.num_total_features,
-        out_embedding_dim=config.OUT_EMBEDDING_DIM,
-    )'''
+
+    # Seleção baseada no nome do dataset carregado
+    if "facebook" in WSG_DATASET.dataset_name.lower():
+        model = FacebookGAE(
+            config=config,
+            num_total_features=pyg_data.num_total_features,
+            out_embedding_dim=config.OUT_EMBEDDING_DIM,
+        )
+    elif "github" in WSG_DATASET.dataset_name.lower():
+        model = GithubVGAE(
+            config=config,
+            num_total_features=pyg_data.num_total_features,
+            out_embedding_dim=config.OUT_EMBEDDING_DIM,
+        )
+    else:
+        raise ValueError(f"Modelo não definido para: {WSG_DATASET.dataset_name}")
+
+    model = model.to(device)
 
 
     directory_manager = DirectoryManager(timestamp=config.TIMESTAMP, run_folder_name="EMBEDDING_RUNS")
@@ -154,9 +161,9 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
 
     # --- Inferência ---
     print("\n[FASE FINAL] Inferência...")
-    t0 = time.process_time()
+    t0 = time.perf_counter()
     final_embeddings = model.inference(pyg_data)
-    t1 = time.process_time()
+    t1 = time.perf_counter()
     inference_duration = t1 - t0
     print(f"Inferência concluída em {inference_duration:.4f}s")
 
@@ -166,8 +173,13 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
         "Embedding_Dim": emb_dim,
         "Inference_Duration_Seconds": inference_duration,
         "Timestamp": config.TIMESTAMP,
+        # Adicionando métricas de memória que já foram calculadas acima
+        "Memory_Peak_RAM_MiB": peak_ram_overall_bytes / (1024 * 1024),
+        "Memory_Peak_VRAM_MiB": peak_vram_bytes / (1024 * 1024),
         "Training_Report": training_report,
     }
+
+
     report_manager.create_report(report)
     report_manager.save_report()
 
@@ -200,7 +212,7 @@ if __name__ == "__main__":
     # Lista de datasets e tamanhos de embedding
     datasets = [
         data_loaders.MusaeFacebookLoader(),
-        #data_loaders.MusaeGithubLoader(),
+        data_loaders.MusaeGithubLoader(),
         #data_loaders.FlickrLoader(),
     ]
     emb_sizes = [2, 3, 8, 16, 32, 64, 128]

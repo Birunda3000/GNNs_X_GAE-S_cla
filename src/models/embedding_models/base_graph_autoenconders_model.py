@@ -107,7 +107,7 @@ class BaseGAECommon(BaseModel, nn.Module):
             range(1, epochs + 1), desc=f"Treinando {self.model_name}", leave=False
         )
 
-        start_time = time.process_time()
+        start_time = time.perf_counter()
 
         for epoch in pbar:
             self.train()
@@ -123,7 +123,7 @@ class BaseGAECommon(BaseModel, nn.Module):
             training_history.append(
                 {
                     "epoch": epoch,
-                    "Time_per_epoch": time.process_time() - start_time,
+                    "Time_per_epoch": time.perf_counter() - start_time,
                     "train_total_loss": total_loss.item(),
                     "test_total_loss": None,
                     "learning_rate": scheduler.get_last_lr()[0],
@@ -142,7 +142,7 @@ class BaseGAECommon(BaseModel, nn.Module):
                 break
 
         return {
-            "total_training_time": time.process_time() - start_time,
+            "total_training_time": time.perf_counter() - start_time,
             "best_epoch": best_epoch,
             "best_score": early_stopper.best_value,
             "training_history": training_history,

@@ -82,7 +82,7 @@ class SklearnClassifier(BaseModel):
         X_val, y_val = X[data.val_mask], y[data.val_mask]
         X_test, y_test = X[data.test_mask], y[data.test_mask]
 
-        start_time = time.process_time()
+        start_time = time.perf_counter()
 
         # Fit com suporte especial para XGBoost (eval_set para early stopping)
         if self._is_xgboost:
@@ -90,7 +90,7 @@ class SklearnClassifier(BaseModel):
         else:
             self.model.fit(X_train, y_train)
 
-        train_time = time.process_time() - start_time
+        train_time = time.perf_counter() - start_time
 
         # Avaliar em validação (para early stopping/seleção)
         y_val_pred = self.model.predict(X_val)

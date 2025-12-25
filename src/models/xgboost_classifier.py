@@ -87,7 +87,7 @@ class XGBoostClassifier(BaseModel):
         dtest = xgb.DMatrix(X_test, label=y_test)
 
         # Medir o tempo de treinamento
-        start_time = time.process_time()
+        start_time = time.perf_counter()
 
         print(f"Treinando XGBoost por {self.num_boost_round} rounds...")
         eval_result = {}
@@ -99,7 +99,7 @@ class XGBoostClassifier(BaseModel):
             evals_result=eval_result,
             verbose_eval=False,
         )
-        train_time = time.process_time() - start_time
+        train_time = time.perf_counter() - start_time
 
         # Avaliar em validação E teste
         y_pred_val_probs = self.model.predict(dval)
@@ -131,7 +131,10 @@ class XGBoostClassifier(BaseModel):
         validation_report = cast(
             Dict[str, Any],
             classification_report(
-                y_val, np.argmax(self.model.predict(dval), axis=1), output_dict=True, zero_division=0
+                y_val,
+                np.argmax(self.model.predict(dval), axis=1),
+                output_dict=True,
+                zero_division=0,
             ),
         )
         test_report = cast(
@@ -140,7 +143,6 @@ class XGBoostClassifier(BaseModel):
                 y_test, y_pred_test, output_dict=True, zero_division=0
             ),
         )
-
 
         return {
             "total_training_time": train_time,

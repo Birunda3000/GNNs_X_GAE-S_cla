@@ -13,8 +13,11 @@ from src.config import Config
 from src.directory_manager import DirectoryManager
 from src.report_manager import ReportManager
 from src.data_format_definition import WSG
+import time
 
 from src.models.base_model import BaseModel
+from src.models.sklearn_model import SklearnClassifier
+
 
 from src.utils import format_bytes, format_mib
 
@@ -132,10 +135,36 @@ class ExperimentRunner:
                 if current_vram_peak > peak_vram_bytes:
                     peak_vram_bytes = current_vram_peak
 
+            if "cuda" in self.config.DEVICE and torch.cuda.is_available():
+                torch.cuda.synchronize()
+
+            gc.collect()
+
+            if getattr(model, "use_gnn", False):
+                # GNNs (Pipeline B)
+                if isinstance(model, torch.nn.Module):
+                    model.eval()
+                
+                t0 = time.perf_counter()
+                with torch.no_grad():
+                    model.inference(data) # Processa tudo (X + Arestas)
+                t1 = time.perf_counter()
+                inference_duration = t1 - t0
+            elif isinstance(model, SklearnClassifier):
+                t0 = time.perf_counter()
+                model.inference(data.x) # Chama inference(x)
+                t1 = time.perf_counter()
+                inference_duration = t1 - t0
+            else:
+                raise ValueError(f"Modelo não suportado: {model.model_name}")
+
+
+
             report["results_summary_per_model"][model.model_name] = {
                 "test_accuracy": model_report.get("best_test_accuracy", model_report.get("test_accuracy")),
                 "test_f1_score_weighted": model_report.get("best_test_f1", model_report.get("test_f1")),
                 "val_f1_score_weighted": model_report.get("val_f1", model_report.get("val_report", {}).get("weighted avg", {}).get("f1-score", 0.0)),
+                "inference_time_seconds": inference_duration,
                 "training_time_seconds": model_report["total_training_time"],
             }
             gc.collect()
