@@ -1,80 +1,71 @@
 import torch
 import numpy as np
-from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neighbors import KNeighborsClassifier, NearestCentroid
 from sklearn.linear_model import LogisticRegression
+from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import f1_score
 from torch_geometric.data import Data
-from typing import Tuple, Dict
 
 
-def evaluate_embeddings(model, data: Data, device: torch.device) -> Tuple[Dict[str, float], float]:
+def evaluate_embeddings(model, data: Data, device: torch.device):
     """
-    Avalia a qualidade dos embeddings gerados pelo modelo VGAE usando
-    três perspectivas complementares.
+    Score Proxy otimista para GAEs:
+    - Recompensa qualquer melhoria real em qualquer sonda.
+    - Evita penalizar ruído (QDA, DT, etc).
+    - Não trava no 'early winner' (ex: KNN parado em 0.80).
+    
+    Fórmula final:
+        final_score = best + soft_mean
+    onde:
+        best = max(scores)
+        soft_mean = média dos scores >= 0.75 * best
+    
+    Isso captura progresso lento e dá robustez ao EarlyStopping.
     """
+
     model.eval()
     with torch.no_grad():
         embeddings = model.inference(data).cpu().numpy()
 
-    # --- CORREÇÃO DE SEGURANÇA (FAULT TOLERANCE) ---
-    # Verifica se o modelo gerou números inválidos (NaN ou Infinito)
-    # Isso acontece quando os gradientes explodem durante o treino.
+    # Segurança
     if np.isnan(embeddings).any() or np.isinf(embeddings).any():
-        print("⚠️ [AVISO] Embeddings contêm NaN ou Inf. Modelo instável. Pulando avaliação.")
-        # Retorna scores zerados para descartar este modelo sem quebrar o script
-        dummy_scores = {
-            "val_KNN_f1_weighted": 0.0,
-            "val_LogisticRegression_f1_weighted": 0.0,
-            "val_DecisionTree_f1_weighted": 0.0,
-        }
-        return dummy_scores, 0.0
-    # -----------------------------------------------
+        return {}, 0.0
 
-    y = data.y.cpu().numpy() if isinstance(data.y, torch.Tensor) else np.array(data.y)
+    # Dados
+    y = data.y.cpu().numpy()
     train_mask = data.train_mask.cpu().numpy()
     val_mask = data.val_mask.cpu().numpy()
 
     X_train, X_val = embeddings[train_mask], embeddings[val_mask]
     y_train, y_val = y[train_mask], y[val_mask]
 
-    # --- KNN ---
-    # Envolvemos em try/except como dupla segurança
-    try:
-        knn = KNeighborsClassifier(n_neighbors=5)
-        knn.fit(X_train, y_train)
-        val_y_pred_knn = knn.predict(X_val)
-        val_f1_knn = float(f1_score(y_val, val_y_pred_knn, average="weighted"))
-    except ValueError as e:
-        print(f"⚠️ [ERRO] Falha no KNN: {e}")
-        val_f1_knn = 0.0
+    scores = {}
 
-    # --- Logistic Regression ---
-    try:
-        logreg = LogisticRegression(max_iter=300)
-        logreg.fit(X_train, y_train)
-        val_y_pred_lr = logreg.predict(X_val)
-        val_f1_lr = float(f1_score(y_val, val_y_pred_lr, average="weighted"))
-    except ValueError as e:
-        print(f"⚠️ [ERRO] Falha na Regressão Logística: {e}")
-        val_f1_lr = 0.0
+    def safe_run(name, clf):
+        try:
+            clf.fit(X_train, y_train)
+            pred = clf.predict(X_val)
+            scores[name] = float(f1_score(y_val, pred, average="weighted"))
+        except Exception:
+            scores[name] = 0.0
 
-    # --- Decision Tree ---
-    try:
-        tree = DecisionTreeClassifier(max_depth=5, random_state=42)
-        tree.fit(X_train, y_train)
-        val_y_pred_tree = tree.predict(X_val)
-        val_f1_tree = float(f1_score(y_val, val_y_pred_tree, average="weighted"))
-    except ValueError as e:
-        print(f"⚠️ [ERRO] Falha na Decision Tree: {e}")
-        val_f1_tree = 0.0
+    # 5 sondas leves
+    safe_run("KNN", KNeighborsClassifier(n_neighbors=5, n_jobs=-1))
+    safe_run("LogReg", LogisticRegression(max_iter=200, n_jobs=-1, class_weight="balanced"))
+    safe_run("QDA", QuadraticDiscriminantAnalysis(reg_param=0.01))
+    safe_run("Centroid", NearestCentroid())
+    safe_run("DT", DecisionTreeClassifier(max_depth=8, random_state=42))
 
-    scores = {
-        "val_KNN_f1_weighted": val_f1_knn,            
-        "val_LogisticRegression_f1_weighted": val_f1_lr,  
-        "val_DecisionTree_f1_weighted": val_f1_tree,     
-    }
+    vals = list(scores.values())
+    best = max(vals)
 
-    best_score = max(val_f1_knn, val_f1_lr, val_f1_tree)
+    # SOFT-MEAN: só valores próximos ao melhor score contam
+    thr = 0.75 * best  # <= limiar flexível e otimista
+    soft_vals = [v for v in vals if v >= thr]
 
-    return scores, best_score
+    soft_mean = np.mean(soft_vals) if soft_vals else best
+
+    final_score = best + soft_mean
+
+    return scores, float(final_score)
