@@ -221,3 +221,5 @@ if __name__ == "__main__":
         for emb in emb_sizes:
             run_embedding_generation(dataset, emb)
             gc.collect()
+            print("❄️  Pausa de 10s para resfriamento da CPU...")
+            time.sleep(10)

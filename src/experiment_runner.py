@@ -161,13 +161,20 @@ class ExperimentRunner:
 
 
             report["results_summary_per_model"][model.model_name] = {
-                "test_accuracy": model_report.get("best_test_accuracy", model_report.get("test_accuracy")),
-                "test_f1_score_weighted": model_report.get("best_test_f1", model_report.get("test_f1")),
-                "val_f1_score_weighted": model_report.get("val_f1", model_report.get("val_report", {}).get("weighted avg", {}).get("f1-score", 0.0)),
+                "test_accuracy": model_report["test_accuracy"],
+                "test_f1_score_weighted": model_report["test_f1"],
+
+                "val_accuracy": model_report["val_accuracy"],
+                "val_f1_score_weighted": model_report["val_f1"],
+
+                "best_epoch": model_report.get("best_epoch", None),
+
                 "inference_time_seconds": inference_duration,
                 "training_time_seconds": model_report["total_training_time"],
             }
             gc.collect()
+            print("❄️  Pausa de 10s para resfriamento da CPU...")
+            time.sleep(10)
 
         mem_end_run = process.memory_info().rss
         report["memory_summary"].update(

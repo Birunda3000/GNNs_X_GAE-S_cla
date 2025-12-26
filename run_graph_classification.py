@@ -7,6 +7,7 @@ import psutil
 import torch
 from datetime import datetime
 from zoneinfo import ZoneInfo
+import time
 
 import src.data_converters as data_converters
 import src.data_loaders as data_loaders
@@ -98,3 +99,5 @@ if __name__ == "__main__":
 
     for dataset in datasets:
         run_graph_classification(dataset)
+        print("❄️  Pausa de 10s para resfriamento da CPU...")
+        time.sleep(10)

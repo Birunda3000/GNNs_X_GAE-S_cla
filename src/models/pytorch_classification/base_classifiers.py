@@ -244,6 +244,7 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
                 early_stopper.restore_best_state(self)
                 break
 
+
         _, _, train_report = self.evaluate(
             x=x,
             y=y,
@@ -251,7 +252,7 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
             train_or_test_mask=train_mask,
             edge_index=edge_index,
         )
-        _, _, val_report = self.evaluate(
+        val_acc, val_f1, val_report = self.evaluate(
             x=x,
             y=y,
             use_gnn=use_gnn,
@@ -268,12 +269,18 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
 
         return {
             "total_training_time": time.perf_counter() - start_time,
-            "best_epoch": best_epoch,
-            "test_f1": test_f1,
+            
             "test_accuracy": test_acc,
+            "test_f1": test_f1,
+
+            "val_accuracy": val_acc,
+            "val_f1": val_f1,
+
             "train_report": train_report,
             "val_report": val_report,
             "test_report": test_report,
+
+            "best_epoch": best_epoch,            
             "training_history": training_history,
         }
 

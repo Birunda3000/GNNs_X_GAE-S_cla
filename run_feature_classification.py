@@ -16,6 +16,7 @@ import torch
 import numpy as np
 import psutil
 import gc
+import time
 
 # Sklearn classifiers
 from sklearn.linear_model import LogisticRegression
@@ -60,8 +61,6 @@ def main(wsg_file_path: str):
 
     WSG_DATASET = data_loaders.DirectWSGLoader(file_path=wsg_file_path)
     wsg_obj = WSG_DATASET.load()
-
-
 
 
     # --- 3. Definir Modelos (A Lista de Ouro do TCC) ---
@@ -111,3 +110,5 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"Erro ao processar {file_path}: {e}")
         gc.collect()
+        print("❄️  Pausa de 10s para resfriamento da CPU...")
+        time.sleep(10)

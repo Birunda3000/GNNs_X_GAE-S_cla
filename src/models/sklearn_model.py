@@ -122,10 +122,13 @@ class SklearnClassifier(BaseModel):
 
         return {
             "total_training_time": train_time,
-            "best_test_accuracy": test_acc,
-            "best_test_f1": test_f1,
+
+            "test_accuracy": test_acc,
+            "test_f1": test_f1,
+
             "val_accuracy": val_acc,
             "val_f1": val_f1,
+
             "train_report": train_report,
             "val_report": val_report,
             "test_report": test_report,
