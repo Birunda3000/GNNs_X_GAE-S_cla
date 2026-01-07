@@ -78,9 +78,6 @@ def main(wsg_file_path: str):
         print("!! AVISO: Dataset não identificado no nome. Usando GitHub como padrão.")
         models_to_run = get_github_models(config=config)
 
-
-
-
     # --- 4. Executar o Experimento ---
     runner = ExperimentRunner(
         config=config,

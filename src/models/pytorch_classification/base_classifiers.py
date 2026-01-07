@@ -3,7 +3,8 @@ import torch.nn as nn
 import src.models.base_model as basemodel
 import time
 from abc import abstractmethod
-from sklearn.metrics import accuracy_score, f1_score, classification_report
+from sklearn.metrics import accuracy_score, f1_score, classification_report, confusion_matrix, ConfusionMatrixDisplay
+import matplotlib.pyplot as plt
 import torch.optim as optim
 from torch_geometric.data import Data
 from tqdm import tqdm
@@ -75,7 +76,7 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
     @torch.no_grad()
     def evaluate(
         self, x, y, use_gnn, train_or_test_mask, edge_index=None
-    ) -> Tuple[float, float, Dict[str, Any]]:  # <- ajustar tipagem para Any
+    ) -> Tuple[float, float, Dict[str, Any], Any]:  # <- ajustar tipagem para Any
         self.eval()
 
         if use_gnn and edge_index is not None:
@@ -103,7 +104,9 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
             ),
         )
 
-        return acc, f1, report
+        conf_mat = confusion_matrix(y_true.cpu(), y_pred.cpu())
+
+        return acc, f1, report, conf_mat
 
     def train_model(
         self,
@@ -199,7 +202,7 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
                 train_mask=train_mask,
             )
 
-            train_acc, train_f1, _ = self.evaluate(
+            train_acc, train_f1, _, _ = self.evaluate(
                 x=x,
                 y=y,
                 use_gnn=use_gnn,
@@ -207,7 +210,7 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
                 edge_index=edge_index,
             )
 
-            val_acc, val_f1, _ = self.evaluate(
+            val_acc, val_f1, _, _ = self.evaluate(
                 x=x,
                 y=y,
                 use_gnn=use_gnn,
@@ -245,21 +248,21 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
                 break
 
 
-        _, _, train_report = self.evaluate(
+        train_acc, train_f1, train_report, train_confusion_matrix = self.evaluate(
             x=x,
             y=y,
             use_gnn=use_gnn,
             train_or_test_mask=train_mask,
             edge_index=edge_index,
         )
-        val_acc, val_f1, val_report = self.evaluate(
+        val_acc, val_f1, val_report, val_confusion_matrix = self.evaluate(
             x=x,
             y=y,
             use_gnn=use_gnn,
             train_or_test_mask=val_mask,
             edge_index=edge_index,
         )
-        test_acc, test_f1, test_report = self.evaluate(
+        test_acc, test_f1, test_report, test_confusion_matrix = self.evaluate(
             x=x,
             y=y,
             use_gnn=use_gnn,
@@ -272,15 +275,22 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
             
             "test_accuracy": test_acc,
             "test_f1": test_f1,
+            "test_report": test_report,
+            "test_confusion_matrix": test_confusion_matrix,
 
             "val_accuracy": val_acc,
             "val_f1": val_f1,
-
-            "train_report": train_report,
             "val_report": val_report,
-            "test_report": test_report,
+            "val_confusion_matrix": val_confusion_matrix,
 
-            "best_epoch": best_epoch,            
+            
+            "train_accuracy": train_acc,
+            "train_f1": train_f1,
+            "train_report": train_report,
+            "train_confusion_matrix": train_confusion_matrix,
+            
+            "best_epoch": best_epoch,
+
             "training_history": training_history,
         }
 

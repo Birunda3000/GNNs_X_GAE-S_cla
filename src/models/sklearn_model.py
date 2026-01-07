@@ -3,7 +3,7 @@ from typing import Any, Dict, Optional, cast
 
 import numpy as np
 import torch
-from sklearn.metrics import accuracy_score, f1_score, classification_report
+from sklearn.metrics import accuracy_score, f1_score, classification_report, confusion_matrix
 from torch_geometric.data import Data
 
 from src.config import Config
@@ -109,29 +109,39 @@ class SklearnClassifier(BaseModel):
                 y_train, self.model.predict(X_train), output_dict=True, zero_division=0
             ),
         )
+        train_confusion_matrix = confusion_matrix(y_train, self.model.predict(X_train))
+
         val_report = cast(
             Dict[str, Any],
             classification_report(y_val, y_val_pred, output_dict=True, zero_division=0),
         )
+        val_confusion_matrix = confusion_matrix(y_val, y_val_pred)
+
         test_report = cast(
             Dict[str, Any],
             classification_report(
                 y_test, y_test_pred, output_dict=True, zero_division=0
             ),
         )
+        test_confusion_matrix = confusion_matrix(y_test, y_test_pred)
 
         return {
             "total_training_time": train_time,
 
             "test_accuracy": test_acc,
             "test_f1": test_f1,
+            "test_report": test_report,
+            "test_confusion_matrix": test_confusion_matrix,
 
             "val_accuracy": val_acc,
             "val_f1": val_f1,
-
-            "train_report": train_report,
             "val_report": val_report,
-            "test_report": test_report,
+            "val_confusion_matrix": val_confusion_matrix,
+
+            "train_accuracy": None,
+            "train_f1": None,
+            "train_report": train_report,
+            "train_confusion_matrix": train_confusion_matrix,
         }
 
     def evaluate(self, data: Data) -> Dict[str, Any]:

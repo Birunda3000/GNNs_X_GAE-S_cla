@@ -4,6 +4,8 @@ import psutil
 import torch
 from torch_geometric.data import Data
 import gc
+import matplotlib.pyplot as plt
+from sklearn.metrics import ConfusionMatrixDisplay
 
 # from functools import partial  # <- opcional: remover se não usar
 
@@ -18,8 +20,84 @@ import time
 from src.models.base_model import BaseModel
 from src.models.sklearn_model import SklearnClassifier
 
-
 from src.utils import format_bytes, format_mib
+
+import os
+import re
+import matplotlib.pyplot as plt
+from sklearn.metrics import ConfusionMatrixDisplay
+
+import os
+import re
+import matplotlib.pyplot as plt
+from sklearn.metrics import ConfusionMatrixDisplay
+
+import os
+import re
+import matplotlib.pyplot as plt
+from sklearn.metrics import ConfusionMatrixDisplay
+
+import os
+import re
+import matplotlib.pyplot as plt
+from sklearn.metrics import ConfusionMatrixDisplay
+
+def save_confusion_matrix_image(cm, model_name, source_info, split, output_dir=".", manual_dim=None):
+    """
+    Gera e salva a matriz de confusão organizada em subpastas.
+    
+    Estrutura criada: output_dir/confusion_matrix/{Nome_Modelo}/Arquivo.png
+    """
+    
+    # 1. Lógica de Extração de Nomes
+    basename = os.path.basename(source_info)
+    match = re.search(r"(.+)_\((\d+)\)_embeddings", basename)
+    
+    if match:
+        dataset_name = match.group(1)
+        dim_val = match.group(2)
+        dim_display = f"Dim: {dim_val}"
+    else:
+        dataset_name = source_info
+        dim_val = str(manual_dim) if manual_dim else "Raw"
+        dim_display = f"Dim: {manual_dim}" if manual_dim else "Features Originais"
+
+    # 2. Sanitização de Nomes (para pastas e arquivos)
+    safe_model = model_name.replace(" ", "_").replace("+", "plus").replace("/", "-")
+    safe_dataset = dataset_name.replace(" ", "_")
+    safe_split = split.replace(" ", "_")
+
+    # --- NOVIDADE: CRIAÇÃO DA ESTRUTURA DE PASTAS ---
+    # Define o caminho: output_dir / confusion_matrix / Nome_do_Modelo
+    target_folder = os.path.join(output_dir, "confusion_matrix", safe_model)
+    
+    # Cria as pastas se não existirem (sem dar erro)
+    os.makedirs(target_folder, exist_ok=True)
+    # ------------------------------------------------
+
+    # 3. Definição do Título e Nome do Arquivo
+    title = f"{model_name} | {dataset_name} ({dim_display}) [{split}]"
+    
+    # Nome do arquivo: CM_Musae-Github_dim-16_Teste.png
+    # (Tirei o nome do modelo do arquivo pois já está no nome da pasta, fica mais limpo)
+    output_filename = f"CM_{safe_dataset}_dim-{dim_val}_{safe_split}.png"
+    
+    # Caminho final completo
+    output_path = os.path.join(target_folder, output_filename)
+
+    # 4. Plotagem
+    fig, ax = plt.subplots(figsize=(8, 6))
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm)
+    
+    disp.plot(cmap='Blues', ax=ax, values_format='d')
+    plt.title(title, fontsize=12, fontweight='bold')
+    
+    # 5. Salvar
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    plt.close()
+    
+    print(f"✅ Matriz salva em: {output_path}")
+
 
 
 class ExperimentRunner:
@@ -171,7 +249,40 @@ class ExperimentRunner:
 
                 "inference_time_seconds": inference_duration,
                 "training_time_seconds": model_report["total_training_time"],
+
+                "detailed_reports": {
+                    "test_report": model_report["test_report"],
+                    "val_report": model_report["val_report"],
+                    "train_report": model_report["train_report"],
+                }
             }
+
+#def save_confusion_matrix_image(cm, model_name, source_info, split, output_dir=".", manual_dim=None):
+
+            save_confusion_matrix_image(
+                cm=model_report["test_confusion_matrix"],
+                model_name=model.model_name,
+                source_info=self.data_source_name,
+                split="teste",
+                output_dir=self.directory_manager.get_run_path(),
+            )
+
+            save_confusion_matrix_image(
+                cm=model_report["val_confusion_matrix"],
+                model_name=model.model_name,
+                source_info=self.data_source_name,
+                split="validação",
+                output_dir=self.directory_manager.get_run_path(),
+            )
+
+            save_confusion_matrix_image(
+                cm=model_report["train_confusion_matrix"],
+                model_name=model.model_name,
+                source_info=self.data_source_name,
+                split="treino",
+                output_dir=self.directory_manager.get_run_path(),
+            )
+
             gc.collect()
             print("❄️  Pausa de 10s para resfriamento da CPU...")
             time.sleep(10)
