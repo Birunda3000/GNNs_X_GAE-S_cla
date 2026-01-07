@@ -94,7 +94,7 @@ def main(wsg_file_path: str):
 
 
 if __name__ == "__main__":
-    base_path = "data/output/EMBEDDING_RUNS"
+    base_path = "data/output/EMBEDDING_RUNS/"
     pattern = "*.wsg.json"
     list_of_files = glob.glob(os.path.join(base_path, "**", pattern), recursive=True)
 

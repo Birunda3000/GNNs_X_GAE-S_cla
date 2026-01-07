@@ -182,4 +182,5 @@ cython_debug/
 
 #
 # Custom ignores
+data/data.zip
 data/

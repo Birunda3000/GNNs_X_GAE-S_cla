@@ -159,19 +159,43 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
     else:
         peak_vram_bytes = 0
 
-    # --- Inferência ---
-    print("\n[FASE FINAL] Inferência...")
-    t0 = time.perf_counter()
-    final_embeddings = model.inference(pyg_data)
-    t1 = time.perf_counter()
-    inference_duration = t1 - t0
-    print(f"Inferência concluída em {inference_duration:.4f}s")
+
+# Função Wrapper: Mede o tempo internamente e retorna (tempo, embeddings)
+    # O memory_usage vai rodar isso e medir o pico de RAM externamente
+    def _inference_wrapper():
+        if torch.cuda.is_available():
+            torch.cuda.synchronize()
+        
+        t_start = time.perf_counter()
+        
+        # Executa a inferência
+        result_embeddings = model.inference(pyg_data)
+        
+        duration = time.perf_counter() - t_start
+        return duration, result_embeddings
+
+    # Executa com Profiler
+    # retval=True faz retornar o que o wrapper devolveu: (duration, result_embeddings)
+    inf_mem_peak, (inference_duration, final_embeddings) = memory_usage(
+        proc=_inference_wrapper,
+        max_usage=True,
+        retval=True,
+        interval=0.01  # Intervalo curto para precisão
+    )
+
+    # Tratamento para versões antigas que retornam lista
+    if isinstance(inf_mem_peak, list):
+        inf_mem_peak = max(inf_mem_peak)
+
+    print(f"Inferência concluída em {inference_duration:.4f}s | RAM Pico: {inf_mem_peak:.2f} MiB")
+
 
     # --- Relatórios e Salvamentos ---
     report = {
         "dataset_name": WSG_DATASET.dataset_name,
         "Embedding_Dim": emb_dim,
         "Inference_Duration_Seconds": inference_duration,
+        "Inference_Peak_RAM_MiB": inf_mem_peak,
         "Timestamp": config.TIMESTAMP,
         # Adicionando métricas de memória que já foram calculadas acima
         "Memory_Peak_RAM_MiB": peak_ram_overall_bytes / (1024 * 1024),

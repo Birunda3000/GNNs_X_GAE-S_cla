@@ -218,23 +218,56 @@ class ExperimentRunner:
 
             gc.collect()
 
-            if getattr(model, "use_gnn", False):
-                # GNNs (Pipeline B)
-                if isinstance(model, torch.nn.Module):
-                    model.eval()
+
+# === 2. MEDIÇÃO UNIFICADA (TEMPO + RAM) - IGUAL AO TREINO ===
+            print(f"⏱️ Medindo inferência (Tempo + RAM) para {model.model_name}...")
+
+            # Função Wrapper: Roda a inferência e devolve apenas o TEMPO gasto.
+            # (O memory_usage vai monitorar a RAM enquanto essa função roda)
+            def _inference_wrapper():
+                # Sincroniza GPU antes do relógio
+                if "cuda" in self.config.DEVICE and torch.cuda.is_available():
+                    torch.cuda.synchronize()
                 
-                t0 = time.perf_counter()
-                with torch.no_grad():
-                    model.inference(data) # Processa tudo (X + Arestas)
-                t1 = time.perf_counter()
-                inference_duration = t1 - t0
-            elif isinstance(model, SklearnClassifier):
-                t0 = time.perf_counter()
-                model.inference(data.x) # Chama inference(x)
-                t1 = time.perf_counter()
-                inference_duration = t1 - t0
-            else:
-                raise ValueError(f"Modelo não suportado: {model.model_name}")
+                t_start = time.perf_counter()
+
+                # Lógica de Inferência (GNN vs Sklearn)
+                if getattr(model, "use_gnn", False):
+                    # GNN: Pipeline B (Grafo Completo)
+                    if isinstance(model, torch.nn.Module):
+                        model.eval()
+                    with torch.no_grad():
+                        model.inference(data)
+                elif isinstance(model, SklearnClassifier):
+                    # Sklearn: Pipeline A (Features)
+                    model.inference(data.x)
+                else:
+                    raise ValueError(f"Modelo não suportado: {model.model_name}")
+
+                # Sincroniza GPU depois da execução
+                if "cuda" in self.config.DEVICE and torch.cuda.is_available():
+                    torch.cuda.synchronize()
+                
+                # Retorna o tempo decorrido
+                return time.perf_counter() - t_start
+
+            # EXECUTA TUDO JUNTO:
+            # - proc: Chama a função _inference_wrapper
+            # - max_usage=True: Retorna o pico de RAM
+            # - retval=True: Retorna também o valor que a função devolveu (o tempo)
+            mem_usage_inf, inference_duration = memory_usage(
+                proc=_inference_wrapper,
+                max_usage=True,
+                retval=True,
+                interval=0.01 # Frequência alta (10ms) para pegar picos rápidos de inferência
+            )
+            
+            # Tratamento de segurança para versões antigas do memory_profiler
+            if isinstance(mem_usage_inf, list):
+                mem_usage_inf = max(mem_usage_inf)
+
+            print(f"   -> Tempo: {inference_duration:.6f}s | RAM Pico: {mem_usage_inf:.2f} MiB")
+
 
 
 
@@ -248,6 +281,7 @@ class ExperimentRunner:
                 "best_epoch": model_report.get("best_epoch", None),
 
                 "inference_time_seconds": inference_duration,
+                "pico_ram_MiB_durante_inferencia": mem_usage_inf,
                 "training_time_seconds": model_report["total_training_time"],
 
                 "detailed_reports": {

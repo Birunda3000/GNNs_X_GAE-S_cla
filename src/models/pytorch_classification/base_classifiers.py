@@ -97,6 +97,7 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
 
         acc = float(accuracy_score(y_true.cpu(), y_pred.cpu()))
         f1 = float(f1_score(y_true.cpu(), y_pred.cpu(), average="weighted"))
+        f1_macro = float(f1_score(y_true.cpu(), y_pred.cpu(), average="macro"))
         report = cast(
             Dict[str, Any],
             classification_report(

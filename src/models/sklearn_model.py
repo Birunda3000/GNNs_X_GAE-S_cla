@@ -101,6 +101,7 @@ class SklearnClassifier(BaseModel):
         y_test_pred = self.model.predict(X_test)
         test_acc = float(accuracy_score(y_test, y_test_pred))
         test_f1 = float(f1_score(y_test, y_test_pred, average="weighted"))
+        test_f1_macro = float(f1_score(y_test, y_test_pred, average="macro"))
 
         # Relatórios completos
         train_report = cast(
