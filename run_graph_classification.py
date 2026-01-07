@@ -16,6 +16,8 @@ from src.experiment_runner import ExperimentRunner
 from src.models.pytorch_classification.dynamic_gnn import (
     FacebookGNNClassifier,
     GitHubGNNClassifier,
+    FacebookEmbeddingGNN,
+    GithubEmbeddingGNN
 )
 
 
@@ -51,22 +53,16 @@ def run_graph_classification(WSG_DATASET):
             f">> Dataset identificado: MUSAE-Facebook. Carregando parâmetros otimizados."
         )
         models_to_run = [
-            FacebookGNNClassifier(
-                config,
-                input_dim=input_dim,
-                output_dim=output_dim,
-            ),
+            #FacebookGNNClassifier(config,input_dim=input_dim,output_dim=output_dim)
+            FacebookEmbeddingGNN(config=config, num_total_features=input_dim, output_dim=output_dim)
         ]
     elif "github" in dataset_name:
         print(
             f">> Dataset identificado: MUSAE-GitHub. Carregando parâmetros otimizados."
         )
         models_to_run = [
-            GitHubGNNClassifier(
-                config,
-                input_dim=input_dim,
-                output_dim=output_dim,
-            ),
+            #GitHubGNNClassifier(config, input_dim=input_dim, output_dim=output_dim)
+            GithubEmbeddingGNN(config=config, num_total_features=input_dim, output_dim=output_dim)
         ]
     else:
         raise ValueError(
@@ -79,7 +75,8 @@ def run_graph_classification(WSG_DATASET):
         run_folder_name="GRAPH_CLASSIFICATION_RUNS",
         wsg_obj=wsg_obj,
         data_source_name=WSG_DATASET.dataset_name,
-        data_converter=data_converters.wsg_for_gcn_gat_multi_hot,
+        #data_converter=data_converters.wsg_for_gcn_gat_multi_hot,
+        data_converter=data_converters.wsg_for_vgae,
     )
 
     process = psutil.Process(os.getpid())
