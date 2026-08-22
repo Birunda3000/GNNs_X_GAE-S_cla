@@ -5,7 +5,6 @@
 FROM python:3.11-slim-bookworm
 
 # 2. INSTALAÇÃO DE DEPENDÊNCIAS DO SISTEMA
-# As mesmas que precisávamos antes.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     git \
@@ -15,16 +14,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf /var/lib/apt/lists/*
 
 # 3. INSTALAÇÃO DO PYTORCH (VERSÃO CPU)
-# O pip instalará a versão correta para CPU automaticamente.
-# Usamos o repositório oficial do PyTorch para isso.
-RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+# Fixamos na versão 2.4.0 para termos garantia absoluta de compatibilidade com os wheels do PyG
+RUN pip install --no-cache-dir torch==2.4.0+cpu torchvision==0.19.0+cpu torchaudio==2.4.0+cpu --index-url https://download.pytorch.org/whl/cpu
 
-# 4. DIRETÓRIO DE TRABALHO E CÓPIA DOS REQUISITOS
+# 4. INSTALAÇÃO DOS WHEELS DO PYTORCH GEOMETRIC (EXTENSÕES C++)
+# O pulo do gato: baixa os binários prontos para o PyTorch 2.4.0 CPU, tempo de build cai para segundos!
+RUN pip install --no-cache-dir torch-scatter torch-sparse torch-cluster torch-spline-conv -f https://data.pyg.org/whl/torch-2.4.0+cpu.html
+
+# 5. DIRETÓRIO DE TRABALHO E CÓPIA DOS REQUISITOS
 WORKDIR /app/gnn_tcc
 COPY .devcontainer/requirements.txt .
 
-# 5. INSTALAÇÃO DAS OUTRAS BIBLIOTECAS
+# 6. INSTALAÇÃO DAS OUTRAS BIBLIOTECAS
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 6. COMANDO FINAL
+# 7. COMANDO FINAL
 CMD ["/bin/bash", "-c", "while true; do sleep infinity; done"]

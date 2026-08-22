@@ -10,6 +10,7 @@ from typing import Any, Dict, List
 import pandas as pd
 import numpy as np
 import scipy.sparse as sp
+import os
 
 # Local application
 from src.data_format_definition import GraphStructure, Metadata, NodeFeaturesEntry, WSG
@@ -387,12 +388,252 @@ class FlickrLoader(BaseDatasetLoader):
 
 
 
+class MusaeTwitchLoader(BaseDatasetLoader):
+    """Carrega o dataset Musae-Twitch (Combinado) a partir de múltiplas regiões."""
+
+    dataset_name = "Musae-Twitch"
+
+    def load(self) -> WSG:
+        # Caminho base validado pelo script de reconhecimento
+        base_path = "data/datasets/twitch/twitch"
+        
+        print("Iniciando o carregamento unificado do Musae-Twitch...")
+
+        all_source_nodes = []
+        all_target_nodes = []
+        all_y = []
+        all_node_names = []
+        all_node_features = {}
+        
+        global_node_offset = 0
+        max_feature_index = 0
+
+        # Lista as pastas das regiões garantindo a ordem
+        pastas = sorted([p for p in os.listdir(base_path) if os.path.isdir(os.path.join(base_path, p))])
+        
+        for pasta in pastas:
+            folder_path = os.path.join(base_path, pasta)
+            
+            edges_file = target_file = features_file = None
+            for f in os.listdir(folder_path):
+                if "edges.csv" in f: edges_file = os.path.join(folder_path, f)
+                elif "target.csv" in f: target_file = os.path.join(folder_path, f)
+                elif f.endswith(".json"): features_file = os.path.join(folder_path, f)
+            
+            if not (edges_file and target_file and features_file):
+                print(f"Aviso: Arquivos incompletos na pasta {pasta}. Pulando.")
+                continue
+                
+            # 1. Carrega os dados da região
+            edges_df = pd.read_csv(edges_file)
+            target_df = pd.read_csv(target_file)
+            with open(features_file, 'r') as f:
+                features_json = json.load(f)
+                
+            num_nodes_region = len(target_df)
+            
+            # 2. Processa Edges (Ajustando com o offset global)
+            edges_df['from'] += global_node_offset
+            edges_df['to'] += global_node_offset
+            
+            # Garante bidirecionalidade e arestas únicas
+            unique_edges = set(tuple(sorted(edge)) for edge in edges_df[['from', 'to']].itertuples(index=False, name=None))
+            
+            source_nodes = [u for u, v in unique_edges] + [v for u, v in unique_edges]
+            target_nodes = [v for u, v in unique_edges] + [u for u, v in unique_edges]
+            
+            all_source_nodes.extend(source_nodes)
+            all_target_nodes.extend(target_nodes)
+            
+            # 3. Processa Target (mature: bool -> 1/0)
+            # O target é a classificação se usa linguagem explícita ou não
+            y_region = target_df['mature'].astype(int).tolist()
+            all_y.extend(y_region)
+            
+            # Usar o 'id' original da twitch + a região como identificador de nome
+            names_region = (target_df['id'].astype(str) + "_" + pasta).tolist()
+            all_node_names.extend(names_region)
+            
+            # 4. Processa Features com Offset (Protegido contra nós ausentes no JSON)
+            for local_id in range(num_nodes_region):
+                global_node_id = local_id + global_node_offset
+                
+                # Tenta pegar as features; se não existir no JSON, retorna lista vazia []
+                feature_list = features_json.get(str(local_id), [])
+                
+                all_node_features[str(global_node_id)] = {
+                    "indices": feature_list,
+                    "weights": [1.0] * len(feature_list)
+                }
+                
+                if feature_list:
+                    local_max = max(feature_list)
+                    if local_max > max_feature_index:
+                        max_feature_index = local_max
+                        
+            print(f"Região {pasta} processada. {num_nodes_region} nós adicionados. (Offset atualizado para a próxima: {global_node_offset + num_nodes_region})")
+            global_node_offset += num_nodes_region
+
+        # --- Instanciar o WSG ---
+        num_total_nodes = global_node_offset
+        num_total_edges = len(all_source_nodes)
+        num_total_features = max_feature_index + 1 if max_feature_index > 0 else 0
+
+        tz_offset = timedelta(hours=-3)
+        tz_info = timezone(tz_offset)
+        processed_at = datetime.now(tz_info).isoformat()
+
+        metadata_data = {
+            "dataset_name": self.dataset_name,
+            "feature_type": "sparse_binary",
+            "num_nodes": num_total_nodes,
+            "num_edges": num_total_edges,
+            "num_total_features": num_total_features,
+            "processed_at": processed_at,
+            "directed": False,
+        }
+
+        graph_structure_data = {
+            "edge_index": [all_source_nodes, all_target_nodes],
+            "y": all_y,
+            "node_names": all_node_names,
+        }
+
+        print("Validando estrutura concatenada com Pydantic...")
+        wsg_object = WSG(
+            metadata=Metadata(**metadata_data),
+            graph_structure=GraphStructure(**graph_structure_data),
+            node_features={k: NodeFeaturesEntry(**v) for k, v in all_node_features.items()}
+        )
+
+        print("Musae-Twitch (Global) processado e validado com sucesso!")
+        return wsg_object
 
 
 
+class RedditLoader(BaseDatasetLoader):
+    """
+    Carrega o dataset Reddit Threads transformando minigrafos isolados em um Super Grafo.
+    
+    Decisões Metodológicas Fundamentadas:
+    1. SUPER GRAFO: As 203.088 threads isoladas são fundidas usando um offset de IDs, 
+       permitindo o processamento em lote pelo VGAE.
+    2. PROPAGAÇÃO DE RÓTULO: Como o dataset classifica a thread inteira e o modelo 
+       classifica nós, o rótulo da thread (0 ou 1) é propagado para todos os seus participantes.
+    3. CONSTANT FEATURE REPRESENTATION: Como o dataset original não possui features de nós:
+       - Evitamos One-Hot Encoding para não gerar uma matriz NxN gigantesca (OOM - Out of Memory).
+       - Injetamos uma feature constante estática (índice 0, peso 1.0).
+       - Justificativa Matemática: Ao usar peso 1.0 uniforme, a primeira camada de Message 
+         Passing da GNN somará os 1s da vizinhança, calculando o "Grau do Nó" de forma natural 
+         e endógena, forçando o modelo a focar puramente na topologia da rede.
+    """
 
+    dataset_name = "Reddit"
 
+    def load(self) -> WSG:
+        edges_path = "data/datasets/reddit_threads/reddit_edges.json"
+        target_path = "data/datasets/reddit_threads/reddit_target.csv"
 
+        print("Iniciando carregamento do Reddit Threads (Metodologia Super Grafo + Feature Constante)...")
+
+        # 1. Carrega os arquivos brutos
+        with open(edges_path, 'r') as f:
+            edges_json = json.load(f)
+        target_df = pd.read_csv(target_path)
+
+        # Transforma o target num dicionário O(1) para busca rápida (id_da_thread -> target)
+        target_dict = dict(zip(target_df['id'].astype(str), target_df['target']))
+
+        all_source_nodes = []
+        all_target_nodes = []
+        all_y = []
+        all_node_names = []
+        all_node_features = {}
+
+        global_node_offset = 0
+
+        print(f"Processando {len(edges_json)} threads... isso pode levar um minuto.")
+
+        # 2. Constrói as "Ilhas" do Super Grafo
+        for thread_id_str, edges in edges_json.items():
+            thread_label = target_dict.get(thread_id_str, None)
+            
+            # Se a thread estiver vazia, pula para não quebrar a lógica
+            if not edges:
+                continue
+
+            # Descobre a quantidade de nós nesta thread específica (maior ID + 1)
+            max_local_id = max([max(u, v) for u, v in edges])
+            num_nodes_here = max_local_id + 1
+
+            # Adiciona as arestas com offset global
+            # (Garante bidirecionalidade duplicando u->v e v->u, já que o grafo é não-direcionado)
+            for u, v in edges:
+                u_glob = u + global_node_offset
+                v_glob = v + global_node_offset
+                
+                if u_glob != v_glob:  # Evita self-loops desnecessários
+                    all_source_nodes.extend([u_glob, v_glob])
+                    all_target_nodes.extend([v_glob, u_glob])
+
+            # Cria os metadados dos nós
+            for local_id in range(num_nodes_here):
+                global_id = local_id + global_node_offset
+                
+                # Propagação do Rótulo: o usuário herda a nota da thread
+                all_y.append(thread_label)
+                
+                # Rastreabilidade: guarda a origem exata do usuário
+                all_node_names.append(f"thread_{thread_id_str}_user_{local_id}")
+
+                # Feature Constante: Permite que o VGAE calcule o grau do nó indiretamente
+                all_node_features[str(global_id)] = {
+                    "indices": [0],
+                    "weights": [1.0]
+                }
+
+            global_node_offset += num_nodes_here
+
+        # 3. Limpeza estrutural profunda (Remove qualquer duplicidade)
+        print("Limpando arestas duplicadas geradas pela bidirecionalidade...")
+        unique_edges = set(zip(all_source_nodes, all_target_nodes))
+        all_source_nodes = [e[0] for e in unique_edges]
+        all_target_nodes = [e[1] for e in unique_edges]
+
+        # 4. Empacota tudo no formato WSG Canônico
+        num_total_nodes = global_node_offset
+        num_total_edges = len(all_source_nodes)
+        num_total_features = 1  # Única feature: a camisa branca constante
+
+        tz_offset = timedelta(hours=-3)
+        tz_info = timezone(tz_offset)
+        processed_at = datetime.now(tz_info).isoformat()
+
+        metadata_data = {
+            "dataset_name": self.dataset_name,
+            "feature_type": "sparse_binary",
+            "num_nodes": num_total_nodes,
+            "num_edges": num_total_edges,
+            "num_total_features": num_total_features,
+            "processed_at": processed_at,
+            "directed": False,
+        }
+
+        graph_structure_data = {
+            "edge_index": [all_source_nodes, all_target_nodes],
+            "y": all_y,
+            "node_names": all_node_names,
+        }
+
+        print("Validando estrutura final do Reddit com Pydantic...")
+        wsg_object = WSG(
+            metadata=Metadata(**metadata_data),
+            graph_structure=GraphStructure(**graph_structure_data),
+            node_features={k: NodeFeaturesEntry(**v) for k, v in all_node_features.items()}
+        )
+
+        print("Reddit Threads encapsulado com sucesso e pronto para o VGAE!")
+        return wsg_object
 
 
 def save_wsg(wsg_obj: WSG, file_path: str):

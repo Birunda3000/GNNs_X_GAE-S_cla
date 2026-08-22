@@ -5,10 +5,11 @@
 
 # Bibliotecas essenciais para manipulação de dados em grafos
 torch_geometric
-torch-scatter
-torch-sparse
-torch-cluster
-torch-spline-conv
+# As 4 bibliotecas abaixo foram movidas para o Dockerfile para usar wheels pré-compilados:
+# torch-scatter
+# torch-sparse
+# torch-cluster
+# torch-spline-conv
 
 # Análise de Dados e Utilitários
 pandas

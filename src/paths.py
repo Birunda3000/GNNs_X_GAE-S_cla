@@ -35,6 +35,11 @@ class musae_facebook_paths:
         DATA_DIR, "datasets", "musae-facebook", "musae_facebook_features.json"
     )
 
+
+
+
+
+
 # --- Caminhos para os arquivos do Flickr ---
 class flickr_paths:
     DATASET_NAME = "flickr"
