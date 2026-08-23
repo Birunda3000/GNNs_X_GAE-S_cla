@@ -25,6 +25,7 @@ from src.models.embedding_models.din_gae import GithubVGAE, FacebookGAE, RedditV
 from src.early_stopper import EarlyStopper
 from src.embeddings_eval import evaluate_embeddings
 from src.utils import format_bytes, salvar_modelo_pytorch_completo, save_embeddings_to_wsg
+from src.utils import DeviceTimer
 
 
 def run_embedding_generation(WSG_DATASET, emb_dim: int):
@@ -70,7 +71,7 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
     peak_ram_overall_bytes = max(peak_ram_overall_bytes, mem_after_load)
 
     print("\n[FASE 2] Convertendo para formato Pytorch Geometric...")
-    pyg_data = data_converters.wsg_for_vgae(wsg_obj, config, train_split_ratio=config.TRAIN_SPLIT_RATIO)
+    pyg_data = data_converters.wsg_for_vgae(wsg_obj, config)
     mem_after_convert = process.memory_info().rss
     peak_ram_overall_bytes = max(peak_ram_overall_bytes, mem_after_convert)
     print(f"RAM após conversão: {format_bytes(mem_after_convert)}")  # ✅
@@ -277,7 +278,7 @@ if __name__ == "__main__":
         # Usando apenas 100 threads de cada classe para ser instantâneo
         #data_loaders.MusaeFacebookLoader(),
         #data_loaders.MusaeGithubLoader(),
-        data_loaders.MusaeTwitchLoader(),
+        #data_loaders.MusaeTwitchLoader(),
         data_loaders.RedditLiteLoader(threads_per_class=100), 
     ]
     

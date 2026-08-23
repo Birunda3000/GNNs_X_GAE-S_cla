@@ -9,6 +9,12 @@ from src.data_format_definition import WSG, Metadata, NodeFeaturesEntry
 import time
 import torch
 import gc
+
+import resource
+import contextlib
+import memray
+
+
 # ==========================================================
 # 💡 FUNÇÕES AUXILIARES DE MEMÓRIA (corrigidas e seguras)
 # ==========================================================
@@ -185,9 +191,11 @@ class DeviceTimer:
     Temporizador de alto rigor metodológico para HPC.
     Garante precisão de hardware (Event) para GPU e de sistema (perf_counter) para CPU.
     """
-    def __init__(self, device: str):
+    # Adicionamos a variável de controle 'disable_gc' (padrão False por segurança)
+    def __init__(self, device: str, disable_gc: bool = False):
         self.device = device
         self.duration = 0.0
+        self.disable_gc = disable_gc
         
         # Pré-alocação mandatória para evitar overhead de alocação de memória pelo SO
         if self.device == "cuda":
@@ -195,8 +203,9 @@ class DeviceTimer:
             self.end_event = torch.cuda.Event(enable_timing=True)
 
     def __enter__(self):
-        # Desativa o Garbage Collector para evitar latência artificial na CPU
-        gc.disable()
+        # Controle explícito: Se você pediu, ele desliga. Se não pediu, ele nem toca no GC.
+        if self.disable_gc:
+            gc.disable()
         
         if self.device == "cuda":
             torch.cuda.synchronize() # Limpa pendências residuais antes de largar
@@ -217,5 +226,85 @@ class DeviceTimer:
         elif self.device == "cpu":
             self.duration = time.perf_counter() - self.start_time
             
-        # Reativa o Garbage Collector devolvendo o controle ao interpretador
-        gc.enable()
+        # Controle explícito: Tudo ou nada, respeitando a flag.
+        if self.disable_gc:
+            gc.enable()
+
+        return False  # Propaga exceções, se houver
+
+
+
+
+
+
+
+
+
+class PyTorchRigorousMemoryProfiler(contextlib.ContextDecorator):
+    """
+    Context Manager analítico O(1) delineado para auditorias de GNNs.
+    Mapeia os footprints cruzados entre Cgroups, Kernel (C/C++), e CUDA VRAM.
+    """
+    def __init__(self, trace_file: str = "gnn_transient_spike_trace.bin", device_id: int = 0):
+        self.trace_file = trace_file
+        self.device_id = device_id
+        
+        self.cgroup_base = "/sys/fs/cgroup"
+        self.cgroup_current = os.path.join(self.cgroup_base, "memory.current")
+        self.cgroup_peak = os.path.join(self.cgroup_base, "memory.peak")
+        self.cgroup_max = os.path.join(self.cgroup_base, "memory.max")
+        
+        self.memray_tracker = memray.Tracker(self.trace_file)
+        self.metrics = {}
+
+    def _read_cgroup_metric(self, path: str) -> int:
+        try:
+            with open(path, "r") as f:
+                value = f.read().strip()
+                return int(value) if value != "max" else -1
+        except (FileNotFoundError, PermissionError):
+            return 0
+
+    def __enter__(self):
+        torch.cuda.empty_cache()
+        
+        if torch.cuda.is_available():
+            torch.cuda.reset_peak_memory_stats(self.device_id)
+            torch.cuda.reset_accumulated_memory_stats(self.device_id)
+        
+        self.start_rss_ru = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        self.start_cgroup_current = self._read_cgroup_metric(self.cgroup_current)
+        
+        self.memray_tracker.__enter__()
+        self.start_time = time.perf_counter()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.end_time = time.perf_counter()
+        self.memray_tracker.__exit__(exc_type, exc_val, exc_tb)
+        
+        end_rss_ru = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        end_cgroup_current = self._read_cgroup_metric(self.cgroup_current)
+        peak_cgroup_historical = self._read_cgroup_metric(self.cgroup_peak)
+        docker_limit = self._read_cgroup_metric(self.cgroup_max)
+        
+        if torch.cuda.is_available():
+            peak_vram_alloc = torch.cuda.max_memory_allocated(self.device_id)
+            peak_vram_reserved = torch.cuda.max_memory_reserved(self.device_id)
+        else:
+            peak_vram_alloc = peak_vram_reserved = 0
+            
+        B2MB = 1024 ** 2
+        
+        self.metrics = {
+            "duration_secs": self.end_time - self.start_time,
+            "host_process_peak_rss_mb": end_rss_ru / 1024.0, 
+            "docker_cgroup_initial_mb": self.start_cgroup_current / B2MB,
+            "docker_cgroup_final_mb": end_cgroup_current / B2MB,
+            "docker_cgroup_peak_mb": peak_cgroup_historical / B2MB,
+            "docker_memory_limit_mb": docker_limit / B2MB if docker_limit > 0 else float('inf'),
+            "cuda_vram_peak_allocated_mb": peak_vram_alloc / B2MB,
+            "cuda_vram_peak_reserved_mb": peak_vram_reserved / B2MB,
+            "cuda_vram_fragmentation_gap_mb": (peak_vram_reserved - peak_vram_alloc) / B2MB,
+        }
+        return False

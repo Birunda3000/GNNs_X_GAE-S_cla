@@ -13,7 +13,7 @@ from torch_geometric.utils import negative_sampling
 from src.models.base_model import BaseModel
 from src.early_stopper import EarlyStopper
 from src.utils import DeviceTimer
-
+import gc
 
 class BaseGAECommon(BaseModel, nn.Module):
     """
@@ -82,7 +82,7 @@ class BaseGAECommon(BaseModel, nn.Module):
         return pos_loss + neg_loss
 
 
-def train_model(
+    def train_model(
         self,
         data: Data,
         optimizer: optim.Optimizer,
@@ -109,12 +109,11 @@ def train_model(
             range(1, epochs + 1), desc=f"Treinando {self.model_name}", leave=False
         )
 
-        # 1. INSTANCIA O CRONÔMETRO DA ÉPOCA AQUI FORA!
-        # Isso evita a alocação no kernel do SO a cada iteração do laço.
-        epoch_timer = DeviceTimer(self.config.DEVICE)
+        # 1. INSTANCIA O CRONÔMETRO DA ÉPOCA AQUI FORA! Isso evita a alocação no kernel do SO a cada iteração do laço.
+        epoch_timer = DeviceTimer(self.config.DEVICE, disable_gc=False)# interno
 
         # 2. Medidor do tempo TOTAL fica INLINE (roda apenas 1 vez)
-        with DeviceTimer(self.config.DEVICE) as total_timer:
+        with DeviceTimer(self.config.DEVICE, disable_gc=True) as total_timer:# externo
             
             for epoch in pbar:
                 # 3. APENAS REUTILIZA O CRONÔMETRO DA ÉPOCA (O "Filho")
@@ -130,9 +129,7 @@ def train_model(
                     stop_now, score, best_epoch, report = early_stopper.check(self, epoch=epoch)
                     scheduler.step(score)
 
-                # Saiu do bloco 'with' menor: A placa de vídeo já sincronizou!
-                # O tempo isolado e cirúrgico desta época já está salvo.
-
+                # Saiu do bloco 'with' menor: A placa de vídeo já sincronizou! O tempo isolado e cirúrgico desta época já está salvo.
                 training_history.append(
                     {
                         "epoch": epoch,
@@ -144,6 +141,7 @@ def train_model(
                         "early_stopping_report": report,
                     }
                 )
+                gc.collect()
 
                 pbar.set_postfix(
                     {"loss": f"{total_loss.item():.4f}", "score": f"{score:.4f}"}
