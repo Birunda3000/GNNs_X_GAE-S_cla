@@ -31,7 +31,7 @@ class Config:
     OUT_EMBEDDING_DIM = 3  # variar em [8, 32, 64, 128] no Optuna
 
     # --- Treinamento ---
-    EPOCHS = 500
+    EPOCHS = 3
     LEARNING_RATE = 1e-3
     WEIGHT_DECAY = 5e-4
 

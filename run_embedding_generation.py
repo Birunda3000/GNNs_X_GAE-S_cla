@@ -101,6 +101,19 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
             num_total_features=pyg_data.num_total_features,
             out_embedding_dim=config.OUT_EMBEDDING_DIM,
         )
+    elif "reddit" in WSG_DATASET.dataset_name.lower():
+        model = GithubVGAE(
+            config=config,
+            num_total_features=pyg_data.num_total_features,
+            out_embedding_dim=config.OUT_EMBEDDING_DIM,
+        )
+    elif "twitch" in WSG_DATASET.dataset_name.lower():
+        # Usando a arquitetura base do Github para a Twitch
+        model = GithubVGAE(
+            config=config,
+            num_total_features=pyg_data.num_total_features,
+            out_embedding_dim=config.OUT_EMBEDDING_DIM,
+        )
     else:
         raise ValueError(f"Modelo não definido para: {WSG_DATASET.dataset_name}")
 
@@ -191,15 +204,40 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
 
 
     # --- Relatórios e Salvamentos ---
+# --- Relatórios e Salvamentos ---
     report = {
-        "dataset_name": WSG_DATASET.dataset_name,
-        "Embedding_Dim": emb_dim,
-        "Inference_Duration_Seconds": inference_duration,
-        "Inference_Peak_RAM_MiB": inf_mem_peak,
-        "Timestamp": config.TIMESTAMP,
-        # Adicionando métricas de memória que já foram calculadas acima
-        "Memory_Peak_RAM_MiB": peak_ram_overall_bytes / (1024 * 1024),
-        "Memory_Peak_VRAM_MiB": peak_vram_bytes / (1024 * 1024),
+        "Metadata": {
+            "Dataset_Name": WSG_DATASET.dataset_name,
+            "Model_Name": getattr(model, "model_name", model.__class__.__name__),
+            "Timestamp": config.TIMESTAMP,
+        },
+        "Graph_Structure": {
+            "Num_Nodes": wsg_obj.metadata.num_nodes,
+            "Num_Edges": wsg_obj.metadata.num_edges,
+            "Num_Total_Features": wsg_obj.metadata.num_total_features,
+            "Directed": wsg_obj.metadata.directed,
+        },
+        "Hyperparameters": {
+            "Random_Seed": config.RANDOM_SEED,
+            "Device": str(device),
+            "Embedding_Dim_Input": config.EMBEDDING_DIM,
+            "Hidden_Dim": config.HIDDEN_DIM,
+            "Out_Embedding_Dim": emb_dim,
+            "Epochs": config.EPOCHS,
+            "Learning_Rate": config.LEARNING_RATE,
+            "Weight_Decay": config.WEIGHT_DECAY,
+            "Early_Stopping_Patience": config.EARLY_STOPPING_PATIENCE,
+            "Early_Stopping_Min_Delta": config.EARLY_STOPPING_MIN_DELTA,
+            "Scheduler_Patience": config.SCHEDULER_PATIENCE,
+            "Scheduler_Factor": config.SCHEDULER_FACTOR,
+            "Min_LR": config.MIN_LR,
+        },
+        "Performance_Metrics": {
+            "Inference_Duration_Seconds": inference_duration,
+            "Inference_Peak_RAM_MiB": inf_mem_peak,
+            "Memory_Peak_RAM_MiB": peak_ram_overall_bytes / (1024 * 1024),
+            "Memory_Peak_VRAM_MiB": peak_vram_bytes / (1024 * 1024),
+        },
         "Training_Report": training_report,
     }
 
@@ -233,7 +271,37 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
 
 
 if __name__ == "__main__":
-    # Lista de datasets e tamanhos de embedding
+
+    # --- CONFIGURAÇÃO LITE PARA TESTE FIM A FIM ---
+    datasets = [
+        # Usando apenas 100 threads de cada classe para ser instantâneo
+        data_loaders.MusaeTwitchLoader(),
+        #data_loaders.RedditLiteLoader(threads_per_class=100), 
+    ]
+    
+    # Testando apenas com 1 dimensão clássica
+    emb_sizes = [64]
+
+    for dataset in datasets:
+        for emb in emb_sizes:
+            run_embedding_generation(dataset, emb)
+            gc.collect()
+            print("❄️  Pausa de 5s para resfriamento...")
+            time.sleep(5)
+
+
+
+
+
+
+
+
+
+
+
+
+
+    '''    # Lista de datasets e tamanhos de embedding
     datasets = [
         data_loaders.MusaeFacebookLoader(),
         data_loaders.MusaeGithubLoader(),
@@ -246,4 +314,4 @@ if __name__ == "__main__":
             run_embedding_generation(dataset, emb)
             gc.collect()
             print("❄️  Pausa de 10s para resfriamento da CPU...")
-            time.sleep(10)
+            time.sleep(10)'''

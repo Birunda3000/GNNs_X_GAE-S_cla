@@ -1,6 +1,13 @@
 # src/data_loader.py
 
 # Standard library
+
+
+import random
+import pandas as pd
+import json
+from datetime import datetime, timedelta, timezone
+
 import json
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta, timezone
@@ -511,21 +518,20 @@ class MusaeTwitchLoader(BaseDatasetLoader):
 
 
 
+import random
+
 class RedditLoader(BaseDatasetLoader):
     """
     Carrega o dataset Reddit Threads transformando minigrafos isolados em um Super Grafo.
     
     Decisões Metodológicas Fundamentadas:
-    1. SUPER GRAFO: As 203.088 threads isoladas são fundidas usando um offset de IDs, 
-       permitindo o processamento em lote pelo VGAE.
-    2. PROPAGAÇÃO DE RÓTULO: Como o dataset classifica a thread inteira e o modelo 
-       classifica nós, o rótulo da thread (0 ou 1) é propagado para todos os seus participantes.
-    3. CONSTANT FEATURE REPRESENTATION: Como o dataset original não possui features de nós:
-       - Evitamos One-Hot Encoding para não gerar uma matriz NxN gigantesca (OOM - Out of Memory).
-       - Injetamos uma feature constante estática (índice 0, peso 1.0).
-       - Justificativa Matemática: Ao usar peso 1.0 uniforme, a primeira camada de Message 
-         Passing da GNN somará os 1s da vizinhança, calculando o "Grau do Nó" de forma natural 
-         e endógena, forçando o modelo a focar puramente na topologia da rede.
+    1. SUPER GRAFO: As 203.088 threads isoladas são fundidas usando um offset.
+    2. PROPAGAÇÃO DE RÓTULO: O rótulo da thread é propagado para seus participantes.
+    3. HYBRID RANDOMIZED DEGREE FEATURES (Inovação):
+       - Para quebrar a simetria de "nós gêmeos" e manter a expressividade sem 
+         explodir a memória (dispensando matrizes densas), o num_total_features = 1000.
+       - Índices 0 a 199: Reservados para o Grau do nó (Ancora a topologia).
+       - Índices 200 a 999: "Código de Barras" com 4 tags aleatórias (Quebra a simetria).
     """
 
     dataset_name = "Reddit"
@@ -534,14 +540,11 @@ class RedditLoader(BaseDatasetLoader):
         edges_path = "data/datasets/reddit_threads/reddit_edges.json"
         target_path = "data/datasets/reddit_threads/reddit_target.csv"
 
-        print("Iniciando carregamento do Reddit Threads (Metodologia Super Grafo + Feature Constante)...")
+        print("Iniciando carregamento do Reddit Threads (Híbrido: Grau + Aleatório)...")
 
-        # 1. Carrega os arquivos brutos
         with open(edges_path, 'r') as f:
             edges_json = json.load(f)
         target_df = pd.read_csv(target_path)
-
-        # Transforma o target num dicionário O(1) para busca rápida (id_da_thread -> target)
         target_dict = dict(zip(target_df['id'].astype(str), target_df['target']))
 
         all_source_nodes = []
@@ -554,57 +557,62 @@ class RedditLoader(BaseDatasetLoader):
 
         print(f"Processando {len(edges_json)} threads... isso pode levar um minuto.")
 
-        # 2. Constrói as "Ilhas" do Super Grafo
         for thread_id_str, edges in edges_json.items():
             thread_label = target_dict.get(thread_id_str, None)
             
-            # Se a thread estiver vazia, pula para não quebrar a lógica
             if not edges:
                 continue
 
-            # Descobre a quantidade de nós nesta thread específica (maior ID + 1)
             max_local_id = max([max(u, v) for u, v in edges])
             num_nodes_here = max_local_id + 1
 
-            # Adiciona as arestas com offset global
-            # (Garante bidirecionalidade duplicando u->v e v->u, já que o grafo é não-direcionado)
+            # --- NOVIDADE: Conta o Grau do Nó Local ---
+            local_degrees = {i: 0 for i in range(num_nodes_here)}
+            for u, v in edges:
+                if u != v: # Ignora self-loops na contagem do grau original
+                    local_degrees[u] += 1
+                    local_degrees[v] += 1
+
+            # Adiciona as arestas (Super Grafo)
             for u, v in edges:
                 u_glob = u + global_node_offset
                 v_glob = v + global_node_offset
-                
-                if u_glob != v_glob:  # Evita self-loops desnecessários
+                if u_glob != v_glob:
                     all_source_nodes.extend([u_glob, v_glob])
                     all_target_nodes.extend([v_glob, u_glob])
 
             # Cria os metadados dos nós
             for local_id in range(num_nodes_here):
                 global_id = local_id + global_node_offset
-                
-                # Propagação do Rótulo: o usuário herda a nota da thread
                 all_y.append(thread_label)
-                
-                # Rastreabilidade: guarda a origem exata do usuário
                 all_node_names.append(f"thread_{thread_id_str}_user_{local_id}")
 
-                # Feature Constante: Permite que o VGAE calcule o grau do nó indiretamente
+                # --- A MÁGICA HÍBRIDA ---
+                # 1. Feature Estrutural (Grau). Limitado a 199 para segurança.
+                grau = local_degrees[local_id]
+                grau_idx = min(grau, 199) 
+
+                # 2. Ruído Estrutural (4 tags sorteadas de 200 a 999)
+                random_tags = random.sample(range(200, 1000), 4)
+
+                # 3. Empacota (1 Grau + 4 Ruídos = 5 índices)
+                final_indices = [grau_idx] + random_tags
+
                 all_node_features[str(global_id)] = {
-                    "indices": [0],
-                    "weights": [1.0]
+                    "indices": final_indices,
+                    "weights": [1.0] * len(final_indices)
                 }
 
             global_node_offset += num_nodes_here
 
-        # 3. Limpeza estrutural profunda (Remove qualquer duplicidade)
         print("Limpando arestas duplicadas geradas pela bidirecionalidade...")
         unique_edges = set(zip(all_source_nodes, all_target_nodes))
         all_source_nodes = [e[0] for e in unique_edges]
         all_target_nodes = [e[1] for e in unique_edges]
 
-        # 4. Empacota tudo no formato WSG Canônico
-        num_total_nodes = global_node_offset
-        num_total_edges = len(all_source_nodes)
-        num_total_features = 1  # Única feature: a camisa branca constante
-
+        # O cardápio agora tem tamanho 1000 exato
+        num_total_features = 1000  
+        
         tz_offset = timedelta(hours=-3)
         tz_info = timezone(tz_offset)
         processed_at = datetime.now(tz_info).isoformat()
@@ -612,8 +620,8 @@ class RedditLoader(BaseDatasetLoader):
         metadata_data = {
             "dataset_name": self.dataset_name,
             "feature_type": "sparse_binary",
-            "num_nodes": num_total_nodes,
-            "num_edges": num_total_edges,
+            "num_nodes": global_node_offset,
+            "num_edges": len(all_source_nodes),
             "num_total_features": num_total_features,
             "processed_at": processed_at,
             "directed": False,
@@ -625,29 +633,151 @@ class RedditLoader(BaseDatasetLoader):
             "node_names": all_node_names,
         }
 
-        print("Validando estrutura final do Reddit com Pydantic...")
         wsg_object = WSG(
             metadata=Metadata(**metadata_data),
             graph_structure=GraphStructure(**graph_structure_data),
             node_features={k: NodeFeaturesEntry(**v) for k, v in all_node_features.items()}
         )
 
-        print("Reddit Threads encapsulado com sucesso e pronto para o VGAE!")
+        print("Reddit Threads encapsulado com sucesso (MÉTODO HÍBRIDO)!")
         return wsg_object
 
 
-def save_wsg(wsg_obj: WSG, file_path: str):
+import random
+import pandas as pd
+import json
+from datetime import datetime, timedelta, timezone
+
+class RedditLiteLoader(BaseDatasetLoader):
     """
-    Salva um objeto WSG em um arquivo JSON no caminho especificado.
-
-    Args:
-        wsg_obj (WSG): O objeto Pydantic WSG a ser salvo.
-        file_path (str): O caminho completo do arquivo onde o JSON será salvo.
+    Versão Lite do Reddit Threads para testes End-to-End.
+    Faz amostragem estratificada (perfeitamente balanceada) das THREADS.
+    Mantém a arquitetura Híbrida (Grau + Ruído Aleatório).
     """
-    print(f"Salvando objeto WSG em '{file_path}'...")
-    with open(file_path, "w") as f:
-        # O método model_dump() converte o objeto Pydantic para um dicionário Python
-        json.dump(wsg_obj.model_dump(), f, indent=4)
 
-    print(f"Objeto WSG salvo com sucesso em '{file_path}'.")
+    dataset_name = "Reddit-Lite"
 
+    def __init__(self, threads_per_class: int = 500):
+        super().__init__()
+        self.threads_per_class = threads_per_class
+
+    def load(self) -> WSG:
+        edges_path = "data/datasets/reddit_threads/reddit_edges.json"
+        target_path = "data/datasets/reddit_threads/reddit_target.csv"
+
+        print(f"Iniciando carregamento do Reddit-Lite (Amostragem de {self.threads_per_class} threads por classe)...")
+
+        # 1. Carrega o target e faz a amostragem estratificada
+        target_df = pd.read_csv(target_path)
+
+
+
+        
+        # Sorteia exatamente N threads da classe 0 e N da classe 1
+        # Sorteia exatamente N threads da classe 0 e N da classe 1 (À prova de falhas)
+        df_class_0 = target_df[target_df['target'] == 0]
+        df_class_1 = target_df[target_df['target'] == 1]
+        
+        sample_0 = df_class_0.sample(min(len(df_class_0), self.threads_per_class), random_state=42)
+        sample_1 = df_class_1.sample(min(len(df_class_1), self.threads_per_class), random_state=42)
+        
+        sampled_df = pd.concat([sample_0, sample_1])
+
+
+
+        
+        # Cria um set para busca super rápida (O(1)) e o dicionário de rótulos
+        valid_thread_ids = set(sampled_df['id'].astype(str))
+        target_dict = dict(zip(sampled_df['id'].astype(str), sampled_df['target']))
+
+        # 2. Carrega as arestas e filtra o JSON
+        with open(edges_path, 'r') as f:
+            edges_json = json.load(f)
+
+        all_source_nodes = []
+        all_target_nodes = []
+        all_y = []
+        all_node_names = []
+        all_node_features = {}
+
+        global_node_offset = 0
+
+        # 3. Constrói o Super Grafo Híbrido APENAS com as threads sorteadas
+        for thread_id_str in valid_thread_ids:
+            edges = edges_json.get(thread_id_str, [])
+            thread_label = target_dict.get(thread_id_str)
+            
+            if not edges:
+                continue
+
+            max_local_id = max([max(u, v) for u, v in edges])
+            num_nodes_here = max_local_id + 1
+
+            # Conta o Grau do Nó Local
+            local_degrees = {i: 0 for i in range(num_nodes_here)}
+            for u, v in edges:
+                if u != v: 
+                    local_degrees[u] += 1
+                    local_degrees[v] += 1
+
+            # Adiciona as arestas (Super Grafo)
+            for u, v in edges:
+                u_glob = u + global_node_offset
+                v_glob = v + global_node_offset
+                if u_glob != v_glob:
+                    all_source_nodes.extend([u_glob, v_glob])
+                    all_target_nodes.extend([v_glob, u_glob])
+
+            # Cria os metadados dos nós com o Híbrido (Grau + Ruído)
+            for local_id in range(num_nodes_here):
+                global_id = local_id + global_node_offset
+                all_y.append(thread_label)
+                all_node_names.append(f"thread_{thread_id_str}_user_{local_id}")
+
+                grau = local_degrees[local_id]
+                grau_idx = min(grau, 199) 
+                random_tags = random.sample(range(200, 1000), 4)
+                final_indices = [grau_idx] + random_tags
+
+                all_node_features[str(global_id)] = {
+                    "indices": final_indices,
+                    "weights": [1.0] * len(final_indices)
+                }
+
+            global_node_offset += num_nodes_here
+
+        # 4. Limpeza e Empacotamento
+        unique_edges = set(zip(all_source_nodes, all_target_nodes))
+        all_source_nodes = [e[0] for e in unique_edges]
+        all_target_nodes = [e[1] for e in unique_edges]
+
+        num_total_features = 1000  
+        
+        tz_offset = timedelta(hours=-3)
+        tz_info = timezone(tz_offset)
+        processed_at = datetime.now(tz_info).isoformat()
+
+        metadata_data = {
+            "dataset_name": self.dataset_name,
+            "feature_type": "sparse_binary",
+            "num_nodes": global_node_offset,
+            "num_edges": len(all_source_nodes),
+            "num_total_features": num_total_features,
+            "processed_at": processed_at,
+            "directed": False,
+        }
+
+        graph_structure_data = {
+            "edge_index": [all_source_nodes, all_target_nodes],
+            "y": all_y,
+            "node_names": all_node_names,
+        }
+
+        wsg_object = WSG(
+            metadata=Metadata(**metadata_data),
+            graph_structure=GraphStructure(**graph_structure_data),
+            node_features={k: NodeFeaturesEntry(**v) for k, v in all_node_features.items()}
+        )
+
+        print(f"Reddit-Lite pronto! Total de nós amostrados: {global_node_offset}")
+        return wsg_object
