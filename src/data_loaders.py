@@ -671,10 +671,7 @@ class RedditLiteLoader(BaseDatasetLoader):
         target_df = pd.read_csv(target_path)
 
 
-
-        
         # Sorteia exatamente N threads da classe 0 e N da classe 1
-        # Sorteia exatamente N threads da classe 0 e N da classe 1 (À prova de falhas)
         df_class_0 = target_df[target_df['target'] == 0]
         df_class_1 = target_df[target_df['target'] == 1]
         
@@ -682,8 +679,6 @@ class RedditLiteLoader(BaseDatasetLoader):
         sample_1 = df_class_1.sample(min(len(df_class_1), self.threads_per_class), random_state=42)
         
         sampled_df = pd.concat([sample_0, sample_1])
-
-
 
         
         # Cria um set para busca super rápida (O(1)) e o dicionário de rótulos

@@ -12,6 +12,7 @@ from torch_geometric.utils import negative_sampling
 
 from src.models.base_model import BaseModel
 from src.early_stopper import EarlyStopper
+from src.utils import DeviceTimer
 
 
 class BaseGAECommon(BaseModel, nn.Module):
@@ -80,7 +81,8 @@ class BaseGAECommon(BaseModel, nn.Module):
         )
         return pos_loss + neg_loss
 
-    def train_model(
+
+def train_model(
         self,
         data: Data,
         optimizer: optim.Optimizer,
@@ -107,46 +109,59 @@ class BaseGAECommon(BaseModel, nn.Module):
             range(1, epochs + 1), desc=f"Treinando {self.model_name}", leave=False
         )
 
-        start_time = time.perf_counter()
+        # 1. INSTANCIA O CRONÔMETRO DA ÉPOCA AQUI FORA!
+        # Isso evita a alocação no kernel do SO a cada iteração do laço.
+        epoch_timer = DeviceTimer(self.config.DEVICE)
 
-        for epoch in pbar:
-            self.train()
-            optimizer.zero_grad()
-            z = self.encode(data)
-            total_loss = self.compute_total_loss(z, data, edge_index)
-            total_loss.backward()
-            optimizer.step()
+        # 2. Medidor do tempo TOTAL fica INLINE (roda apenas 1 vez)
+        with DeviceTimer(self.config.DEVICE) as total_timer:
+            
+            for epoch in pbar:
+                # 3. APENAS REUTILIZA O CRONÔMETRO DA ÉPOCA (O "Filho")
+                with epoch_timer:
+                    self.train()
+                    optimizer.zero_grad()
+                    z = self.encode(data)
+                    total_loss = self.compute_total_loss(z, data, edge_index)
+                    total_loss.backward()
+                    optimizer.step()
 
-            stop_now, score, best_epoch, report = early_stopper.check(self, epoch=epoch)
-            scheduler.step(score)
+                    # Check do Early Stopper também entra na conta da época
+                    stop_now, score, best_epoch, report = early_stopper.check(self, epoch=epoch)
+                    scheduler.step(score)
 
-            training_history.append(
-                {
-                    "epoch": epoch,
-                    "Time_per_epoch": time.perf_counter() - start_time,
-                    "train_total_loss": total_loss.item(),
-                    "test_total_loss": None,
-                    "learning_rate": scheduler.get_last_lr()[0],
-                    "early_stopping_score": score,
-                    "early_stopping_report": report,
-                }
-            )
+                # Saiu do bloco 'with' menor: A placa de vídeo já sincronizou!
+                # O tempo isolado e cirúrgico desta época já está salvo.
 
-            pbar.set_postfix(
-                {"loss": f"{total_loss.item():.4f}", "score": f"{score:.4f}"}
-            )
+                training_history.append(
+                    {
+                        "epoch": epoch,
+                        "Time_per_epoch": epoch_timer.duration,
+                        "train_total_loss": total_loss.item(),
+                        "test_total_loss": None,
+                        "learning_rate": scheduler.get_last_lr()[0],
+                        "early_stopping_score": score,
+                        "early_stopping_report": report,
+                    }
+                )
 
-            if early_stopper is not None and stop_now:
-                print(f"[EARLY STOPPING] Parando no epoch {epoch}")
-                early_stopper.restore_best_state(self)
-                break
+                pbar.set_postfix(
+                    {"loss": f"{total_loss.item():.4f}", "score": f"{score:.4f}"}
+                )
 
+                if early_stopper is not None and stop_now:
+                    print(f"[EARLY STOPPING] Parando no epoch {epoch}")
+                    early_stopper.restore_best_state(self)
+                    break
+
+        # Saiu do bloco 'with' maior: O treino acabou de vez e o tempo global fechou.
         return {
-            "total_training_time": time.perf_counter() - start_time,
+            "total_training_time": total_timer.duration,
             "best_epoch": best_epoch,
             "best_score": early_stopper.best_value,
             "training_history": training_history,
         }
+
 
     # ========== MÉTODOS A SEREM IMPLEMENTADOS ==========
 

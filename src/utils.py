@@ -6,7 +6,9 @@ from typing import Any, Optional
 import torch
 from src.data_format_definition import WSG, Metadata, NodeFeaturesEntry
 
-
+import time
+import torch
+import gc
 # ==========================================================
 # 💡 FUNÇÕES AUXILIARES DE MEMÓRIA (corrigidas e seguras)
 # ==========================================================
@@ -175,3 +177,45 @@ def carregar_modelo_pytorch_completo(save_path: str, device: str = "cpu"):
     model.eval()
     print(f"🔁 Modelo carregado de: {save_path}")
     return model
+
+
+
+class DeviceTimer:
+    """
+    Temporizador de alto rigor metodológico para HPC.
+    Garante precisão de hardware (Event) para GPU e de sistema (perf_counter) para CPU.
+    """
+    def __init__(self, device: str):
+        self.device = device
+        self.duration = 0.0
+        
+        # Pré-alocação mandatória para evitar overhead de alocação de memória pelo SO
+        if self.device == "cuda":
+            self.start_event = torch.cuda.Event(enable_timing=True)
+            self.end_event = torch.cuda.Event(enable_timing=True)
+
+    def __enter__(self):
+        # Desativa o Garbage Collector para evitar latência artificial na CPU
+        gc.disable()
+        
+        if self.device == "cuda":
+            torch.cuda.synchronize() # Limpa pendências residuais antes de largar
+            self.start_event.record()
+        elif self.device == "cpu":
+            self.start_time = time.perf_counter()
+        else:
+            raise ValueError(f"Dispositivo não suportado: {self.device}")
+        
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.device == "cuda":
+            self.end_event.record()
+            # Sincronização direcionada exclusivamente para este evento
+            self.end_event.synchronize() 
+            self.duration = self.start_event.elapsed_time(self.end_event) / 1000.0
+        elif self.device == "cpu":
+            self.duration = time.perf_counter() - self.start_time
+            
+        # Reativa o Garbage Collector devolvendo o controle ao interpretador
+        gc.enable()

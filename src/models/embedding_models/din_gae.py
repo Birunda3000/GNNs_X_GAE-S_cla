@@ -195,3 +195,39 @@ class GithubVGAE(DynamicVGAE):
             aggr='mean',                # Agregador mean
         )
         self.model_name = "GithubVGAE"
+
+
+class RedditVGAE(DynamicVGAE):
+    """
+    Modelo VGAE otimizado para a escala massiva do dataset Reddit.
+    
+    Hiperparâmetros selecionados para economia de VRAM:
+    - Layer: SAGEConv (Indispensável para grafos gigantes)
+    - Agregador: mean
+    - Layers: 2 (Mais raso para evitar oversmoothing e explosão de RAM em 4 milhões de nós)
+    - Hidden Dim: 128 (Metade do GitHub)
+    - Embedding Dim (Input): 64 (Suficiente para capturar o "código de barras" do grau + ruído)
+    - Dropout: 0.2
+    - Activation: ReLU
+    - Normalize Embeddings: True
+    """
+
+    def __init__(self, config, num_total_features: int, out_embedding_dim: int):
+        super().__init__(
+            config=config,
+            num_total_features=num_total_features,
+            # Dimensões (Mantidas enxutas para a RTX 5060 Ti / A2000)
+            embedding_dim=64,           # Input embedding
+            hidden_dim=128,             # Camadas ocultas
+            out_embedding_dim=out_embedding_dim,       # Latente Z
+            # Arquitetura
+            layer_type=SAGEConv,        # GraphSAGE para vizinhanças enormes
+            num_layers=2,               # Profundidade reduzida
+            # Regularização
+            activation=nn.ReLU,    
+            dropout=0.2,                
+            normalize_embeddings=True,  
+            # Parâmetros específicos do SAGEConv
+            aggr='mean',                
+        )
+        self.model_name = "RedditVGAE"

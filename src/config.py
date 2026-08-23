@@ -20,7 +20,7 @@ class Config:
     DEVICE = "cuda" if os.environ.get("NVIDIA_VISIBLE_DEVICES") else "cpu"
 
     # Semente global (para reprodutibilidade)
-    RANDOM_SEED = 25369  # antes: int(time.time())
+    RANDOM_SEED = int(time.time())
 
     # --- Splits ---
     TRAIN_SPLIT_RATIO = 0.8  # geralmente não usado porque Musae tem split próprio

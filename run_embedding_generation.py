@@ -8,7 +8,6 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 import gc
 
-
 from memory_profiler import memory_usage
 import numpy as np
 import psutil
@@ -22,7 +21,7 @@ import src.data_loaders as data_loaders
 from src.directory_manager import DirectoryManager
 from src.report_manager import ReportManager
 from src.models.embedding_models.autoencoders_models import GraphSageGAE, GraphSageGAE, GCNGAE, GCNVGAE
-from src.models.embedding_models.din_gae import GithubVGAE, FacebookGAE
+from src.models.embedding_models.din_gae import GithubVGAE, FacebookGAE, RedditVGAE
 from src.early_stopper import EarlyStopper
 from src.embeddings_eval import evaluate_embeddings
 from src.utils import format_bytes, salvar_modelo_pytorch_completo, save_embeddings_to_wsg
@@ -71,7 +70,7 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
     peak_ram_overall_bytes = max(peak_ram_overall_bytes, mem_after_load)
 
     print("\n[FASE 2] Convertendo para formato Pytorch Geometric...")
-    pyg_data = data_converters.wsg_for_vgae(wsg_obj, config)
+    pyg_data = data_converters.wsg_for_vgae(wsg_obj, config, train_split_ratio=config.TRAIN_SPLIT_RATIO)
     mem_after_convert = process.memory_info().rss
     peak_ram_overall_bytes = max(peak_ram_overall_bytes, mem_after_convert)
     print(f"RAM após conversão: {format_bytes(mem_after_convert)}")  # ✅
@@ -102,7 +101,7 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
             out_embedding_dim=config.OUT_EMBEDDING_DIM,
         )
     elif "reddit" in WSG_DATASET.dataset_name.lower():
-        model = GithubVGAE(
+        model = RedditVGAE(
             config=config,
             num_total_features=pyg_data.num_total_features,
             out_embedding_dim=config.OUT_EMBEDDING_DIM,
@@ -173,19 +172,15 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
         peak_vram_bytes = 0
 
 
-# Função Wrapper: Mede o tempo internamente e retorna (tempo, embeddings)
+    # Função Wrapper: Mede o tempo com DeviceTimer e retorna (tempo, embeddings)
     # O memory_usage vai rodar isso e medir o pico de RAM externamente
     def _inference_wrapper():
-        if torch.cuda.is_available():
-            torch.cuda.synchronize()
-        
-        t_start = time.perf_counter()
-        
-        # Executa a inferência
-        result_embeddings = model.inference(pyg_data)
-        
-        duration = time.perf_counter() - t_start
-        return duration, result_embeddings
+        # O DeviceTimer cuida de todo o "sujeira" do hardware pra você
+        with DeviceTimer(config.DEVICE) as timer:
+            result_embeddings = model.inference(pyg_data)
+            
+        return timer.duration, result_embeddings
+
 
     # Executa com Profiler
     # retval=True faz retornar o que o wrapper devolveu: (duration, result_embeddings)
@@ -195,7 +190,6 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
         retval=True,
         interval=0.01  # Intervalo curto para precisão
     )
-
     # Tratamento para versões antigas que retornam lista
     if isinstance(inf_mem_peak, list):
         inf_mem_peak = max(inf_mem_peak)
@@ -204,7 +198,7 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
 
 
     # --- Relatórios e Salvamentos ---
-# --- Relatórios e Salvamentos ---
+
     report = {
         "Metadata": {
             "Dataset_Name": WSG_DATASET.dataset_name,
@@ -237,6 +231,12 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
             "Inference_Peak_RAM_MiB": inf_mem_peak,
             "Memory_Peak_RAM_MiB": peak_ram_overall_bytes / (1024 * 1024),
             "Memory_Peak_VRAM_MiB": peak_vram_bytes / (1024 * 1024),
+        },
+        "Data_Split": {
+            "Train_Size_Ratio_Configured": getattr(config, 'TRAIN_SPLIT_RATIO', 0.8),
+            "Train_Nodes": int(pyg_data.train_mask.sum()),
+            "Val_Nodes": int(pyg_data.val_mask.sum()),
+            "Test_Nodes": int(pyg_data.test_mask.sum()),
         },
         "Training_Report": training_report,
     }
@@ -275,8 +275,10 @@ if __name__ == "__main__":
     # --- CONFIGURAÇÃO LITE PARA TESTE FIM A FIM ---
     datasets = [
         # Usando apenas 100 threads de cada classe para ser instantâneo
+        #data_loaders.MusaeFacebookLoader(),
+        #data_loaders.MusaeGithubLoader(),
         data_loaders.MusaeTwitchLoader(),
-        #data_loaders.RedditLiteLoader(threads_per_class=100), 
+        data_loaders.RedditLiteLoader(threads_per_class=100), 
     ]
     
     # Testando apenas com 1 dimensão clássica
