@@ -14,7 +14,7 @@ import shutil
 
 # Imports do projeto
 from src.config import Config
-from src.data_loaders import MusaeGithubLoader, MusaeFacebookLoader
+from src.data_loaders import MusaeGithubLoader, MusaeFacebookLoader, MusaeTwitchLoader, RedditLiteLoader, RedditLoader
 from src.models.embedding_models.din_gae import DynamicGAE, DynamicVGAE
 from src.directory_manager import DirectoryManager
 from src.report_manager import ReportManager
@@ -204,15 +204,10 @@ def run_optuna_optimization(WSG_DATASET: Any, config: Config, model_class: Any, 
 
 if __name__ == "__main__":
     config = Config()
+    dataset_twitch = MusaeTwitchLoader()
 
-    dataset_github = MusaeGithubLoader()
-    
-    run_optuna_optimization(dataset_github, config, DynamicGAE, n_trials=30)
-    #run_optuna_optimization(dataset_github, config, DynamicVGAE, n_trials=30)
+    print("=== Testando GAE para o Twitch ===")
+    run_optuna_optimization(dataset_twitch, config, DynamicGAE, n_trials=30)
 
-
-
-    # Dataset 2
-    # dataset_fb = MusaeFacebookLoader()
-    # run_optuna_optimization(dataset_fb, config, DynamicGAE, n_trials=20)
-    run_optuna_optimization(dataset_fb, config, DynamicVGAE, n_trials=20)
+    print("=== Testando VGAE para o Twitch ===")
+    run_optuna_optimization(dataset_twitch, config, DynamicVGAE, n_trials=30)

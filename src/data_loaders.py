@@ -2,7 +2,6 @@
 
 # Standard library
 
-
 import random
 import pandas as pd
 import json
@@ -518,7 +517,7 @@ class MusaeTwitchLoader(BaseDatasetLoader):
 
 
 
-import random
+
 
 class RedditLoader(BaseDatasetLoader):
     """
