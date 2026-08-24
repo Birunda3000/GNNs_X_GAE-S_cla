@@ -203,6 +203,43 @@ class TwitchVGAE(DynamicVGAE):
     Modelo VGAE otimizado para o dataset Twitch (Global).
     
     Hiperparâmetros selecionados via Optuna (Trial 28):
+    - Layer: GATConv
+    - Layers: 4
+    - Hidden Dim: 256
+    - Embedding Dim (Input): 64
+    - Dropout: 0.2
+    - Activation: ReLU
+    - Normalize Embeddings: False
+    """
+    def __init__(self, config, num_total_features: int, out_embedding_dim: int):
+        super().__init__(
+            config=config,
+            num_total_features=num_total_features,
+            # Dimensões
+            embedding_dim=64,           # Input embedding (campeão do Optuna)
+            hidden_dim=256,             # Camadas ocultas (campeão do Optuna)
+            out_embedding_dim=out_embedding_dim,  # Latente Z (recebido do pipeline)
+            
+            # Arquitetura
+            layer_type=GATConv,         # Atenção
+            num_layers=4,               # Profundidade (4 camadas)
+            
+            # Regularização e Ativação
+            activation=nn.ReLU,         # Ativação
+            dropout=0.2,                # Dropout
+            normalize_embeddings=False, # Sem normalização L2
+            
+            # Parâmetros específicos do GATConv
+            heads=1,                    # Cabeças de atenção (Padrão para Autoencoders)
+        )
+        self.model_name = "TwitchVGAE"
+
+
+'''class TwitchVGAE(DynamicVGAE):
+    """
+    Modelo VGAE otimizado para o dataset Twitch (Global).
+    
+    Hiperparâmetros selecionados via Optuna (Trial 28):
     - Layer: SAGEConv
     - Layers: 3
     - Hidden Dim: 128
@@ -232,7 +269,7 @@ class TwitchVGAE(DynamicVGAE):
             # Parâmetros específicos do SAGEConv
             aggr='mean',                # Agregador mean
         )
-        self.model_name = "TwitchVGAE"
+        self.model_name = "TwitchVGAE"'''
 
 
 
