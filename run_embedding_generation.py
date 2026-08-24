@@ -48,7 +48,7 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
 
     process = psutil.Process(os.getpid())
     mem_start = process.memory_info().rss
-    print(f"RAM inicial do processo: {format_bytes(mem_start)}")  # ✅
+    print(f"RAM inicial do processo: {format_bytes(mem_start)}") 
 
     peak_ram_overall_bytes = mem_start
 
@@ -74,7 +74,7 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
     pyg_data = data_converters.wsg_for_vgae(wsg_obj, config)
     mem_after_convert = process.memory_info().rss
     peak_ram_overall_bytes = max(peak_ram_overall_bytes, mem_after_convert)
-    print(f"RAM após conversão: {format_bytes(mem_after_convert)}")  # ✅
+    print(f"RAM após conversão: {format_bytes(mem_after_convert)}")
 
 
     # --- Modelo ---
@@ -278,7 +278,7 @@ if __name__ == "__main__":
         data_loaders.MusaeFacebookLoader(),
         data_loaders.MusaeGithubLoader(),
         data_loaders.MusaeTwitchLoader(),
-        #data_loaders.RedditLiteLoader(threads_per_class=100), 
+        data_loaders.RedditLiteLoader(threads_per_class=2000), 
     ]
     
     # Testando apenas com 1 dimensão clássica
@@ -290,16 +290,6 @@ if __name__ == "__main__":
             gc.collect()
             print("❄️  Pausa de 5s para resfriamento...")
             time.sleep(5)
-
-
-
-
-
-
-
-
-
-
 
 
 

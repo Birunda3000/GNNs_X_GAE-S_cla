@@ -317,33 +317,34 @@ class RedditVGAE(DynamicVGAE):
     """
     Modelo VGAE otimizado para a escala massiva do dataset Reddit.
     
-    Hiperparâmetros selecionados para economia de VRAM:
-    - Layer: SAGEConv (Indispensável para grafos gigantes)
-    - Agregador: mean
-    - Layers: 2 (Mais raso para evitar oversmoothing e explosão de RAM em 4 milhões de nós)
-    - Hidden Dim: 128 (Metade do GitHub)
-    - Embedding Dim (Input): 64 (Suficiente para capturar o "código de barras" do grau + ruído)
+    Hiperparâmetros selecionados via Optuna (Trial 15):
+    - Layer: GATConv
+    - Layers: 4
+    - Hidden Dim: 64 (Excelente para economia de VRAM)
+    - Embedding Dim (Input): 128
     - Dropout: 0.2
-    - Activation: ReLU
+    - Activation: LeakyReLU
     - Normalize Embeddings: True
     """
-
     def __init__(self, config, num_total_features: int, out_embedding_dim: int):
         super().__init__(
             config=config,
             num_total_features=num_total_features,
-            # Dimensões (Mantidas enxutas para a RTX 5060 Ti / A2000)
-            embedding_dim=64,           # Input embedding
-            hidden_dim=128,             # Camadas ocultas
-            out_embedding_dim=out_embedding_dim,       # Latente Z
+            # Dimensões
+            embedding_dim=128,          # Input embedding (campeão do Optuna)
+            hidden_dim=64,              # Camadas ocultas enxutas
+            out_embedding_dim=out_embedding_dim,  # Latente Z (recebido do pipeline)
+            
             # Arquitetura
-            layer_type=SAGEConv,        # GraphSAGE para vizinhanças enormes
-            num_layers=2,               # Profundidade reduzida
-            # Regularização
-            activation=nn.ReLU,    
-            dropout=0.2,                
-            normalize_embeddings=True,  
-            # Parâmetros específicos do SAGEConv
-            aggr='mean',                
+            layer_type=GATConv,         # Mecanismo de Atenção
+            num_layers=4,               # Profundidade
+            
+            # Regularização e Ativação
+            activation=nn.LeakyReLU,    # Ativação
+            dropout=0.2,                # Dropout
+            normalize_embeddings=True,  # Normalização L2
+            
+            # Parâmetros específicos do GATConv
+            heads=1,                    # Cabeças de atenção
         )
         self.model_name = "RedditVGAE"

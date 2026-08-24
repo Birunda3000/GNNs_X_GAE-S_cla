@@ -221,14 +221,15 @@ if __name__ == "__main__":
     #print("=== Testando GAE para o Twitch ===")
     #run_optuna_optimization(dataset_twitch, config, DynamicGAE, n_trials=30)
 
-    print("=== Testando VGAE para o Twitch ===")
-    run_optuna_optimization(dataset_twitch, config, DynamicVGAE, n_trials=30)
+    #print("=== Testando VGAE para o Twitch ===")
+    #run_optuna_optimization(dataset_twitch, config, DynamicVGAE, n_trials=30)
+
 
 
     print("Iniciando carregamento do dataset REDDIT (Versão Lite)...")
     # threads_per_class=500 vai gerar um grafo com 1000 threads fundidas.
     # DICA: Se a memória da GPU ainda chorar com 500, diminua para 200 ou 300.
-    dataset_reddit_lite = RedditLiteLoader(threads_per_class=1500)
+    dataset_reddit_lite = RedditLiteLoader(threads_per_class=500)
     
     #print("\n=== Testando GAE para o Reddit (Lite) ===")
     # Mantendo n_trials=30. O pruner agressivo vai agir rápido!
