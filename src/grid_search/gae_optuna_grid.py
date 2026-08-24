@@ -50,7 +50,7 @@ def objective(trial, pyg_data, config, model_class, dataset_name):
     else:
         raise ValueError(f"Unsupported layer_type_str: {layer_type_str}")
 
-    num_layers = trial.suggest_int("num_layers", 2, 3, 4)
+    num_layers = trial.suggest_int("num_layers", 2, 4)
     hidden_dim = trial.suggest_categorical("hidden_dim", [64, 128, 256])
     dropout = trial.suggest_categorical("dropout", [0.0, 0.2, 0.5])
 
