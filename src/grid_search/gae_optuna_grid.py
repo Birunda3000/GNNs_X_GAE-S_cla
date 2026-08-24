@@ -30,18 +30,28 @@ import src.grid_search.grid_search_params as grids
 
 def objective(trial, pyg_data, config, model_class, dataset_name):
 
+    # --- 0. GARANTIR REPRODUTIBILIDADE ---
+    torch.manual_seed(config.RANDOM_SEED)
+    np.random.seed(config.RANDOM_SEED)
+    random.seed(config.RANDOM_SEED)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(config.RANDOM_SEED)
+
+
     # --------- 1. ESPAÇO DE BUSCA FINAL RECOMENDADO ----------
 
-    layer_type_str = trial.suggest_categorical("layer_type", ["SAGEConv", "GCNConv"])
+    layer_type_str = trial.suggest_categorical("layer_type", ["SAGEConv", "GCNConv", "GATConv"])
     if layer_type_str == "SAGEConv":
         layer_type = grids.SAGEConv
     elif layer_type_str == "GCNConv":
         layer_type = grids.GCNConv
+    elif layer_type_str == "GATConv":
+        layer_type = grids.GATConv
     else:
         raise ValueError(f"Unsupported layer_type_str: {layer_type_str}")
 
-    num_layers = trial.suggest_int("num_layers", 2, 3)
-    hidden_dim = trial.suggest_categorical("hidden_dim", [128, 256])
+    num_layers = trial.suggest_int("num_layers", 2, 3, 4)
+    hidden_dim = trial.suggest_categorical("hidden_dim", [64, 128, 256])
     dropout = trial.suggest_categorical("dropout", [0.0, 0.2, 0.5])
 
     activation_str = trial.suggest_categorical("activation", ["ReLU", "ELU", "LeakyReLU"])
@@ -55,8 +65,8 @@ def objective(trial, pyg_data, config, model_class, dataset_name):
         raise ValueError(f"Unsupported activation_str: {activation_str}")
 
     # Parametros de embedding
-    embedding_dim = trial.suggest_categorical("embedding_dim", [128, 256])
-    out_embedding_dim = trial.suggest_categorical("out_embedding_dim", [8, 16, 64])
+    embedding_dim = trial.suggest_categorical("embedding_dim", [64, 128, 256])
+    out_embedding_dim = trial.suggest_categorical("out_embedding_dim", [64])
     normalize_embeddings = trial.suggest_categorical("normalize_embeddings", [True, False])
 
     device = torch.device(config.DEVICE)
@@ -120,6 +130,7 @@ def objective(trial, pyg_data, config, model_class, dataset_name):
         # --------- 6. SALVAR RELATÓRIO -----------------------
         report_manager = ReportManager(directory_manager)
         full_report = {
+            "random_seed": config.RANDOM_SEED,
             "params": trial.params,
             "best_score": best_score,
             "training_history": training_report["training_history"]
@@ -182,8 +193,8 @@ def run_optuna_optimization(WSG_DATASET: Any, config: Config, model_class: Any, 
         direction="maximize",
         study_name=f"{model_class.__name__}_{WSG_DATASET.dataset_name}",
         pruner=optuna.pruners.MedianPruner(
-            n_startup_trials=10,
-            n_warmup_steps=25
+            n_startup_trials=5,
+            n_warmup_steps=10
         )
     )
 
@@ -191,9 +202,10 @@ def run_optuna_optimization(WSG_DATASET: Any, config: Config, model_class: Any, 
     study.optimize(func, n_trials=n_trials)
 
     print("\n" + "="*50)
-    print(f"📌 MELHOR RESULTADO ({model_class.__name__}):")
-    print(f"Score: {study.best_value}")
-    print(f"Params: {study.best_params}")
+    print(f"  🏆 MELHOR RESULTADO ({model_class.__name__} - {WSG_DATASET.dataset_name}):")
+    print(f"  Pasta (Trial): Trial_{study.best_trial.number}") # <--- Indica a pasta exata!
+    print(f"  Score (F1):    {study.best_value:.6f}")
+    print(f"  Params:        {study.best_params}")
     print("="*50 + "\n")
 
 
@@ -211,3 +223,16 @@ if __name__ == "__main__":
 
     print("=== Testando VGAE para o Twitch ===")
     run_optuna_optimization(dataset_twitch, config, DynamicVGAE, n_trials=30)
+
+
+    print("Iniciando carregamento do dataset REDDIT (Versão Lite)...")
+    # threads_per_class=500 vai gerar um grafo com 1000 threads fundidas.
+    # DICA: Se a memória da GPU ainda chorar com 500, diminua para 200 ou 300.
+    dataset_reddit_lite = RedditLiteLoader(threads_per_class=1500)
+    
+    print("\n=== Testando GAE para o Reddit (Lite) ===")
+    # Mantendo n_trials=30. O pruner agressivo vai agir rápido!
+    run_optuna_optimization(dataset_reddit_lite, config, DynamicGAE, n_trials=30)
+    
+    print("\n=== Testando VGAE para o Reddit (Lite) ===")
+    run_optuna_optimization(dataset_reddit_lite, config, DynamicVGAE, n_trials=30)
