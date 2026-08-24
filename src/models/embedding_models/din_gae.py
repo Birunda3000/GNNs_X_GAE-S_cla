@@ -159,6 +159,46 @@ class FacebookGAE(DynamicGAE):
         self.model_name = "FacebookGAE"
 
 
+# Classe otimizada para Facebook
+class FacebookVGAE(DynamicVGAE):
+    """
+    Modelo GAE otimizado para o dataset Facebook (MUSAE).
+    
+    Hiperparâmetros selecionados:
+    - Layer: GATConv (Atenção é fundamental para redes sociais)
+    - Layers: 4 (Profundo, mas o GAT mitiga oversmoothing)
+    - Heads: 1 (Simples e eficiente)
+    - Hidden Dim: 256
+    - Dropout: 0.5
+    - Activation: GELU (Mais suave que ReLU)
+    - Embedding Dim (Input): 64
+    - Out Embedding Dim (Latente/Z): 32
+    - Normalize Embeddings: True (Crítico para qualidade dos embeddings)
+    """
+
+    def __init__(self, config, num_total_features: int, out_embedding_dim):
+        super().__init__(
+            config=config,
+            num_total_features=num_total_features,
+            # Dimensões
+            embedding_dim=64,           # Input embedding
+            hidden_dim=256,             # Camadas ocultas
+            out_embedding_dim=out_embedding_dim,       # Latente Z
+            # Arquitetura
+            layer_type=GATConv,         # Mecanismo de atenção
+            num_layers=4,               # Profundidade
+            # Regularização
+            activation=nn.GELU,         # Ativação suave
+            dropout=0.5,                # Dropout padrão
+            normalize_embeddings=True,  # Normalização L2
+            # Parâmetros específicos do GATConv
+            heads=1,                    # Número de cabeças de atenção
+        )
+        self.model_name = "FacebookVGAE"
+
+
+
+
 # Classe otimizada para Github
 class GithubVGAE(DynamicVGAE):
     """

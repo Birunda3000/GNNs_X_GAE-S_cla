@@ -21,7 +21,7 @@ import src.data_loaders as data_loaders
 from src.directory_manager import DirectoryManager
 from src.report_manager import ReportManager
 from src.models.embedding_models.autoencoders_models import GraphSageGAE, GraphSageGAE, GCNGAE, GCNVGAE
-from src.models.embedding_models.din_gae import GithubVGAE, FacebookGAE, RedditVGAE, TwitchVGAE
+from src.models.embedding_models.din_gae import GithubVGAE, FacebookVGAE, RedditVGAE, TwitchVGAE
 from src.early_stopper import EarlyStopper
 from src.embeddings_eval import evaluate_embeddings
 from src.utils import format_bytes, salvar_modelo_pytorch_completo, save_embeddings_to_wsg
@@ -90,7 +90,7 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
 
     # Seleção baseada no nome do dataset carregado
     if "facebook" in WSG_DATASET.dataset_name.lower():
-        model = FacebookGAE(
+        model = FacebookVGAE(
             config=config,
             num_total_features=pyg_data.num_total_features,
             out_embedding_dim=config.OUT_EMBEDDING_DIM,
@@ -214,8 +214,8 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
         "Hyperparameters": {
             "Random_Seed": config.RANDOM_SEED,
             "Device": str(device),
-            "Embedding_Dim_Input": config.EMBEDDING_DIM,
-            "Hidden_Dim": config.HIDDEN_DIM,
+            #"Embedding_Dim_Input": config.EMBEDDING_DIM,
+            #"Hidden_Dim": config.HIDDEN_DIM,
             "Out_Embedding_Dim": emb_dim,
             "Epochs": config.EPOCHS,
             "Learning_Rate": config.LEARNING_RATE,
@@ -275,10 +275,10 @@ if __name__ == "__main__":
     # --- CONFIGURAÇÃO LITE PARA TESTE FIM A FIM ---
     datasets = [
         # Usando apenas 100 threads de cada classe para ser instantâneo
-        #data_loaders.MusaeFacebookLoader(),
-        #data_loaders.MusaeGithubLoader(),
-        #data_loaders.MusaeTwitchLoader(),
-        data_loaders.RedditLiteLoader(threads_per_class=100), 
+        data_loaders.MusaeFacebookLoader(),
+        data_loaders.MusaeGithubLoader(),
+        data_loaders.MusaeTwitchLoader(),
+        #data_loaders.RedditLiteLoader(threads_per_class=100), 
     ]
     
     # Testando apenas com 1 dimensão clássica
