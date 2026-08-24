@@ -197,6 +197,45 @@ class GithubVGAE(DynamicVGAE):
         self.model_name = "GithubVGAE"
 
 
+
+class TwitchVGAE(DynamicVGAE):
+    """
+    Modelo VGAE otimizado para o dataset Twitch (Global).
+    
+    Hiperparâmetros selecionados via Optuna (Trial 28):
+    - Layer: SAGEConv
+    - Layers: 3
+    - Hidden Dim: 128
+    - Embedding Dim (Input): 256
+    - Dropout: 0.0
+    - Activation: ReLU
+    - Normalize Embeddings: True
+    """
+    def __init__(self, config, num_total_features: int, out_embedding_dim: int):
+        super().__init__(
+            config=config,
+            num_total_features=num_total_features,
+            # Dimensões
+            embedding_dim=256,          # Input embedding (campeão do Optuna)
+            hidden_dim=128,             # Camadas ocultas (campeão do Optuna)
+            out_embedding_dim=out_embedding_dim,  # Latente Z (recebido dinamicamente do pipeline)
+            
+            # Arquitetura
+            layer_type=SAGEConv,        # GraphSAGE
+            num_layers=3,               # Profundidade
+            
+            # Regularização e Ativação
+            activation=nn.ReLU,         # Ativação 
+            dropout=0.0,                # Sem dropout
+            normalize_embeddings=True,  # Normalização L2
+            
+            # Parâmetros específicos do SAGEConv
+            aggr='mean',                # Agregador mean
+        )
+        self.model_name = "TwitchVGAE"
+
+
+
 class RedditVGAE(DynamicVGAE):
     """
     Modelo VGAE otimizado para a escala massiva do dataset Reddit.

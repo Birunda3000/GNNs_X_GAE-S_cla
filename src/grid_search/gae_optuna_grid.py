@@ -218,8 +218,8 @@ if __name__ == "__main__":
     config = Config()
     dataset_twitch = MusaeTwitchLoader()
 
-    print("=== Testando GAE para o Twitch ===")
-    run_optuna_optimization(dataset_twitch, config, DynamicGAE, n_trials=30)
+    #print("=== Testando GAE para o Twitch ===")
+    #run_optuna_optimization(dataset_twitch, config, DynamicGAE, n_trials=30)
 
     print("=== Testando VGAE para o Twitch ===")
     run_optuna_optimization(dataset_twitch, config, DynamicVGAE, n_trials=30)
@@ -230,9 +230,9 @@ if __name__ == "__main__":
     # DICA: Se a memória da GPU ainda chorar com 500, diminua para 200 ou 300.
     dataset_reddit_lite = RedditLiteLoader(threads_per_class=1500)
     
-    print("\n=== Testando GAE para o Reddit (Lite) ===")
+    #print("\n=== Testando GAE para o Reddit (Lite) ===")
     # Mantendo n_trials=30. O pruner agressivo vai agir rápido!
-    run_optuna_optimization(dataset_reddit_lite, config, DynamicGAE, n_trials=30)
+    #run_optuna_optimization(dataset_reddit_lite, config, DynamicGAE, n_trials=30)
     
     print("\n=== Testando VGAE para o Reddit (Lite) ===")
     run_optuna_optimization(dataset_reddit_lite, config, DynamicVGAE, n_trials=30)

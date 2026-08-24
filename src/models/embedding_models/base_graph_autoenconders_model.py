@@ -123,6 +123,7 @@ class BaseGAECommon(BaseModel, nn.Module):
                     z = self.encode(data)
                     total_loss = self.compute_total_loss(z, data, edge_index)
                     total_loss.backward()
+                    torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=1.0)
                     optimizer.step()
 
                     # Check do Early Stopper também entra na conta da época
