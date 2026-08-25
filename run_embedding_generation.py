@@ -8,9 +8,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 import gc
 
-from memory_profiler import memory_usage
 import numpy as np
-import psutil
 import torch
 import torch.optim as optim
 from torch.optim import lr_scheduler
@@ -20,12 +18,12 @@ import src.data_converters as data_converters
 import src.data_loaders as data_loaders
 from src.directory_manager import DirectoryManager
 from src.report_manager import ReportManager
-from src.models.embedding_models.autoencoders_models import GraphSageGAE, GraphSageGAE, GCNGAE, GCNVGAE
+from src.models.embedding_models.autoencoders_models import GraphSageGAE, GCNGAE, GCNVGAE
 from src.models.embedding_models.din_gae import GithubVGAE, FacebookVGAE, RedditVGAE, TwitchVGAE
 from src.early_stopper import EarlyStopper
 from src.embeddings_eval import evaluate_embeddings
 from src.utils import format_bytes, salvar_modelo_pytorch_completo, save_embeddings_to_wsg
-from src.utils import DeviceTimer
+from src.utils import DeviceTimer, PeakMemoryProfiler
 
 
 def run_embedding_generation(WSG_DATASET, emb_dim: int):
@@ -46,16 +44,6 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
     
     device = torch.device(config.DEVICE)
 
-    process = psutil.Process(os.getpid())
-    mem_start = process.memory_info().rss
-    print(f"RAM inicial do processo: {format_bytes(mem_start)}") 
-
-    peak_ram_overall_bytes = mem_start
-
-    if "cuda" in device.type and torch.cuda.is_available():
-        torch.cuda.reset_peak_memory_stats(device)
-        print("VRAM (GPU) Peak Stats zeradas.")
-
     # Seeds e prints
     torch.manual_seed(config.RANDOM_SEED)
     np.random.seed(config.RANDOM_SEED)
@@ -67,26 +55,12 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
     # --- Pipeline de Dados ---
     print("\n[FASE 1] Carregando dados...")
     wsg_obj = WSG_DATASET.load()
-    mem_after_load = process.memory_info().rss
-    peak_ram_overall_bytes = max(peak_ram_overall_bytes, mem_after_load)
 
     print("\n[FASE 2] Convertendo para formato Pytorch Geometric...")
     pyg_data = data_converters.wsg_for_vgae(wsg_obj, config)
-    mem_after_convert = process.memory_info().rss
-    peak_ram_overall_bytes = max(peak_ram_overall_bytes, mem_after_convert)
-    print(f"RAM após conversão: {format_bytes(mem_after_convert)}")
-
 
     # --- Modelo ---
-    print("\n[FASE 3] Construindo o modelo GraphSAGE-GAE...")
-    '''model = GraphSageGAE(
-        config=config,
-        num_total_features=pyg_data.num_total_features,
-        embedding_dim=config.EMBEDDING_DIM,
-        hidden_dim=config.HIDDEN_DIM,
-        out_embedding_dim=config.OUT_EMBEDDING_DIM,
-    ).to(device)'''
-
+    print("\n[FASE 3] Construindo o modelo GAE/VGAE...")
 
     # Seleção baseada no nome do dataset carregado
     if "facebook" in WSG_DATASET.dataset_name.lower():
@@ -118,7 +92,6 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
 
     model = model.to(device)
 
-
     directory_manager = DirectoryManager(timestamp=config.TIMESTAMP, run_folder_name="EMBEDDING_RUNS")
     report_manager = ReportManager(directory_manager)
     early_stopper = EarlyStopper(
@@ -137,68 +110,38 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
         min_lr=config.MIN_LR,
     )
 
-    mem_after_model = process.memory_info().rss
-    peak_ram_overall_bytes = max(peak_ram_overall_bytes, mem_after_model)
-    print(f"RAM após instanciar modelo: {format_bytes(mem_after_model)}")  # ✅
-
-    # --- Treinamento ---
+    # =====================================================================
+    # --- FASE 4: TREINAMENTO (Medição Isolada) ---
+    # =====================================================================
     print("\n[FASE 4] Treinando modelo...")
-    func = model.train_model
-    func_kwargs = dict(
-        data=pyg_data,
-        optimizer=optimizer,
-        epochs=config.EPOCHS,
-        early_stopper=early_stopper,
-        scheduler=scheduler,
-    )
-    proc_tuple = (func, [], func_kwargs)
-    mem_usage_result, training_report = memory_usage(
-        proc=cast(Any, proc_tuple),
-        max_usage=True,
-        retval=True,
-        interval=0.1,
-    )
-    peak_ram_train_func_mib = mem_usage_result or 0.0
-    peak_ram_overall_bytes = max(peak_ram_overall_bytes, int(peak_ram_train_func_mib * 1024 * 1024))
+    
+    train_profiler = PeakMemoryProfiler(device=config.DEVICE, step_name="Treino_VGAE")
+    
+    with train_profiler:
+        training_report = model.train_model(
+            data=pyg_data,
+            optimizer=optimizer,
+            epochs=config.EPOCHS,
+            early_stopper=early_stopper,
+            scheduler=scheduler,
+        )
 
-    mem_after_train = process.memory_info().rss
-    peak_ram_overall_bytes = max(peak_ram_overall_bytes, mem_after_train)
-
-    print(f"Treino concluído. RAM final: {format_bytes(mem_after_train)}")  # ✅
-    if torch.cuda.is_available():
-        peak_vram_bytes = torch.cuda.max_memory_allocated(device)
-        print(f"VRAM pico: {format_bytes(peak_vram_bytes)}")  # ✅
-    else:
-        peak_vram_bytes = 0
-
-
-    # Função Wrapper: Mede o tempo com DeviceTimer e retorna (tempo, embeddings)
-    # O memory_usage vai rodar isso e medir o pico de RAM externamente
-    def _inference_wrapper():
-        # O DeviceTimer cuida de todo o "sujeira" do hardware pra você
+    # =====================================================================
+    # --- FASE 5: INFERÊNCIA (Medição Isolada de Tempo e Memória) ---
+    # =====================================================================
+    print("\n[FASE 5] Gerando Embeddings (Inferência)...")
+    
+    inf_profiler = PeakMemoryProfiler(device=config.DEVICE, step_name="Inferencia_Embeddings")
+    
+    with inf_profiler:
         with DeviceTimer(config.DEVICE) as timer:
-            result_embeddings = model.inference(pyg_data)
+            final_embeddings = model.inference(pyg_data)
             
-        return timer.duration, result_embeddings
+    inference_duration = timer.duration
 
-
-    # Executa com Profiler
-    # retval=True faz retornar o que o wrapper devolveu: (duration, result_embeddings)
-    inf_mem_peak, (inference_duration, final_embeddings) = memory_usage(
-        proc=_inference_wrapper,
-        max_usage=True,
-        retval=True,
-        interval=0.01  # Intervalo curto para precisão
-    )
-    # Tratamento para versões antigas que retornam lista
-    if isinstance(inf_mem_peak, list):
-        inf_mem_peak = max(inf_mem_peak)
-
-    print(f"Inferência concluída em {inference_duration:.4f}s | RAM Pico: {inf_mem_peak:.2f} MiB")
-
+    print(f"Inferência concluída em {inference_duration:.4f}s")
 
     # --- Relatórios e Salvamentos ---
-
     report = {
         "Metadata": {
             "Dataset_Name": WSG_DATASET.dataset_name,
@@ -214,8 +157,6 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
         "Hyperparameters": {
             "Random_Seed": config.RANDOM_SEED,
             "Device": str(device),
-            #"Embedding_Dim_Input": config.EMBEDDING_DIM,
-            #"Hidden_Dim": config.HIDDEN_DIM,
             "Out_Embedding_Dim": emb_dim,
             "Epochs": config.EPOCHS,
             "Learning_Rate": config.LEARNING_RATE,
@@ -228,9 +169,10 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
         },
         "Performance_Metrics": {
             "Inference_Duration_Seconds": inference_duration,
-            "Inference_Peak_RAM_MiB": inf_mem_peak,
-            "Memory_Peak_RAM_MiB": peak_ram_overall_bytes / (1024 * 1024),
-            "Memory_Peak_VRAM_MiB": peak_vram_bytes / (1024 * 1024),
+            "Training_Peak_RAM_MB": train_profiler.cpu_diff_mb,
+            "Training_Peak_VRAM_MB": train_profiler.gpu_peak_mb,
+            "Inference_Peak_RAM_MB": inf_profiler.cpu_diff_mb,
+            "Inference_Peak_VRAM_MB": inf_profiler.gpu_peak_mb,
         },
         "Data_Split": {
             "Train_Size_Ratio_Configured": getattr(config, 'TRAIN_SPLIT_RATIO', 0.8),
@@ -240,7 +182,6 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
         },
         "Training_Report": training_report,
     }
-
 
     report_manager.create_report(report)
     report_manager.save_report()
@@ -274,14 +215,12 @@ if __name__ == "__main__":
 
     # --- CONFIGURAÇÃO LITE PARA TESTE FIM A FIM ---
     datasets = [
-        # Usando apenas 100 threads de cada classe para ser instantâneo
-        data_loaders.MusaeFacebookLoader(),
+        #data_loaders.MusaeFacebookLoader(),
         data_loaders.MusaeGithubLoader(),
-        data_loaders.MusaeTwitchLoader(),
-        data_loaders.RedditLiteLoader(threads_per_class=2000), 
+        #data_loaders.MusaeTwitchLoader(),
+        #data_loaders.RedditLiteLoader(threads_per_class=20), 
     ]
     
-    # Testando apenas com 1 dimensão clássica
     emb_sizes = [64]
 
     for dataset in datasets:
@@ -290,20 +229,3 @@ if __name__ == "__main__":
             gc.collect()
             print("❄️  Pausa de 5s para resfriamento...")
             time.sleep(5)
-
-
-
-    '''    # Lista de datasets e tamanhos de embedding
-    datasets = [
-        data_loaders.MusaeFacebookLoader(),
-        data_loaders.MusaeGithubLoader(),
-        #data_loaders.FlickrLoader(),
-    ]
-    emb_sizes = [2, 3, 8, 16, 32, 64, 128]
-
-    for dataset in datasets:
-        for emb in emb_sizes:
-            run_embedding_generation(dataset, emb)
-            gc.collect()
-            print("❄️  Pausa de 10s para resfriamento da CPU...")
-            time.sleep(10)'''

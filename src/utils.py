@@ -1,115 +1,111 @@
+import contextlib
+import gc
 import json
+import logging
 import os
+import time
+import resource
 from datetime import datetime, timezone
 from typing import Any, Optional
 
-import torch
-from src.data_format_definition import WSG, Metadata, NodeFeaturesEntry
+try:
+    import torch
+    TORCH_AVAILABLE = True
+except ImportError:
+    TORCH_AVAILABLE = False
 
-import time
-import torch
-import gc
+from src.data_format_definition import Metadata, NodeFeaturesEntry, WSG
 
-import resource
-import contextlib
-import memray
-
-import os
-import contextlib
-import torch
-import resource
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - [%(levelname)s] - %(message)s')
+logger = logging.getLogger("TCC-GNN-Profiler")
 
 
 # ==========================================================
-# 💡 FUNÇÕES AUXILIARES DE MEMÓRIA (corrigidas e seguras)
+# FORMATAÇÃO E CONVERSÃO DE MEMÓRIA
 # ==========================================================
 
-def _coerce_to_bytes(value: Any, assume_mib: bool = False) -> Optional[float]:
-    """Converte um valor em bytes.
-    
-    Args:
-        value: int (bytes), float (bytes OU MiB se assume_mib=True), ou string
-        assume_mib: se True, trata float como MiB; se False, como bytes
-    """
+
+def _coerce_to_bytes(
+    value: Any,
+    assume_mib: bool = False,
+) -> Optional[float]:
+    """Converte um valor para bytes."""
     if value is None or isinstance(value, bool):
         return None
-    if isinstance(value, int):
-        return float(value)
-    if isinstance(value, float):
-        if assume_mib:
-            return float(value) * 1024 * 1024
-        else:
-            return float(value)  # já em bytes
-    if isinstance(value, str):
+
+    if isinstance(value, (int, float)):
+        numeric_value = float(value)
+    elif isinstance(value, str):
         try:
-            numeric = float(value)
+            numeric_value = float(value)
         except ValueError:
             return None
-        return numeric * 1024 * 1024 if assume_mib else numeric
-    return None
+    else:
+        return None
+
+    if assume_mib:
+        return numeric_value * 1024 * 1024
+
+    return numeric_value
 
 
-def _format_memory_value(value: Any, assume_mib: bool = False) -> str:
-    """Formata bytes para MB ou GB."""
-    bytes_value = _coerce_to_bytes(value, assume_mib=assume_mib)
+def _format_memory_value(
+    value: Any,
+    assume_mib: bool = False,
+) -> str:
+    """Formata bytes como MB ou GB."""
+    bytes_value = _coerce_to_bytes(value, assume_mib)
+
     if bytes_value is None or bytes_value < 0:
         return "N/A"
-    gigabytes = bytes_value / (1024 ** 3)
+
+    gigabytes = bytes_value / (1024**3)
+
     if gigabytes >= 1:
         return f"{gigabytes:.2f} GB"
-    megabytes = bytes_value / (1024 ** 2)
+
+    megabytes = bytes_value / (1024**2)
     return f"{megabytes:.2f} MB"
 
 
-def format_bytes(b: Any) -> str:
-    """Formata valores em bytes (int ou float já em bytes)."""
-    return _format_memory_value(b, assume_mib=False)
+def format_bytes(value: Any) -> str:
+    """Formata um valor já convertido para bytes."""
+    return _format_memory_value(value)
 
 
-def format_mib(m: Any) -> str:
-    """Formata valores em MiB (ex: do memory_profiler)."""
-    return _format_memory_value(m, assume_mib=True)
+def format_mib(value: Any) -> str:
+    """Formata um valor informado em MiB."""
+    return _format_memory_value(value, assume_mib=True)
 
 
-def fmt(val, precision=6):
-    """Formata floats de forma segura; se None ou inválido, retorna 'N/A'."""
-    return f"{val:.{precision}f}" if isinstance(val, (int, float)) else "N/A"
+def fmt(value: Any, precision: int = 6) -> str:
+    """Formata números com precisão definida."""
+    if isinstance(value, (int, float)):
+        return f"{value:.{precision}f}"
+
+    return "N/A"
 
 
 # ==========================================================
-# 💾 SALVAR EMBEDDINGS EM FORMATO WSG (corrigido)
+# SALVAMENTO DE EMBEDDINGS
 # ==========================================================
+
 
 def save_embeddings_to_wsg(
     final_embeddings: torch.Tensor,
     wsg_obj: WSG,
-    config,
+    config: Any,
     save_path: str,
-    tz_info=None
+    tz_info=None,
 ) -> str:
-    """
-    Salva os embeddings finais em um novo arquivo WSG.
-
-    Args:
-        final_embeddings (torch.Tensor): Tensor de embeddings (num_nodes x dim)
-        wsg_obj (WSG): Objeto WSG original (metadados + estrutura do grafo)
-        config: Objeto de configuração (precisa ter OUT_EMBEDDING_DIM e EPOCHS)
-        save_path (str): Caminho onde o arquivo será salvo
-        tz_info (timezone, opcional): Fuso horário para timestamps
-
-    Returns:
-        str: Caminho completo do arquivo salvo
-    """
-    # Garante que os embeddings estão no CPU
+    """Salva embeddings em um novo arquivo WSG."""
     final_embeddings = final_embeddings.detach().cpu()
 
-    # Fuso horário padrão
     if tz_info is None:
         tz_info = datetime.now().astimezone().tzinfo or timezone.utc
 
     os.makedirs(save_path, exist_ok=True)
 
-    # --- METADADOS ---
     output_metadata = Metadata(
         dataset_name=f"{wsg_obj.metadata.dataset_name}-Embeddings",
         feature_type="dense_continuous",
@@ -120,10 +116,8 @@ def save_embeddings_to_wsg(
         directed=wsg_obj.metadata.directed,
     )
 
-    # --- EMBEDDINGS ---
     embedding_indices = list(range(config.OUT_EMBEDDING_DIM))
 
-    # ✅ Corrigido: campos de NodeFeaturesEntry agora estão corretos
     output_node_features = {
         str(node_id): NodeFeaturesEntry(
             indices=embedding_indices,
@@ -132,107 +126,182 @@ def save_embeddings_to_wsg(
         for node_id in range(wsg_obj.metadata.num_nodes)
     }
 
-    # --- CRIA O NOVO WSG ---
     output_wsg = WSG(
         metadata=output_metadata,
         graph_structure=wsg_obj.graph_structure,
         node_features=output_node_features,
     )
 
-    # --- SALVAMENTO ---
-    dataset_name = wsg_obj.metadata.dataset_name
     filename = (
-        f"{dataset_name}_({config.OUT_EMBEDDING_DIM})_embeddings_{config.TIMESTAMP}.wsg.json"
+        f"{wsg_obj.metadata.dataset_name}"
+        f"_({config.OUT_EMBEDDING_DIM})"
+        f"_embeddings_{config.TIMESTAMP}.wsg.json"
     )
-    output_path = os.path.join(save_path, filename, )
 
-    # Usa método compatível com Pydantic v2+
+    output_path = os.path.join(save_path, filename)
+
     try:
         payload = output_wsg.model_dump()
     except AttributeError:
         payload = output_wsg.dict()
 
-    with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(payload, f, ensure_ascii=False, indent=2)
+    with open(output_path, "w", encoding="utf-8") as file:
+        json.dump(payload, file, ensure_ascii=False, indent=2)
 
-    print(f"✅ Embeddings salvos em: '{output_path}'")
+    logger.info("Embeddings salvos em: %s", output_path)
     return output_path
 
 
 # ==========================================================
-# 🧠 FUNÇÕES DE MODELO PYTORCH
+# MODELOS PYTORCH
 # ==========================================================
 
+
 def salvar_modelo_pytorch_completo(
-    model,
+    model: torch.nn.Module,
     dataset_name: str,
     timestamp: str,
-    save_dir: str = "models"
-):
-    """Salva o modelo PyTorch completo (arquitetura + pesos + buffers)."""
+    save_dir: str = "models",
+) -> str:
+    """Salva a arquitetura completa, pesos e buffers do modelo."""
     os.makedirs(save_dir, exist_ok=True)
 
-    model_name = getattr(model, "model_name", model.__class__.__name__)
-    base_name = f"{dataset_name}__{model_name}__{timestamp}"
+    model_name = getattr(
+        model,
+        "model_name",
+        model.__class__.__name__,
+    )
 
-    save_path = os.path.join(save_dir, f"{base_name}.pt")
+    filename = f"{dataset_name}__{model_name}__{timestamp}.pt"
+    save_path = os.path.join(save_dir, filename)
 
     torch.save(model, save_path)
-    print(f"✅ Modelo completo salvo em: {save_path}")
+    logger.info("Modelo completo salvo em: %s", save_path)
+
     return save_path
 
 
-def carregar_modelo_pytorch_completo(save_path: str, device: str = "cpu"):
-    """Carrega um modelo completo salvo com torch.save(model)."""
+def carregar_modelo_pytorch_completo(
+    save_path: str,
+    device: str = "cpu",
+) -> torch.nn.Module:
+    """Carrega um modelo PyTorch completo."""
     model = torch.load(save_path, map_location=device)
     model.eval()
-    print(f"🔁 Modelo carregado de: {save_path}")
+
+    logger.info("Modelo carregado de: %s", save_path)
     return model
 
 
+# ==========================================================
+# MEDIÇÃO DE TEMPO
+# ==========================================================
+
 
 class DeviceTimer:
-    """
-    Temporizador de alto rigor metodológico para HPC.
-    Garante precisão de hardware (Event) para GPU e de sistema (perf_counter) para CPU.
-    """
-    # Adicionamos a variável de controle 'disable_gc' (padrão False por segurança)
-    def __init__(self, device: str, disable_gc: bool = False):
-        self.device = device
-        self.duration = 0.0
+    """Mede o tempo de execução em CPU ou CUDA."""
+
+    def __init__(
+        self,
+        device: str,
+        disable_gc: bool = False,
+    ):
+        self.device = device.lower()
         self.disable_gc = disable_gc
-        
-        # Pré-alocação mandatória para evitar overhead de alocação de memória pelo SO
+        self.duration = 0.0
+
         if self.device == "cuda":
             self.start_event = torch.cuda.Event(enable_timing=True)
             self.end_event = torch.cuda.Event(enable_timing=True)
 
     def __enter__(self):
-        # Controle explícito: Se você pediu, ele desliga. Se não pediu, ele nem toca no GC.
         if self.disable_gc:
             gc.disable()
-        
+
         if self.device == "cuda":
-            torch.cuda.synchronize() # Limpa pendências residuais antes de largar
+            torch.cuda.synchronize()
             self.start_event.record()
         elif self.device == "cpu":
             self.start_time = time.perf_counter()
         else:
             raise ValueError(f"Dispositivo não suportado: {self.device}")
-        
+
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.device == "cuda":
             self.end_event.record()
-            # Sincronização direcionada exclusivamente para este evento
-            self.end_event.synchronize() 
+            self.end_event.synchronize()
             self.duration = self.start_event.elapsed_time(self.end_event) / 1000.0
-        elif self.device == "cpu":
+        else:
             self.duration = time.perf_counter() - self.start_time
-            
-        # Controle explícito: Tudo ou nada, respeitando a flag.
+
         if self.disable_gc:
             gc.enable()
 
-        return False  # Propaga exceções, se houver
+        return False
+
+
+# ==========================================================
+# PROFILING DE MEMÓRIA
+# ==========================================================
+
+
+class PeakMemoryProfiler(contextlib.ContextDecorator):
+    """
+    Profiler purificado de Zero-Polling.
+    Utiliza chamadas diretas ao Kernel Linux (ru_maxrss) e à API C++ do PyTorch.
+    """
+    def __init__(self, device: str, step_name: str = "Execução"):
+        self.step_name = step_name
+        self.device_type = device.lower()
+        
+        # Variáveis que o JSON espera ler:
+        self.cpu_peak_before = 0.0
+        self.cpu_diff_mb = 0.0
+        self.gpu_peak_mb = 0.0
+
+    def _get_cpu_peak_mb(self) -> float:
+        # ru_maxrss retorna kilobytes no Linux. Dividimos por 1024 para MB.
+        return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0
+
+    def __enter__(self):
+        gc.collect()
+        
+        if self.device_type == 'cuda' and TORCH_AVAILABLE and torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.reset_peak_memory_stats()
+            torch.cuda.synchronize()
+            
+        self.cpu_peak_before = self._get_cpu_peak_mb()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.device_type == 'cuda' and TORCH_AVAILABLE and torch.cuda.is_available():
+            torch.cuda.synchronize()
+
+        cpu_peak_after = self._get_cpu_peak_mb()
+        
+        # Salva o incremento na memória RAM (Delta) e o pico da GPU no self
+        self.cpu_diff_mb = cpu_peak_after - self.cpu_peak_before
+        
+        self.gpu_peak_mb = 0.0
+        if self.device_type == 'cuda' and TORCH_AVAILABLE and torch.cuda.is_available():
+            self.gpu_peak_mb = torch.cuda.max_memory_allocated() / (1024 ** 2)
+
+        logger.info(f"==> [RESULTADOS ZERO-POLLING] {self.step_name}")
+        logger.info(f"  -> [RAM Host] Pico Histórico Antes:  {self.cpu_peak_before:.2f} MB")
+        logger.info(f"  -> [RAM Host] Pico Histórico Depois: {cpu_peak_after:.2f} MB")
+        logger.info(f"  -> [RAM Host] Incremento no Pico:    {self.cpu_diff_mb:.2f} MB")
+        
+        if cpu_peak_after == self.cpu_peak_before:
+            logger.warning(
+                "  -> [ALERTA] Efeito Sombra na CPU! O pico real desta etapa foi ofuscado "
+                "pela execução de um processo mais pesado (ex: Treino) rodando no mesmo script. "
+                "Para capturar o valor estrito da RAM desta etapa, isole-a em um script dedicado."
+            )
+            
+        if self.device_type in ['cuda']:
+            logger.info(f"  -> [VRAM Device] Pico Matemático:    {self.gpu_peak_mb:.2f} MB")
+
+        return False
