@@ -22,8 +22,8 @@ from src.models.embedding_models.autoencoders_models import GraphSageGAE, GCNGAE
 from src.models.embedding_models.din_gae import GithubVGAE, FacebookVGAE, RedditVGAE, TwitchVGAE
 from src.early_stopper import EarlyStopper
 from src.embeddings_eval import evaluate_embeddings
-from src.utils import format_bytes, salvar_modelo_pytorch_completo, save_embeddings_to_wsg
-from src.utils import DeviceTimer, PeakMemoryProfiler
+from src.utils import format_bytes, run_isolated_inference, salvar_modelo_pytorch_completo, save_embeddings_to_wsg, DeviceTimer, PeakMemoryProfiler, run_isolated_inference
+
 
 
 def run_embedding_generation(WSG_DATASET, emb_dim: int):
@@ -37,19 +37,16 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
     # --- Configuração Inicial ---
     config = Config()
     config.OUT_EMBEDDING_DIM = emb_dim  # sobrescreve dimensão
-
     config.TIMESTAMP = datetime.now(ZoneInfo("America/Sao_Paulo")).strftime(
         "%d-%m-%Y_%H-%M-%S"
     )
-    
-    device = torch.device(config.DEVICE)
 
     # Seeds e prints
     torch.manual_seed(config.RANDOM_SEED)
     np.random.seed(config.RANDOM_SEED)
     random.seed(config.RANDOM_SEED)
 
-    print(f"Dispositivo: {device}")
+    print(f"Dispositivo: {config.DEVICE}")
     print(f"Dataset: {WSG_DATASET.dataset_name}")
 
     # --- Pipeline de Dados ---
@@ -90,7 +87,7 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
     else:
         raise ValueError(f"Modelo não definido para: {WSG_DATASET.dataset_name}")
 
-    model = model.to(device)
+    model = model.to(config.DEVICE)
 
     directory_manager = DirectoryManager(timestamp=config.TIMESTAMP, run_folder_name="EMBEDDING_RUNS")
     report_manager = ReportManager(directory_manager)
@@ -99,7 +96,7 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
         min_delta=config.EARLY_STOPPING_MIN_DELTA,
         mode="max",
         metric_name="max_f1",
-        custom_eval=lambda m: evaluate_embeddings(m, pyg_data, device),
+        custom_eval=lambda m: evaluate_embeddings(m, pyg_data, config.DEVICE),
     )
     optimizer = optim.Adam(model.parameters(), lr=config.LEARNING_RATE, weight_decay=config.WEIGHT_DECAY)
     scheduler = lr_scheduler.ReduceLROnPlateau(
@@ -115,8 +112,7 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
     # =====================================================================
     print("\n[FASE 4] Treinando modelo...")
     
-    train_profiler = PeakMemoryProfiler(device=config.DEVICE, step_name="Treino_VGAE")
-    
+    train_profiler = PeakMemoryProfiler(device=config.DEVICE, step_name="Treino")
     with train_profiler:
         training_report = model.train_model(
             data=pyg_data,
@@ -125,21 +121,17 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
             early_stopper=early_stopper,
             scheduler=scheduler,
         )
-
+    
     # =====================================================================
     # --- FASE 5: INFERÊNCIA (Medição Isolada de Tempo e Memória) ---
     # =====================================================================
-    print("\n[FASE 5] Gerando Embeddings (Inferência)...")
-    
-    inf_profiler = PeakMemoryProfiler(device=config.DEVICE, step_name="Inferencia_Embeddings")
-    
-    with inf_profiler:
-        with DeviceTimer(config.DEVICE) as timer:
-            final_embeddings = model.inference(pyg_data)
-            
-    inference_duration = timer.duration
+    print("\n[FASE 5] Gerando Embeddings (Inferência Isolada)...")
 
-    print(f"Inferência concluída em {inference_duration:.4f}s")
+    # Toda a mágica do Spawn, fila e discos acontece silenciosamente aqui
+    inf_metrics, final_embeddings = run_isolated_inference(model, pyg_data, config)
+    print(f"Inferência concluída em {inf_metrics['duration']:.4f}s")
+
+
 
     # --- Relatórios e Salvamentos ---
     report = {
@@ -156,7 +148,7 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
         },
         "Hyperparameters": {
             "Random_Seed": config.RANDOM_SEED,
-            "Device": str(device),
+            "Device": str(config.DEVICE),
             "Out_Embedding_Dim": emb_dim,
             "Epochs": config.EPOCHS,
             "Learning_Rate": config.LEARNING_RATE,
@@ -168,13 +160,23 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
             "Min_LR": config.MIN_LR,
         },
         "Performance_Metrics": {
-            "Inference_Duration_Seconds": inference_duration,
-
-            "Training_Peak_RAM_MB - DIFF": train_profiler.cpu_diff_mb,
-            "Training_Peak_VRAM_MB": train_profiler.gpu_peak_mb,
-
-            "Inference_Peak_RAM_MB - DIFF": inf_profiler.cpu_diff_mb,
-            "Inference_Peak_VRAM_MB": inf_profiler.gpu_peak_mb,
+            "Training_Duration_Seconds": training_report["total_training_time"],
+            "Inference_Duration_Seconds": inf_metrics["duration"],
+            
+            # --- MÉTRICAS DE RAM HOST (CPU) ---
+            "Training_RAM_Snapshot_Inicial_MB": train_profiler.cpu_ram_start_mb,
+            "Training_RAM_Incremento_Real_MB": train_profiler.cpu_diff_mb,
+            "Training_RAM_Teto_Absoluto_MB": train_profiler.cpu_ram_start_mb + train_profiler.cpu_diff_mb,
+            
+            "Inference_RAM_Snapshot_Inicial_MB": inf_metrics["cpu_ram_start_mb"],
+            "Inference_RAM_Incremento_Real_MB": inf_metrics["cpu_diff_mb"],
+            
+            # --- MÉTRICAS DE VRAM DEVICE (GPU) ---
+            "Training_VRAM_Pico_Alocado_MB": train_profiler.gpu_alloc_mb,
+            "Training_VRAM_Pico_Reservado_MB": train_profiler.gpu_reserved_mb,
+            
+            "Inference_VRAM_Pico_Alocado_MB": inf_metrics["gpu_alloc_mb"],
+            "Inference_VRAM_Pico_Reservado_MB": inf_metrics["gpu_reserved_mb"],
         },
         "Data_Split": {
             "Train_Size_Ratio_Configured": getattr(config, 'TRAIN_SPLIT_RATIO', 0.8),
@@ -214,8 +216,7 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
 
 
 if __name__ == "__main__":
-
-    # --- CONFIGURAÇÃO LITE PARA TESTE FIM A FIM ---
+    # --- CONFIGURAÇÃO ---
     datasets = [
         #data_loaders.MusaeFacebookLoader(),
         data_loaders.MusaeGithubLoader(),

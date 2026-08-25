@@ -5,8 +5,12 @@ import logging
 import os
 import time
 import resource
+import traceback
 from datetime import datetime, timezone
 from typing import Any, Optional
+from src.data_format_definition import Metadata, NodeFeaturesEntry, WSG
+import traceback
+import multiprocessing as mp
 
 try:
     import torch
@@ -14,7 +18,6 @@ try:
 except ImportError:
     TORCH_AVAILABLE = False
 
-from src.data_format_definition import Metadata, NodeFeaturesEntry, WSG
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - [%(levelname)s] - %(message)s')
 logger = logging.getLogger("TCC-GNN-Profiler")
@@ -255,18 +258,42 @@ class DeviceTimer:
 
 class PeakMemoryProfiler(contextlib.ContextDecorator):
     """
-    Profiler purificado de Zero-Polling com Alertas Visuais.
+    Em ambientes Linux/Docker, audita diretamente o Cgroups v2 para abranger vazamentos de multi-processing. Em GPU, monitora Alocação vs Reserva.
     """
     def __init__(self, device: str, step_name: str = "Execução"):
         self.step_name = step_name
         self.device_type = device.lower()
         
-        self.cpu_peak_before = 0.0
+        # Caminhos do Cgroups v2 para Docker
+        self.cgroup_current = "/sys/fs/cgroup/memory.current"
+        self.cgroup_peak = "/sys/fs/cgroup/memory.peak"
+        
+        self.cpu_ram_start_mb = 0.0
         self.cpu_diff_mb = 0.0
-        self.gpu_peak_mb = 0.0
+        self.gpu_alloc_mb = 0.0
+        self.gpu_reserved_mb = 0.0
 
-    def _get_cpu_peak_mb(self) -> float:
-        return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0
+    def _read_cgroup_metric(self, path: str) -> float:
+        """Lê os controladores de memória do Kernel de forma passiva (O(1))."""
+        try:
+            with open(path, "r") as f:
+                val = f.read().strip()
+                if val == "max": return -1.0
+                return int(val) / (1024 ** 2)
+        except (FileNotFoundError, PermissionError):
+            return 0.0
+
+    def _get_cpu_ram_mb(self, use_peak: bool = False) -> float:
+        """
+        Tenta usar Cgroups v2 (Padrão Ouro Docker). 
+        Faz fallback para USS multiplataforma se não estiver no Linux.
+        """
+        cgroup_val = self._read_cgroup_metric(self.cgroup_peak if use_peak else self.cgroup_current)
+        if cgroup_val > 0:
+            return cgroup_val
+            
+        # Fallback: USS (Ignora Page Cache, mas cego para subprocessos pesados)
+        return psutil.Process(os.getpid()).memory_full_info().uss / (1024 ** 2)
 
     def __enter__(self):
         gc.collect()
@@ -276,52 +303,117 @@ class PeakMemoryProfiler(contextlib.ContextDecorator):
             torch.cuda.reset_peak_memory_stats()
             torch.cuda.synchronize()
             
-        self.cpu_peak_before = self._get_cpu_peak_mb()
+        self.cpu_ram_start_mb = self._get_cpu_ram_mb(use_peak=False)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.device_type == 'cuda' and TORCH_AVAILABLE and torch.cuda.is_available():
             torch.cuda.synchronize()
 
-        cpu_peak_after = self._get_cpu_peak_mb()
-        self.cpu_diff_mb = cpu_peak_after - self.cpu_peak_before
+        # O pico atingido no bloco
+        cpu_peak_after = self._get_cpu_ram_mb(use_peak=True)
         
-        self.gpu_peak_mb = 0.0
-        if self.device_type == 'cuda' and TORCH_AVAILABLE and torch.cuda.is_available():
-            self.gpu_peak_mb = torch.cuda.max_memory_allocated() / (1024 ** 2)
+        # Se Cgroups não for suportado, usamos o histórico base de ru_maxrss como fallback de pico
+        if cpu_peak_after == 0.0:
+             cpu_peak_after = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0
 
-        # Print padrão das medições base
-        logger.info(f"==> [RESULTADOS ZERO-POLLING] {TerminalColors.BOLD}{self.step_name}{TerminalColors.RESET}")
-        logger.info(f"  -> [RAM Host] Pico Histórico Antes:  {self.cpu_peak_before:.2f} MB")
-        logger.info(f"  -> [RAM Host] Pico Histórico Depois: {cpu_peak_after:.2f} MB")
+        self.cpu_diff_mb = cpu_peak_after - self.cpu_ram_start_mb
         
-        # --- LÓGICA DE CORES DOS ALERTAS ---
-        if self.cpu_diff_mb == 0.0:
-            # 🔴 VERMELHO: Destaca o valor mascarado
+        if self.device_type == 'cuda' and TORCH_AVAILABLE and torch.cuda.is_available():
+            self.gpu_alloc_mb = torch.cuda.max_memory_allocated() / (1024 ** 2)
+            self.gpu_reserved_mb = torch.cuda.max_memory_reserved() / (1024 ** 2)
+
+        # Print padrão
+        logger.info(f"==> [AUDITORIA DE MEMÓRIA] {TerminalColors.BOLD}{self.step_name}{TerminalColors.RESET}")
+        logger.info(f"  -> [RAM Host] Snapshot Inicial: {self.cpu_ram_start_mb:.2f} MB")
+        logger.info(f"  -> [RAM Host] Pico Histórico:   {cpu_peak_after:.2f} MB")
+        
+        # LÓGICA DE CORES DOS ALERTAS (RAM)
+        if self.cpu_diff_mb <= 0.0:
             logger.warning(
-                f"  -> [RAM Host] Incremento no Pico:    "
-                f"{TerminalColors.RED}{TerminalColors.BOLD}{self.cpu_diff_mb:.2f} MB{TerminalColors.RESET}"
-            )
-            # 🟡 AMARELO: Explicação do problema
-            logger.warning(
-                f"{TerminalColors.YELLOW}{TerminalColors.BOLD}  -> [ALERTA] Efeito Sombra na CPU detectado!{TerminalColors.RESET}\n"
-                f"{TerminalColors.YELLOW}     O pico real desta etapa foi ofuscado pela execução de um processo anterior mais pesado.\n"
-                f"     Para capturar o valor estrito da RAM, execute esta inferência isolada em um novo script.{TerminalColors.RESET}"
+                f"  -> [RAM Host] Incremento:       {TerminalColors.RED}{TerminalColors.BOLD}0.00 MB{TerminalColors.RESET} (Efeito Sombra)"
             )
         else:
-            # 🟢 VERDE: Medição validada e limpa
             logger.info(
-                f"  -> [RAM Host] Incremento no Pico:    "
-                f"{TerminalColors.GREEN}{TerminalColors.BOLD}{self.cpu_diff_mb:.2f} MB{TerminalColors.RESET}"
+                f"  -> [RAM Host] Incremento Real:  {TerminalColors.GREEN}{TerminalColors.BOLD}{self.cpu_diff_mb:.2f} MB{TerminalColors.RESET}"
             )
+
+        # MÉTRICAS DA VRAM
+        if self.device_type in ['cuda'] and self.gpu_alloc_mb > 0:
+            fragmentation_gap = self.gpu_reserved_mb - self.gpu_alloc_mb
             
-        if self.device_type in ['cuda']:
-            if self.gpu_peak_mb > 0:
-                logger.info(
-                    f"  -> [VRAM Device] Pico Matemático:    "
-                    f"{TerminalColors.GREEN}{TerminalColors.BOLD}{self.gpu_peak_mb:.2f} MB{TerminalColors.RESET}"
+            logger.info(f"  -> [VRAM GPU] Pico Alocado:     {TerminalColors.GREEN}{self.gpu_alloc_mb:.2f} MB{TerminalColors.RESET} (Matemática)")
+            logger.info(f"  -> [VRAM GPU] Pico Reservado:   {TerminalColors.CYAN}{self.gpu_reserved_mb:.2f} MB{TerminalColors.RESET} (Requisito de Hardware)")
+            
+            if fragmentation_gap > 200: # Alerta se a fragmentação passar de 200MB
+                logger.warning(
+                    f"{TerminalColors.YELLOW}  -> [ALERTA VRAM] Gap de Fragmentação alto ({fragmentation_gap:.2f} MB). "
+                    f"Considere exportar PYTORCH_CUDA_ALLOC_CONF='expandable_segments:True'{TerminalColors.RESET}"
                 )
-            else:
-                logger.info(f"  -> [VRAM Device] Pico Matemático:    {self.gpu_peak_mb:.2f} MB")
 
         return False
+
+
+
+def _isolated_worker(queue, model_path, pyg_data_path, device_str):
+    """ O Trabalhador sujo que roda em background """
+    try:
+        device = torch.device(device_str)
+        
+        pyg_data = torch.load(pyg_data_path, weights_only=False).to(device)
+        model = torch.load(model_path, map_location=device)
+        model.eval()
+        
+        inf_profiler = PeakMemoryProfiler(device=device_str, step_name="Inferencia_Isolada")
+        timer = DeviceTimer(device_str)
+        
+        with inf_profiler:
+            with timer:
+                with torch.no_grad():
+                    # USANDO O SEU MÉTODO EXATO:
+                    final_embeddings = model.inference(pyg_data)
+                    
+        results = {
+            "duration": timer.duration,
+            "cpu_ram_start_mb": inf_profiler.cpu_ram_start_mb,
+            "cpu_diff_mb": inf_profiler.cpu_diff_mb,
+            "gpu_alloc_mb": inf_profiler.gpu_alloc_mb,
+            "gpu_reserved_mb": inf_profiler.gpu_reserved_mb,
+            "embeddings": final_embeddings.cpu()
+        }
+        queue.put({"status": "success", "data": results})
+    except Exception as e:
+        queue.put({"status": "error", "error": f"{str(e)}\n{traceback.format_exc()}"})
+
+
+def run_isolated_inference(model, pyg_data, config):
+    """ 
+    Orquestrador limpo. Esconde o multiprocessing do arquivo principal. 
+    Retorna o dicionário de métricas e os embeddings gerados.
+    """
+    temp_model = os.path.join(config.OUTPUT_DIR, f"tmp_mod_{config.TIMESTAMP}.pt")
+    temp_data = os.path.join(config.OUTPUT_DIR, f"tmp_dat_{config.TIMESTAMP}.pt")
+    
+    # Salva temporariamente para a passagem de bastão
+    torch.save(model, temp_model)
+    torch.save(pyg_data.cpu(), temp_data)
+    
+    ctx = mp.get_context('spawn')
+    queue = ctx.Queue()
+    
+    # Aciona o processo
+    p = ctx.Process(target=_isolated_worker, args=(queue, temp_model, temp_data, str(config.DEVICE)))
+    p.start()
+    p.join()
+    
+    # Limpa a sujeira
+    if os.path.exists(temp_model): os.remove(temp_model)
+    if os.path.exists(temp_data): os.remove(temp_data)
+    
+    if not queue.empty():
+        res = queue.get()
+        if res["status"] == "error":
+            raise RuntimeError(f"Erro na Inferência Isolada:\n{res['error']}")
+        return res["data"], res["data"]["embeddings"]
+        
+    raise RuntimeError("O Worker morreu sem devolver resposta!")
