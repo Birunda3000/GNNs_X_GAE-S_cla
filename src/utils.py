@@ -19,6 +19,13 @@ from src.data_format_definition import Metadata, NodeFeaturesEntry, WSG
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - [%(levelname)s] - %(message)s')
 logger = logging.getLogger("TCC-GNN-Profiler")
 
+# Classe auxiliar para as cores no terminal
+class TerminalColors:
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    RED = '\033[91m'
+    RESET = '\033[0m'
+    BOLD = '\033[1m'
 
 # ==========================================================
 # FORMATAÇÃO E CONVERSÃO DE MEMÓRIA
@@ -246,23 +253,19 @@ class DeviceTimer:
 # PROFILING DE MEMÓRIA
 # ==========================================================
 
-
 class PeakMemoryProfiler(contextlib.ContextDecorator):
     """
-    Profiler purificado de Zero-Polling.
-    Utiliza chamadas diretas ao Kernel Linux (ru_maxrss) e à API C++ do PyTorch.
+    Profiler purificado de Zero-Polling com Alertas Visuais.
     """
     def __init__(self, device: str, step_name: str = "Execução"):
         self.step_name = step_name
         self.device_type = device.lower()
         
-        # Variáveis que o JSON espera ler:
         self.cpu_peak_before = 0.0
         self.cpu_diff_mb = 0.0
         self.gpu_peak_mb = 0.0
 
     def _get_cpu_peak_mb(self) -> float:
-        # ru_maxrss retorna kilobytes no Linux. Dividimos por 1024 para MB.
         return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0
 
     def __enter__(self):
@@ -281,27 +284,44 @@ class PeakMemoryProfiler(contextlib.ContextDecorator):
             torch.cuda.synchronize()
 
         cpu_peak_after = self._get_cpu_peak_mb()
-        
-        # Salva o incremento na memória RAM (Delta) e o pico da GPU no self
         self.cpu_diff_mb = cpu_peak_after - self.cpu_peak_before
         
         self.gpu_peak_mb = 0.0
         if self.device_type == 'cuda' and TORCH_AVAILABLE and torch.cuda.is_available():
             self.gpu_peak_mb = torch.cuda.max_memory_allocated() / (1024 ** 2)
 
-        logger.info(f"==> [RESULTADOS ZERO-POLLING] {self.step_name}")
+        # Print padrão das medições base
+        logger.info(f"==> [RESULTADOS ZERO-POLLING] {TerminalColors.BOLD}{self.step_name}{TerminalColors.RESET}")
         logger.info(f"  -> [RAM Host] Pico Histórico Antes:  {self.cpu_peak_before:.2f} MB")
         logger.info(f"  -> [RAM Host] Pico Histórico Depois: {cpu_peak_after:.2f} MB")
-        logger.info(f"  -> [RAM Host] Incremento no Pico:    {self.cpu_diff_mb:.2f} MB")
         
-        if cpu_peak_after == self.cpu_peak_before:
+        # --- LÓGICA DE CORES DOS ALERTAS ---
+        if self.cpu_diff_mb == 0.0:
+            # 🔴 VERMELHO: Destaca o valor mascarado
             logger.warning(
-                "  -> [ALERTA] Efeito Sombra na CPU! O pico real desta etapa foi ofuscado "
-                "pela execução de um processo mais pesado (ex: Treino) rodando no mesmo script. "
-                "Para capturar o valor estrito da RAM desta etapa, isole-a em um script dedicado."
+                f"  -> [RAM Host] Incremento no Pico:    "
+                f"{TerminalColors.RED}{TerminalColors.BOLD}{self.cpu_diff_mb:.2f} MB{TerminalColors.RESET}"
+            )
+            # 🟡 AMARELO: Explicação do problema
+            logger.warning(
+                f"{TerminalColors.YELLOW}{TerminalColors.BOLD}  -> [ALERTA] Efeito Sombra na CPU detectado!{TerminalColors.RESET}\n"
+                f"{TerminalColors.YELLOW}     O pico real desta etapa foi ofuscado pela execução de um processo anterior mais pesado.\n"
+                f"     Para capturar o valor estrito da RAM, execute esta inferência isolada em um novo script.{TerminalColors.RESET}"
+            )
+        else:
+            # 🟢 VERDE: Medição validada e limpa
+            logger.info(
+                f"  -> [RAM Host] Incremento no Pico:    "
+                f"{TerminalColors.GREEN}{TerminalColors.BOLD}{self.cpu_diff_mb:.2f} MB{TerminalColors.RESET}"
             )
             
         if self.device_type in ['cuda']:
-            logger.info(f"  -> [VRAM Device] Pico Matemático:    {self.gpu_peak_mb:.2f} MB")
+            if self.gpu_peak_mb > 0:
+                logger.info(
+                    f"  -> [VRAM Device] Pico Matemático:    "
+                    f"{TerminalColors.GREEN}{TerminalColors.BOLD}{self.gpu_peak_mb:.2f} MB{TerminalColors.RESET}"
+                )
+            else:
+                logger.info(f"  -> [VRAM Device] Pico Matemático:    {self.gpu_peak_mb:.2f} MB")
 
         return False

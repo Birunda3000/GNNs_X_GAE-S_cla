@@ -169,9 +169,11 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
         },
         "Performance_Metrics": {
             "Inference_Duration_Seconds": inference_duration,
-            "Training_Peak_RAM_MB": train_profiler.cpu_diff_mb,
+
+            "Training_Peak_RAM_MB - DIFF": train_profiler.cpu_diff_mb,
             "Training_Peak_VRAM_MB": train_profiler.gpu_peak_mb,
-            "Inference_Peak_RAM_MB": inf_profiler.cpu_diff_mb,
+
+            "Inference_Peak_RAM_MB - DIFF": inf_profiler.cpu_diff_mb,
             "Inference_Peak_VRAM_MB": inf_profiler.gpu_peak_mb,
         },
         "Data_Split": {
