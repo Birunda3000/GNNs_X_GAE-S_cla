@@ -1,17 +1,44 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_geometric.nn import MessagePassing, GATConv, GINConv, SAGEConv
+import math
+
+from torch_geometric.nn import GATConv, GINConv, SAGEConv
+from torch_geometric.nn.conv.cugraph import CuGraphSAGEConv, CuGraphGATConv
+from torch_geometric import EdgeIndex
+
+# 🔥 FASE 3: Importação da Fronteira Tecnológica de Atenção (PyTorch 2.6)
+try:
+    from torch.nn.attention.flex_attention import flex_attention, create_block_mask
+    HAS_FLEX = True
+except ImportError:
+    HAS_FLEX = False
+
 from src.models.embedding_models.base_graph_autoenconders_model import BaseGAE, BaseVGAE
 from src.models.base_model import get_activation_fn
 
+# ==============================================================================
+# 🔥 RESOLUÇÃO ESTRUTURAL JIT
+# Isola os objetos obscuros da NVIDIA do radar do compilador TorchDynamo
+# ==============================================================================
+
+@torch.compiler.disable
+def prepare_edge_index(edge_index, num_nodes):
+    """Protege a classe opaca EdgeIndex do rastreamento do compilador."""
+    if not isinstance(edge_index, EdgeIndex):
+        return EdgeIndex(edge_index, sparse_size=(num_nodes, num_nodes))
+    return edge_index
+
+@torch.compiler.disable
+def apply_conv(conv, x, edge_index):
+    """Protege os kernels bare-metal do NVIDIA RAPIDS contra dissecção do JIT."""
+    return conv(x, edge_index)
+
+# ==============================================================================
+
 def create_layer(layer_type, in_dim, out_dim, **kwargs):
-    """
-    Fábrica de camadas que distribui os parâmetros corretos para cada tipo.
-    """
-    # 1. GIN: Precisa de MLP interno e train_eps
     if layer_type.__name__ == 'GINConv' or (isinstance(layer_type, type) and issubclass(layer_type, GINConv)):
-        train_eps = kwargs.get('train_eps', False) # Default False
+        train_eps = kwargs.get('train_eps', False)
         mlp = nn.Sequential(
             nn.Linear(in_dim, out_dim),
             nn.ReLU(),
@@ -19,28 +46,23 @@ def create_layer(layer_type, in_dim, out_dim, **kwargs):
         )
         return layer_type(mlp, train_eps=train_eps)
     
-    # 2. GAT: Precisa de heads, concat e dropout
-    elif layer_type.__name__ == 'GATConv' or (isinstance(layer_type, type) and issubclass(layer_type, GATConv)):
+    elif layer_type.__name__ in ['GATConv', 'CuGraphGATConv'] or (isinstance(layer_type, type) and issubclass(layer_type, (GATConv, CuGraphGATConv))):
         heads = kwargs.get('heads', 1)
         dropout = kwargs.get('dropout', 0.0)
-        # Forçamos concat=False no Autoencoder para manter dimensões controladas
         return layer_type(in_dim, out_dim, heads=heads, concat=False, dropout=dropout)
     
-    # 3. SAGE: Precisa de aggregator (aggr)
-    elif layer_type.__name__ == 'SAGEConv' or (isinstance(layer_type, type) and issubclass(layer_type, SAGEConv)):
+    elif layer_type.__name__ in ['SAGEConv', 'CuGraphSAGEConv'] or (isinstance(layer_type, type) and issubclass(layer_type, (SAGEConv, CuGraphSAGEConv))):
         aggr = kwargs.get('aggr', 'mean')
         return layer_type(in_dim, out_dim, aggr=aggr)
     
-    # 4. GCN (Baseline) ou Outros
     else:
         return layer_type(in_dim, out_dim)
 
-# --- Classes DynamicGAE e DynamicVGAE (Atualizadas) ---
 
 class DynamicGAE(BaseGAE):
     def __init__(self, config, num_total_features, embedding_dim, hidden_dim, out_embedding_dim, 
                  layer_type, num_layers, activation=nn.ReLU, dropout=0.5, normalize_embeddings=True, 
-                 **kwargs): # <--- Captura kwargs extras (heads, aggr, train_eps)
+                 **kwargs): 
         super().__init__(config, num_total_features, embedding_dim, hidden_dim, out_embedding_dim)
         
         self.activation_fn = get_activation_fn(activation)
@@ -48,26 +70,25 @@ class DynamicGAE(BaseGAE):
         self.normalize_embeddings = normalize_embeddings
 
         layers = []
-        # Camada 1
         layers.append(create_layer(layer_type, embedding_dim, hidden_dim, **kwargs))
 
-        # Camadas Ocultas
         for _ in range(num_layers - 2):
             layers.append(create_layer(layer_type, hidden_dim, hidden_dim, **kwargs))
 
-        # Camada Final
         layers.append(create_layer(layer_type, hidden_dim, out_embedding_dim, **kwargs))
 
         self.convs = nn.ModuleList(layers)
 
     def encode(self, data):
-        # ... (implementação do encode igual ao anterior) ...
         x = self.feature_embedder(data.feature_indices, data.feature_offsets, per_sample_weights=data.feature_weights)
         x = F.dropout(x, p=self.dropout, training=self.training)
-        edge_index = data.edge_index
+        
+        # O compilador quebra o grafo intencionalmente e em silêncio aqui
+        edge_index = prepare_edge_index(data.edge_index, x.size(0))
 
         for i, conv in enumerate(self.convs):
-            x = conv(x, edge_index)
+            # O kernel da NVIDIA roda blindado do JIT
+            x = apply_conv(conv, x, edge_index)
             if i < len(self.convs) - 1:
                 x = self.activation_fn(x)
                 x = F.dropout(x, p=self.dropout, training=self.training)
@@ -79,7 +100,7 @@ class DynamicGAE(BaseGAE):
 class DynamicVGAE(BaseVGAE):
     def __init__(self, config, num_total_features, embedding_dim, hidden_dim, out_embedding_dim, 
                  layer_type, num_layers, activation=nn.ReLU, dropout=0.5, normalize_embeddings=True, 
-                 **kwargs): # <--- Captura kwargs extras
+                 **kwargs):
         super().__init__(config, num_total_features, embedding_dim, hidden_dim, out_embedding_dim)
         
         self.activation_fn = get_activation_fn(activation)
@@ -87,32 +108,30 @@ class DynamicVGAE(BaseVGAE):
         self.normalize_embeddings = normalize_embeddings
 
         hidden_layers = []
-        # Camada 1
         hidden_layers.append(create_layer(layer_type, embedding_dim, hidden_dim, **kwargs))
         
-        # Camadas Intermediárias
         for _ in range(num_layers - 2):
             hidden_layers.append(create_layer(layer_type, hidden_dim, hidden_dim, **kwargs))
             
         self.convs_hidden = nn.ModuleList(hidden_layers)
 
-        # Camadas Mu e LogStd (Finais)
         self.conv_mu = create_layer(layer_type, hidden_dim, out_embedding_dim, **kwargs)
         self.conv_logstd = create_layer(layer_type, hidden_dim, out_embedding_dim, **kwargs)
 
     def encode(self, data):
-        # ... (implementação do encode igual ao anterior) ...
         x = self.feature_embedder(data.feature_indices, data.feature_offsets, per_sample_weights=data.feature_weights)
         x = F.dropout(x, p=self.dropout, training=self.training)
-        edge_index = data.edge_index
+        
+        # O compilador quebra o grafo intencionalmente e em silêncio aqui
+        edge_index = prepare_edge_index(data.edge_index, x.size(0))
 
         for conv in self.convs_hidden:
-            x = conv(x, edge_index)
+            x = apply_conv(conv, x, edge_index)
             x = self.activation_fn(x)
             x = F.dropout(x, p=self.dropout, training=self.training)
 
-        self.__mu__ = self.conv_mu(x, edge_index)
-        self.__logstd__ = self.conv_logstd(x, edge_index)
+        self.__mu__ = apply_conv(self.conv_mu, x, edge_index)
+        self.__logstd__ = apply_conv(self.conv_logstd, x, edge_index)
         
         eps = torch.randn_like(self.__mu__)
         z = self.__mu__ + eps * torch.exp(self.__logstd__)
@@ -121,230 +140,157 @@ class DynamicVGAE(BaseVGAE):
             z = F.normalize(z, p=2, dim=-1)
         return z
 
-# Classe otimizada para Facebook
-class FacebookGAE(DynamicGAE):
-    """
-    Modelo GAE otimizado para o dataset Facebook (MUSAE).
-    
-    Hiperparâmetros selecionados:
-    - Layer: GATConv (Atenção é fundamental para redes sociais)
-    - Layers: 4 (Profundo, mas o GAT mitiga oversmoothing)
-    - Heads: 1 (Simples e eficiente)
-    - Hidden Dim: 256
-    - Dropout: 0.5
-    - Activation: GELU (Mais suave que ReLU)
-    - Embedding Dim (Input): 64
-    - Out Embedding Dim (Latente/Z): 32
-    - Normalize Embeddings: True (Crítico para qualidade dos embeddings)
-    """
 
+class FacebookGAE(DynamicGAE):
     def __init__(self, config, num_total_features: int, out_embedding_dim):
         super().__init__(
             config=config,
             num_total_features=num_total_features,
-            # Dimensões
-            embedding_dim=64,           # Input embedding
-            hidden_dim=256,             # Camadas ocultas
-            out_embedding_dim=out_embedding_dim,       # Latente Z
-            # Arquitetura
-            layer_type=GATConv,         # Mecanismo de atenção
-            num_layers=4,               # Profundidade
-            # Regularização
-            activation=nn.GELU,         # Ativação suave
-            dropout=0.5,                # Dropout padrão
-            normalize_embeddings=True,  # Normalização L2
-            # Parâmetros específicos do GATConv
-            heads=1,                    # Número de cabeças de atenção
+            embedding_dim=64,           
+            hidden_dim=256,             
+            out_embedding_dim=out_embedding_dim,       
+            layer_type=CuGraphGATConv,
+            num_layers=4,               
+            activation=nn.GELU,         
+            dropout=0.5,                
+            normalize_embeddings=True,  
+            heads=1,                    
         )
         self.model_name = "FacebookGAE"
 
-
-# Classe otimizada para Facebook
 class FacebookVGAE(DynamicVGAE):
-    """
-    Modelo GAE otimizado para o dataset Facebook (MUSAE).
-    
-    Hiperparâmetros selecionados:
-    - Layer: GATConv (Atenção é fundamental para redes sociais)
-    - Layers: 4 (Profundo, mas o GAT mitiga oversmoothing)
-    - Heads: 1 (Simples e eficiente)
-    - Hidden Dim: 256
-    - Dropout: 0.5
-    - Activation: GELU (Mais suave que ReLU)
-    - Embedding Dim (Input): 64
-    - Out Embedding Dim (Latente/Z): 32
-    - Normalize Embeddings: True (Crítico para qualidade dos embeddings)
-    """
-
     def __init__(self, config, num_total_features: int, out_embedding_dim):
         super().__init__(
             config=config,
             num_total_features=num_total_features,
-            # Dimensões
-            embedding_dim=64,           # Input embedding
-            hidden_dim=256,             # Camadas ocultas
-            out_embedding_dim=out_embedding_dim,       # Latente Z
-            # Arquitetura
-            layer_type=GATConv,         # Mecanismo de atenção
-            num_layers=4,               # Profundidade
-            # Regularização
-            activation=nn.GELU,         # Ativação suave
-            dropout=0.5,                # Dropout padrão
-            normalize_embeddings=True,  # Normalização L2
-            # Parâmetros específicos do GATConv
-            heads=1,                    # Número de cabeças de atenção
+            embedding_dim=64,           
+            hidden_dim=256,             
+            out_embedding_dim=out_embedding_dim,       
+            layer_type=CuGraphGATConv,
+            num_layers=4,               
+            activation=nn.GELU,         
+            dropout=0.5,                
+            normalize_embeddings=True,  
+            heads=1,                    
         )
         self.model_name = "FacebookVGAE"
 
-
-
-
-# Classe otimizada para Github
 class GithubVGAE(DynamicVGAE):
-    """
-    Modelo VGAE otimizado para o dataset Github (DEV).
-    
-    Hiperparâmetros selecionados:
-    - Layer: SAGEConv (Boa generalização em grafos de colaboração)
-    - Agregador: mean (Simples e eficaz)
-    - Layers: 4 (Profundo, mas controlado)
-    - Hidden Dim: 256
-    - Dropout: 0.1 (Baixo para preservar informação)
-    - Activation: LeakyReLU (Evita neurônios mortos)
-    - Embedding Dim (Input): 256
-    - Out Embedding Dim (Latente/Z): 32
-    - Normalize Embeddings: True (Importante para qualidade dos embeddings)
-    """
-
     def __init__(self, config, num_total_features: int, out_embedding_dim):
         super().__init__(
             config=config,
             num_total_features=num_total_features,
-            # Dimensões
-            embedding_dim=256,          # Input embedding
-            hidden_dim=256,             # Camadas ocultas
-            out_embedding_dim=out_embedding_dim,       # Latente Z
-            # Arquitetura
-            layer_type=SAGEConv,        # GraphSAGE
-            num_layers=4,               # Profundidade
-            # Regularização
-            activation=nn.LeakyReLU,    # Evita neurônios mortos
-            dropout=0.1,                # Baixo dropout
-            normalize_embeddings=True,  # Normalização L2
-            # Parâmetros específicos do SAGEConv
-            aggr='mean',                # Agregador mean
+            embedding_dim=256,          
+            hidden_dim=256,             
+            out_embedding_dim=out_embedding_dim,       
+            layer_type=CuGraphSAGEConv,
+            num_layers=4,               
+            activation=nn.LeakyReLU,    
+            dropout=0.1,                
+            normalize_embeddings=True,  
+            aggr='mean',                
         )
         self.model_name = "GithubVGAE"
 
-
-
 class TwitchVGAE(DynamicVGAE):
-    """
-    Modelo VGAE otimizado para o dataset Twitch (Global).
-    
-    Hiperparâmetros selecionados via Optuna (Trial 28):
-    - Layer: GATConv
-    - Layers: 4
-    - Hidden Dim: 256
-    - Embedding Dim (Input): 64
-    - Dropout: 0.2
-    - Activation: ReLU
-    - Normalize Embeddings: False
-    """
     def __init__(self, config, num_total_features: int, out_embedding_dim: int):
         super().__init__(
             config=config,
             num_total_features=num_total_features,
-            # Dimensões
-            embedding_dim=64,           # Input embedding (campeão do Optuna)
-            hidden_dim=256,             # Camadas ocultas (campeão do Optuna)
-            out_embedding_dim=out_embedding_dim,  # Latente Z (recebido do pipeline)
-            
-            # Arquitetura
-            layer_type=GATConv,         # Atenção
-            num_layers=4,               # Profundidade (4 camadas)
-            
-            # Regularização e Ativação
-            activation=nn.ReLU,         # Ativação
-            dropout=0.2,                # Dropout
-            normalize_embeddings=False, # Sem normalização L2
-            
-            # Parâmetros específicos do GATConv
-            heads=1,                    # Cabeças de atenção (Padrão para Autoencoders)
+            embedding_dim=64,           
+            hidden_dim=256,             
+            out_embedding_dim=out_embedding_dim,  
+            layer_type=CuGraphGATConv,
+            num_layers=4,               
+            activation=nn.ReLU,         
+            dropout=0.2,                
+            normalize_embeddings=False, 
+            heads=1,                    
         )
         self.model_name = "TwitchVGAE"
 
-
-'''class TwitchVGAE(DynamicVGAE):
-    """
-    Modelo VGAE otimizado para o dataset Twitch (Global).
-    
-    Hiperparâmetros selecionados via Optuna (Trial 28):
-    - Layer: SAGEConv
-    - Layers: 3
-    - Hidden Dim: 128
-    - Embedding Dim (Input): 256
-    - Dropout: 0.0
-    - Activation: ReLU
-    - Normalize Embeddings: True
-    """
-    def __init__(self, config, num_total_features: int, out_embedding_dim: int):
-        super().__init__(
-            config=config,
-            num_total_features=num_total_features,
-            # Dimensões
-            embedding_dim=256,          # Input embedding (campeão do Optuna)
-            hidden_dim=128,             # Camadas ocultas (campeão do Optuna)
-            out_embedding_dim=out_embedding_dim,  # Latente Z (recebido dinamicamente do pipeline)
-            
-            # Arquitetura
-            layer_type=SAGEConv,        # GraphSAGE
-            num_layers=3,               # Profundidade
-            
-            # Regularização e Ativação
-            activation=nn.ReLU,         # Ativação 
-            dropout=0.0,                # Sem dropout
-            normalize_embeddings=True,  # Normalização L2
-            
-            # Parâmetros específicos do SAGEConv
-            aggr='mean',                # Agregador mean
-        )
-        self.model_name = "TwitchVGAE"'''
-
-
-
 class RedditVGAE(DynamicVGAE):
-    """
-    Modelo VGAE otimizado para a escala massiva do dataset Reddit.
-    
-    Hiperparâmetros selecionados via Optuna (Trial 15):
-    - Layer: GATConv
-    - Layers: 4
-    - Hidden Dim: 64 (Excelente para economia de VRAM)
-    - Embedding Dim (Input): 128
-    - Dropout: 0.2
-    - Activation: LeakyReLU
-    - Normalize Embeddings: True
-    """
     def __init__(self, config, num_total_features: int, out_embedding_dim: int):
         super().__init__(
             config=config,
             num_total_features=num_total_features,
-            # Dimensões
-            embedding_dim=128,          # Input embedding (campeão do Optuna)
-            hidden_dim=64,              # Camadas ocultas enxutas
-            out_embedding_dim=out_embedding_dim,  # Latente Z (recebido do pipeline)
-            
-            # Arquitetura
-            layer_type=GATConv,         # Mecanismo de Atenção
-            num_layers=4,               # Profundidade
-            
-            # Regularização e Ativação
-            activation=nn.LeakyReLU,    # Ativação
-            dropout=0.2,                # Dropout
-            normalize_embeddings=True,  # Normalização L2
-            
-            # Parâmetros específicos do GATConv
-            heads=1,                    # Cabeças de atenção
+            embedding_dim=128,          
+            hidden_dim=64,              
+            out_embedding_dim=out_embedding_dim,  
+            layer_type=CuGraphGATConv,
+            num_layers=4,               
+            activation=nn.LeakyReLU,    
+            dropout=0.2,                
+            normalize_embeddings=True,  
+            heads=1,                    
         )
         self.model_name = "RedditVGAE"
+
+# ==============================================================================
+# A FRONTEIRA: GRAPH TRANSFORMERS COM FLEX ATTENTION (FASE 3)
+# ==============================================================================
+
+class FlexGraphAttentionLayer(nn.Module):
+    def __init__(self, in_dim, out_dim, heads=4):
+        super().__init__()
+        self.heads = heads
+        self.out_dim = out_dim
+        
+        self.q_proj = nn.Linear(in_dim, out_dim * heads)
+        self.k_proj = nn.Linear(in_dim, out_dim * heads)
+        self.v_proj = nn.Linear(in_dim, out_dim * heads)
+        self.out_proj = nn.Linear(out_dim * heads, out_dim)
+
+    def forward(self, x, edge_index):
+        if not HAS_FLEX:
+            raise ImportError("FlexAttention requer PyTorch 2.5/2.6. Atualize o ambiente para utilizar Graph Transformers.")
+            
+        N = x.size(0)
+        device = x.device
+        
+        adj = torch.zeros((N, N), dtype=torch.bool, device=device)
+        adj[edge_index[0], edge_index[1]] = True
+        adj.fill_diagonal_(True)
+
+        def graph_mask_mod(b, h, q_idx, kv_idx):
+            return adj[q_idx, kv_idx]
+
+        block_mask = create_block_mask(graph_mask_mod, B=1, H=self.heads, Q_LEN=N, KV_LEN=N)
+
+        q = self.q_proj(x).view(1, N, self.heads, self.out_dim).transpose(1, 2)
+        k = self.k_proj(x).view(1, N, self.heads, self.out_dim).transpose(1, 2)
+        v = self.v_proj(x).view(1, N, self.heads, self.out_dim).transpose(1, 2)
+
+        out = flex_attention(q, k, v, block_mask=block_mask)
+
+        out = out.transpose(1, 2).reshape(N, self.heads * self.out_dim)
+        return self.out_proj(out)
+
+
+class FlexTransformerGAE(BaseGAE):
+    def __init__(self, config, num_total_features: int, out_embedding_dim: int):
+        super().__init__(
+            config=config,
+            num_total_features=num_total_features,
+            embedding_dim=128,          
+            hidden_dim=128,             
+            out_embedding_dim=out_embedding_dim,
+        )
+        self.model_name = "FlexTransformerGAE"
+        self.activation_fn = nn.GELU()
+        self.dropout = 0.2
+        
+        self.layer1 = FlexGraphAttentionLayer(128, 128, heads=4)
+        self.layer2 = FlexGraphAttentionLayer(128, out_embedding_dim, heads=4)
+
+    def encode(self, data):
+        x = self.feature_embedder(data.feature_indices, data.feature_offsets, per_sample_weights=data.feature_weights)
+        x = F.dropout(x, p=self.dropout, training=self.training)
+        
+        x = self.layer1(x, data.edge_index)
+        x = self.activation_fn(x)
+        x = F.dropout(x, p=self.dropout, training=self.training)
+        
+        x = self.layer2(x, data.edge_index)
+        
+        return F.normalize(x, p=2, dim=-1)

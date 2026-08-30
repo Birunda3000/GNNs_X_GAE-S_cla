@@ -15,6 +15,13 @@ from src.early_stopper import EarlyStopper
 from src.utils import DeviceTimer
 import gc
 
+# 🔥 FASE 3: Suporte ao NVIDIA Transformer Engine para FP8
+try:
+    import transformer_engine.pytorch as te
+    HAS_TE = True
+except ImportError:
+    HAS_TE = False
+
 class BaseGAECommon(BaseModel, nn.Module):
     """
     Classe intermediária base para todos os Autoencoders de Grafo (GAE/VGAE).
@@ -106,9 +113,12 @@ class BaseGAECommon(BaseModel, nn.Module):
         best_epoch: Optional[int] = None
 
         pbar = tqdm(range(1, epochs + 1), desc=f"Treinando {self.model_name}", leave=False)
-
         # 1. INSTANCIA O CRONÔMETRO DA ÉPOCA AQUI FORA! Isso evita a alocação no kernel do SO a cada iteração do laço.
         epoch_timer = DeviceTimer(self.config.DEVICE, disable_gc=False)# interno
+        
+        # 🔥 FASE 3: Aciona a compilação JIT com suporte a CUDA Graphs
+        self.compile_methods(["encode", "decode"], dynamic=True)
+
 
         # 2. Medidor do tempo TOTAL fica INLINE (roda apenas 1 vez)
         with DeviceTimer(self.config.DEVICE, disable_gc=True) as total_timer:# externo
@@ -118,8 +128,19 @@ class BaseGAECommon(BaseModel, nn.Module):
                 with epoch_timer:
                     self.train()
                     optimizer.zero_grad()
-                    z = self.encode(data)
-                    total_loss = self.compute_total_loss(z, data, edge_index)
+                    
+                    # 🔥 FASE 3: Motor de Precisão Acelerada (FP8 ou BFloat16)
+                    # Colapsa o uso do barramento de memória pela metade sem perder acurácia
+                    if HAS_TE:
+                        with te.fp8_autocast(enabled=True):
+                            z = self.encode(data)
+                            total_loss = self.compute_total_loss(z, data, edge_index)
+                    else:
+                        # Fallback seguro e altamente otimizado para PyTorch nativo
+                        with torch.autocast(device_type=device.type, dtype=torch.bfloat16):
+                            z = self.encode(data)
+                            total_loss = self.compute_total_loss(z, data, edge_index)
+                    
                     total_loss.backward()
                     torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=1.0)
                     optimizer.step()
@@ -148,6 +169,7 @@ class BaseGAECommon(BaseModel, nn.Module):
                     break
 
         # Saiu do bloco 'with' maior: O treino acabou de vez e o tempo global fechou.
+        self.decompile_methods()
         return {
             "total_training_time": total_timer.duration,
             "best_epoch": best_epoch,

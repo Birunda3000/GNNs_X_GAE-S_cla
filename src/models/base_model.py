@@ -4,9 +4,7 @@ import torch.nn.functional as F
 
 from abc import ABC, abstractmethod
 from torch_geometric.data import Data
-from typing import Dict, Optional, Any, Tuple
-from sklearn.metrics import accuracy_score, f1_score, classification_report
-from typing import cast
+from typing import Optional, Any
 from src.config import Config
 
 
@@ -26,22 +24,19 @@ def get_activation_fn(activation):
       - fallback seguro para ReLU
     """
 
-    # Caso venha a classe, instanciar
     if isinstance(activation, type):
         activation = activation()
 
-    # Mapeamento instância -> função funcional
     mapping = {
         nn.ReLU:      F.relu,
         nn.ELU:       F.elu,
         nn.LeakyReLU: F.leaky_relu,
         nn.GELU:      F.gelu,
         nn.Tanh:      torch.tanh,
-        nn.SiLU:      F.silu,   # ✔️ Adicionado
-        nn.Mish:      F.mish,   # ✔️ Adicionado
+        nn.SiLU:      F.silu,
+        nn.Mish:      F.mish,
     }
 
-    # Encontrar função funcional correspondente
     for cls, fn in mapping.items():
         if isinstance(activation, cls):
             return fn
@@ -77,3 +72,28 @@ class BaseModel(ABC):
     @abstractmethod
     def inference(self, x):
         pass
+
+    # 🔥 FASE 3: Injetor de Compilação JIT Dinâmico LIMPO
+    def compile_methods(self, method_names: list, dynamic: bool = True):
+        """Aplica o compilador JIT de forma limpa, sem supressão de erros."""
+        if not getattr(self, "_is_compiled", False):
+            import torch
+            
+            self._compiled_method_names = []
+            print(f"\n⚡ [JIT] Compilando {self.model_name} (Métodos: {method_names} | dynamic={dynamic})...")
+            
+            for name in method_names:
+                if hasattr(self, name):
+                    original_method = getattr(self, name)
+                    setattr(self, name, torch.compile(original_method, dynamic=dynamic))
+                    self._compiled_method_names.append(name)
+            self._is_compiled = True
+
+    def decompile_methods(self):
+        """Remove a armadura do JIT, restaurando os métodos originais para permitir o salvamento (Pickle)."""
+        if getattr(self, "_is_compiled", False):
+            for name in getattr(self, "_compiled_method_names", []):
+                if name in self.__dict__:
+                    del self.__dict__[name] # Remove o wrapper compilado da instância
+            self._is_compiled = False
+            self._compiled_method_names = []

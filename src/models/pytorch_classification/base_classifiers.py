@@ -14,6 +14,13 @@ from src.early_stopper import EarlyStopper
 import torch.optim as optim
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
+# 🔥 FASE 2: DataLoader otimizado da NVIDIA
+try:
+    from torch_geometric.loader.cugraph import CuGraphNeighborLoader
+except ImportError:
+    # Fallback seguro caso a imagem NGC precise de ajustes finos
+    from torch_geometric.loader import NeighborLoader as CuGraphNeighborLoader
+
 
 class PyTorchClassifier(basemodel.BaseModel, nn.Module):
     """
@@ -168,17 +175,22 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
         criterion=nn.CrossEntropyLoss(),
     ):
         self.verify_train_input_data(data)
-
-        # Garante que tensores e máscaras estão no mesmo device do modelo
         device = self.device
-        x = data.x.to(device)
-        y = data.y.to(device)
-        edge_index = getattr(data, "edge_index", None)
-        if edge_index is not None:
-            edge_index = edge_index.to(device)
-        train_mask = data.train_mask.to(device)
-        val_mask = data.val_mask.to(device)
-        test_mask = data.test_mask.to(device)
+
+        # 🔥 FASE 2: Configuração do Loader de Alta Performance
+        # Se for GNN, mapeamos os vizinhos usando a profundidade da rede (num_layers).
+        # Se for MLP (use_gnn=False), não precisamos de vizinhos.
+        num_layers = getattr(self, 'num_layers', 2)
+        neighbors_sample = [15] * num_layers if use_gnn else []
+
+        print(f"\n🚀 Inicializando CuGraphNeighborLoader (Amostragem em UVM)...")
+        train_loader = CuGraphNeighborLoader(
+            data,
+            num_neighbors=neighbors_sample,
+            batch_size=1024,
+            input_nodes=data.train_mask,
+            shuffle=True,
+        )
 
         training_history: List[Dict[str, Any]] = []
         stop_now: bool = False
@@ -186,91 +198,87 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
 
         pbar = tqdm(
             range(1, epochs + 1),
-            desc=f"Treinando {self.model_name}",
+            desc=f"Treinando {self.model_name} (Mini-Batch)",
             leave=False,
         )
 
         start_time = time.perf_counter()
 
+        # 🔥 FASE 1: Aciona a compilação JIT apenas no passe frontal
+        self.compile_methods(["forward"], dynamic=True)
+
         for epoch in pbar:
-            train_loss = self._train_step(
-                optimizer,
-                criterion,
-                use_gnn,
-                x=x,
-                y=y,
-                edge_index=edge_index,
-                train_mask=train_mask,
-            )
+            self.train()
+            total_loss = 0.0
+            
+            # Iterando sobre os subgrafos ultra-rápidos injetados pelo RAPIDS
+            for batch in train_loader:
+                batch = batch.to(device)
+                optimizer.zero_grad()
+                
+                if use_gnn and hasattr(batch, 'edge_index'):
+                    out = self(batch.x, batch.edge_index)
+                else:
+                    out = self(batch.x)
 
+                # No mini-batch, calculamos a loss apenas para os nós alvo do batch
+                # que estão nas primeiras posições (tamanho do batch_size)
+                batch_size = batch.batch_size
+                loss = criterion(out[:batch_size], batch.y[:batch_size])
+                
+                loss.backward()
+                optimizer.step()
+                total_loss += loss.item()
+
+            avg_train_loss = total_loss / len(train_loader)
+
+            # Para manter a avaliação ágil durante o treino, usamos o full-batch tradicional
+            x_full = data.x.to(device)
+            y_full = data.y.to(device)
+            edge_index_full = getattr(data, "edge_index", None)
+            if edge_index_full is not None:
+                edge_index_full = edge_index_full.to(device)
+            
             train_acc, train_f1, _, _ = self.evaluate(
-                x=x,
-                y=y,
-                use_gnn=use_gnn,
-                train_or_test_mask=train_mask,
-                edge_index=edge_index,
+                x=x_full, y=y_full, use_gnn=use_gnn, train_or_test_mask=data.train_mask.to(device), edge_index=edge_index_full
             )
-
             val_acc, val_f1, _, _ = self.evaluate(
-                x=x,
-                y=y,
-                use_gnn=use_gnn,
-                train_or_test_mask=val_mask,
-                edge_index=edge_index,
+                x=x_full, y=y_full, use_gnn=use_gnn, train_or_test_mask=data.val_mask.to(device), edge_index=edge_index_full
             )
 
-            stop_now, f1, best_epoch, _ = early_stopper.check(
-                self,
-                epoch=epoch,
-                current_value=val_f1,
-            )
+            stop_now, f1, best_epoch, _ = early_stopper.check(self, epoch=epoch, current_value=val_f1)
             scheduler.step(f1)
 
-            training_history.append(
-                {
-                    "epoch": epoch,
-                    "train_f1": train_f1,
-                    "train_accuracy": train_acc,
-                    "train_loss": train_loss,
-                    "val_f1": val_f1,
-                    "val_accuracy": val_acc,
-                    "Time_per_epoch": time.perf_counter() - start_time,
-                    "learning_rate": scheduler.get_last_lr()[0],
-                }
-            )
+            training_history.append({
+                "epoch": epoch,
+                "train_f1": train_f1,
+                "train_accuracy": train_acc,
+                "train_loss": avg_train_loss,
+                "val_f1": val_f1,
+                "val_accuracy": val_acc,
+                "Time_per_epoch": time.perf_counter() - start_time,
+                "learning_rate": scheduler.get_last_lr()[0],
+            })
 
-            pbar.set_postfix(
-                {"train_loss": f"{train_loss:.4f}", "val_f1": f"{val_f1:.4f}"}
-            )
+            pbar.set_postfix({"loss": f"{avg_train_loss:.4f}", "val_f1": f"{val_f1:.4f}"})
 
             if early_stopper is not None and stop_now:
                 print(f"[EARLY STOPPING] Parando no epoch {epoch}")
                 early_stopper.restore_best_state(self)
                 break
 
-
+        # Relatórios Finais após a restauração do melhor modelo
         train_acc, train_f1, train_report, train_confusion_matrix = self.evaluate(
-            x=x,
-            y=y,
-            use_gnn=use_gnn,
-            train_or_test_mask=train_mask,
-            edge_index=edge_index,
+            x=x_full, y=y_full, use_gnn=use_gnn, train_or_test_mask=data.train_mask.to(device), edge_index=edge_index_full
         )
         val_acc, val_f1, val_report, val_confusion_matrix = self.evaluate(
-            x=x,
-            y=y,
-            use_gnn=use_gnn,
-            train_or_test_mask=val_mask,
-            edge_index=edge_index,
+            x=x_full, y=y_full, use_gnn=use_gnn, train_or_test_mask=data.val_mask.to(device), edge_index=edge_index_full
         )
         test_acc, test_f1, test_report, test_confusion_matrix = self.evaluate(
-            x=x,
-            y=y,
-            use_gnn=use_gnn,
-            train_or_test_mask=test_mask,
-            edge_index=edge_index,
+            x=x_full, y=y_full, use_gnn=use_gnn, train_or_test_mask=data.test_mask.to(device), edge_index=edge_index_full
         )
 
+        self.decompile_methods()
         return {
             "total_training_time": time.perf_counter() - start_time,
             
@@ -283,7 +291,6 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
             "val_f1": val_f1,
             "val_report": val_report,
             "val_confusion_matrix": val_confusion_matrix,
-
             
             "train_accuracy": train_acc,
             "train_f1": train_f1,

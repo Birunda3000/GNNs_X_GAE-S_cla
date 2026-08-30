@@ -1,0 +1,7 @@
+atualizar o pip direto na construção do container
+concertar as dependências da nvidia
+melhorar o earlystopper
+configurar o lint ruff
+mudar pra amostragem por arestas e não por nós
+mudar pra reconstrução total e não apenas as arestas
+adicionar o suporte a features de arestas
