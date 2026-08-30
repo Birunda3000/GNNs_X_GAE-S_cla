@@ -32,3 +32,4 @@ beautifulsoup4
 memory_profiler
 memray
 resource
+psutil

@@ -121,14 +121,20 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
             early_stopper=early_stopper,
             scheduler=scheduler,
         )
-    
+
     # =====================================================================
     # --- FASE 5: INFERÊNCIA (Medição Isolada de Tempo e Memória) ---
     # =====================================================================
     print("\n[FASE 5] Gerando Embeddings (Inferência Isolada)...")
-
+    
     # Toda a mágica do Spawn, fila e discos acontece silenciosamente aqui
-    inf_metrics, final_embeddings = run_isolated_inference(model, pyg_data, config)
+    inf_metrics, final_embeddings = run_isolated_inference(
+        model=model, 
+        pyg_data=pyg_data, 
+        config=config, 
+        save_dir=directory_manager.get_run_path()
+    )
+    
     print(f"Inferência concluída em {inf_metrics['duration']:.4f}s")
 
 

@@ -105,9 +105,7 @@ class BaseGAECommon(BaseModel, nn.Module):
         stop_now: bool = False
         best_epoch: Optional[int] = None
 
-        pbar = tqdm(
-            range(1, epochs + 1), desc=f"Treinando {self.model_name}", leave=False
-        )
+        pbar = tqdm(range(1, epochs + 1), desc=f"Treinando {self.model_name}", leave=False)
 
         # 1. INSTANCIA O CRONÔMETRO DA ÉPOCA AQUI FORA! Isso evita a alocação no kernel do SO a cada iteração do laço.
         epoch_timer = DeviceTimer(self.config.DEVICE, disable_gc=False)# interno
@@ -126,9 +124,8 @@ class BaseGAECommon(BaseModel, nn.Module):
                     torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=1.0)
                     optimizer.step()
 
-                    # Check do Early Stopper também entra na conta da época
-                    stop_now, score, best_epoch, report = early_stopper.check(self, epoch=epoch)
-                    scheduler.step(score)
+                stop_now, score, best_epoch, report = early_stopper.check(self, epoch=epoch)
+                scheduler.step(score)
 
                 # Saiu do bloco 'with' menor: A placa de vídeo já sincronizou! O tempo isolado e cirúrgico desta época já está salvo.
                 training_history.append(
@@ -143,10 +140,7 @@ class BaseGAECommon(BaseModel, nn.Module):
                     }
                 )
                 gc.collect()
-
-                pbar.set_postfix(
-                    {"loss": f"{total_loss.item():.4f}", "score": f"{score:.4f}"}
-                )
+                pbar.set_postfix({"loss": f"{total_loss.item():.4f}", "score": f"{score:.4f}"})
 
                 if early_stopper is not None and stop_now:
                     print(f"[EARLY STOPPING] Parando no epoch {epoch}")
