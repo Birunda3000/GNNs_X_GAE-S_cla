@@ -1,0 +1,17 @@
+[tool.ruff]
+line-length = 150
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort (ordenação de imports automática)
+    "UP", # pyupgrade (moderniza sintaxe antiga do Python)
+]
+ignore = ["E501"] # Ignora alertas chatos de linha muito longa (o formatador já resolve isso)
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

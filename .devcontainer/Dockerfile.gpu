@@ -1,34 +1,41 @@
 # .devcontainer/Dockerfile.gpu
+FROM nvcr.io/nvidia/pytorch:26.05-py3
 
-# 1. ACEITA UM ARGUMENTO PARA A TAG DA IMAGEM
-# Atualizado para Janeiro/2025 (CUDA 12.8) para compatibilidade com driver estável
-ARG BASE_IMAGE_TAG="25.01-py3"
-FROM nvcr.io/nvidia/pytorch:${BASE_IMAGE_TAG}
+# 🔥 Resolução de Conflitos: Libera o pip das restrições da NVIDIA
+RUN [ -f /etc/pip/constraint.txt ] && > /etc/pip/constraint.txt || true
 
-# Instalação de dependências do sistema
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# 🔥 Variáveis Vitais: Mapeamento WDDM e Alocador Anti-Fragmentação
+ENV LD_LIBRARY_PATH="/usr/lib/wsl/lib:${LD_LIBRARY_PATH}"
+ENV PYTORCH_CUDA_ALLOC_CONF="expandable_segments:True,max_split_size_mb:512"
+
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     build-essential \
-    git \
+    ninja-build \
     cmake \
-    libgl1 \
-    libglib2.0-0 && \
-    rm -rf /var/lib/apt/lists/*
+    libnuma-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# INSTALAÇÃO DOS WHEELS DO PYTORCH GEOMETRIC (EXTENSÕES C++)
-# Truque: Lê a versão nativa do PyTorch da NVIDIA dinamicamente e puxa os wheels do PyG p/ CUDA 12.4
-# (O PyG é compatível retroativamente com os drivers mais novos da série 12.x)
-RUN TORCH_VERSION=$(python -c "import torch; print(torch.__version__.split('+')[0].split('a')[0])") && \
-    echo "Baixando PyG pré-compilado para PyTorch $TORCH_VERSION..." && \
-    pip install --no-cache-dir torch-scatter torch-sparse torch-cluster torch-spline-conv \
-    -f https://data.pyg.org/whl/torch-${TORCH_VERSION}+cu124.html
+RUN pip install --no-cache-dir --upgrade pip wheel setuptools
+
+# Instalação Limpa do PyTorch Geometric
+RUN pip install --no-cache-dir \
+    torch_geometric \
+    triton \
+    numba \
+    scipy \
+    networkx
+
+# Instalação do RAPIDS via NVIDIA Index (Pacotes CUDA 13)
+RUN pip install --no-cache-dir \
+    cugraph-cu13 \
+    cugraph-pyg-cu13 \
+    --extra-index-url=https://pypi.nvidia.com
 
 WORKDIR /app/gnn_tcc
-
 COPY .devcontainer/requirements.txt .
 
-# Instala o resto do requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+# Nossas Ferramentas de MLOps (com timeout estendido contra falhas de rede)
+RUN pip install --no-cache-dir --default-timeout=100 --ignore-installed Pygments -r requirements.txt
 
 ENV PATH="/usr/local/bin:${PATH}"
-
 CMD ["/bin/bash", "-c", "while true; do sleep infinity; done"]

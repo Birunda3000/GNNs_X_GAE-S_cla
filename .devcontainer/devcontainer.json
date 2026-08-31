@@ -1,14 +1,13 @@
 {
     "name": "TCC GNN PyTorch (NVIDIA Optimized)",
-
-
     "dockerComposeFile": "docker-compose.gpu.yml",
     //"dockerComposeFile": "docker-compose.cpu.yml",
-
     "service": "gnn_tcc_dev",
     "workspaceFolder": "/app/gnn_tcc",
     "shutdownAction": "stopCompose",
     "remoteUser": "root",
+    
+    "forwardPorts": [5000],
 
     "customizations": {
         "vscode": {
@@ -16,7 +15,7 @@
                 "ms-python.python",
                 "ms-python.vscode-pylance",
                 "ms-toolsai.jupyter",
-                "ms-python.black-formatter",
+                "charliermarsh.ruff",
                 "github.copilot",
                 "github.copilot-chat",
                 "mechatroner.rainbow-csv"
@@ -29,11 +28,12 @@
                 "jupyter.interactiveWindowMode": "perFile",
                 "editor.formatOnSave": true,
                 "[python]": {
-                    "editor.defaultFormatter": "ms-python.black-formatter"
+                    "editor.defaultFormatter": "charliermarsh.ruff"
                 },
                 "python.linting.enabled": true,
-                "python.linting.flake8Enabled": true,
-                "python.linting.lintOnSave": true
+                "python.linting.flake8Enabled": false,
+                "python.linting.lintOnSave": true,
+                "ruff.lint.run": "onSave"
             }
         }
     }

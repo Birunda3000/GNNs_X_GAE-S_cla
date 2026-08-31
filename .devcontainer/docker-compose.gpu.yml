@@ -3,29 +3,21 @@ services:
     build:
       context: ..
       dockerfile: .devcontainer/Dockerfile.gpu
-      args:
-        # MUDANÇA CRÍTICA: Downgrade para Jan/2025 para casar com seu driver (CUDA 12.8)
-        BASE_IMAGE_TAG: "25.01-py3"
-
+      network: host # Bypass de DNS do WSL2
     container_name: gnn_tcc_container_gpu
-
-    # MUDANÇA: Previne erro de "Bus error" no PyTorch DataLoader
     ipc: host
-
     deploy:
       resources:
         reservations:
           devices:
-            # MUDANÇA: Sintaxe compatível com Windows/WSL2 moderno
             - driver: nvidia
               count: all
               capabilities: [gpu]
-
     volumes:
       - ..:/app/gnn_tcc
-
-      - /usr/lib/wsl:/usr/lib/wsl
-    
+      - /usr/lib/wsl/lib:/usr/lib/wsl/lib:ro
+    ulimits:
+      memlock: -1
+      stack: 67108864
     working_dir: /app/gnn_tcc
-
     command: ["/bin/bash", "-c", "while true; do sleep infinity; done"]

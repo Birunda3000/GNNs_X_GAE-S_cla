@@ -5,15 +5,15 @@ import torch.optim as optim
 from torch_geometric.data import Data
 from typing import Dict, Any, List, Optional, cast
 from tqdm import tqdm
-import time
+import gc
 from torch_geometric.nn import MessagePassing
 from torch import Tensor
 from torch_geometric.utils import negative_sampling
 
 from src.models.base_model import BaseModel
-from src.early_stopper import EarlyStopper
+# Importa o novo orquestrador (ajuste o nome se você o nomeou diferente no early_stopper.py)
+from src.early_stopper import UniversalEarlyStopper 
 from src.utils import DeviceTimer
-import gc
 
 # 🔥 FASE 3: Suporte ao NVIDIA Transformer Engine para FP8
 try:
@@ -43,37 +43,26 @@ class BaseGAECommon(BaseModel, nn.Module):
         BaseModel.__init__(self, config)
         nn.Module.__init__(self)
 
-        # Camada de embedding para features esparsas
         self.feature_embedder = nn.EmbeddingBag(
             num_embeddings=num_total_features,
             embedding_dim=embedding_dim,
-            mode="sum",  # ***Uso "sum" para agregar embeddings de features, media não implementada***
+            mode="sum",
         )
 
     # ========== MÉTODOS GENÉRICOS ==========
 
     def verify_train_input_data(self, data: Data):
         assert data.edge_index is not None, "Input data must contain edge_index."
-        assert (
-            data.feature_indices is not None
-        ), "Input data must contain feature_indices."
-        assert (
-            data.feature_offsets is not None
-        ), "Input data must contain feature_offsets."
-        assert (
-            data.feature_weights is not None
-        ), "Input data must contain feature_weights."
-        assert (
-            data.num_nodes is not None and data.num_nodes > 0
-        ), "data.num_nodes must be valid."
+        assert data.feature_indices is not None, "Input data must contain feature_indices."
+        assert data.feature_offsets is not None, "Input data must contain feature_offsets."
+        assert data.feature_weights is not None, "Input data must contain feature_weights."
+        assert data.num_nodes is not None and data.num_nodes > 0, "data.num_nodes must be valid."
 
     def decode(self, z: torch.Tensor, edge_index: torch.Tensor) -> torch.Tensor:
         """Produto escalar entre embeddings de nós conectados."""
         return (z[edge_index[0]] * z[edge_index[1]]).sum(dim=1)
 
-    def reconstruction_loss(
-        self, z: torch.Tensor, pos_edge_index: torch.Tensor
-    ) -> torch.Tensor:
+    def reconstruction_loss(self, z: torch.Tensor, pos_edge_index: torch.Tensor) -> torch.Tensor:
         pos_logits = self.decode(z, pos_edge_index)
         pos_loss = F.binary_cross_entropy_with_logits(
             pos_logits, z.new_ones(pos_edge_index.size(1))
@@ -88,95 +77,86 @@ class BaseGAECommon(BaseModel, nn.Module):
         )
         return pos_loss + neg_loss
 
-
     def train_model(
         self,
         data: Data,
         optimizer: optim.Optimizer,
         epochs: int,
-        early_stopper: EarlyStopper,
+        early_stopper: UniversalEarlyStopper, # ✅ Atualizado para a tipagem correta
         scheduler,
+        scheduler_metric_name: Optional[str] = None
     ) -> Dict[str, Any]:
         """Loop de treino genérico, compartilhado entre GAE e VGAE."""
         self.verify_train_input_data(data)
 
-        # Move Data para o mesmo device do modelo
         device = next(self.parameters()).device
         data = data.to(device)
 
         edge_index = cast(torch.Tensor, data.edge_index)
         training_history: List[Dict[str, Any]] = []
 
-        score: Optional[float] = None
-        report: Optional[Dict[str, Any]] = None
         stop_now: bool = False
-        best_epoch: Optional[int] = None
 
         pbar = tqdm(range(1, epochs + 1), desc=f"Treinando {self.model_name}", leave=False)
-        # 1. INSTANCIA O CRONÔMETRO DA ÉPOCA AQUI FORA! Isso evita a alocação no kernel do SO a cada iteração do laço.
-        epoch_timer = DeviceTimer(self.config.DEVICE, disable_gc=False)# interno
-        
-        # 🔥 FASE 3: Aciona a compilação JIT com suporte a CUDA Graphs
+        epoch_timer = DeviceTimer(self.config.DEVICE, disable_gc=False)
+
         self.compile_methods(["encode", "decode"], dynamic=True)
 
+        with DeviceTimer(self.config.DEVICE, disable_gc=True) as total_timer:
 
-        # 2. Medidor do tempo TOTAL fica INLINE (roda apenas 1 vez)
-        with DeviceTimer(self.config.DEVICE, disable_gc=True) as total_timer:# externo
-            
             for epoch in pbar:
-                # 3. APENAS REUTILIZA O CRONÔMETRO DA ÉPOCA (O "Filho")
                 with epoch_timer:
                     self.train()
                     optimizer.zero_grad()
-                    
-                    # 🔥 FASE 3: Motor de Precisão Acelerada (FP8 ou BFloat16)
-                    # Colapsa o uso do barramento de memória pela metade sem perder acurácia
+
                     if HAS_TE:
                         with te.fp8_autocast(enabled=True):
                             z = self.encode(data)
                             total_loss = self.compute_total_loss(z, data, edge_index)
                     else:
-                        # Fallback seguro e altamente otimizado para PyTorch nativo
                         with torch.autocast(device_type=device.type, dtype=torch.bfloat16):
                             z = self.encode(data)
                             total_loss = self.compute_total_loss(z, data, edge_index)
-                    
+
                     total_loss.backward()
                     torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=1.0)
                     optimizer.step()
 
-                stop_now, score, best_epoch, report = early_stopper.check(self, epoch=epoch)
-                scheduler.step(score)
 
-                # Saiu do bloco 'with' menor: A placa de vídeo já sincronizou! O tempo isolado e cirúrgico desta época já está salvo.
+                stop_now, report = early_stopper.check(
+                    epoch=epoch,
+                    model=self,
+                    data=data,
+                    train_mask=data.train_mask,
+                    eval_mask=data.val_mask
+                )
+                scheduler.step(report[scheduler_metric_name] if scheduler_metric_name else total_loss.item())
+
                 training_history.append(
                     {
                         "epoch": epoch,
                         "Time_per_epoch": epoch_timer.duration,
                         "train_total_loss": total_loss.item(),
-                        "test_total_loss": None,
                         "learning_rate": scheduler.get_last_lr()[0],
-                        "early_stopping_score": score,
                         "early_stopping_report": report,
                     }
                 )
                 gc.collect()
-                pbar.set_postfix({"loss": f"{total_loss.item():.4f}", "score": f"{score:.4f}"})
+                pbar.set_postfix({"loss": f"{total_loss.item():.4f}"})
 
-                if early_stopper is not None and stop_now:
+                if stop_now:
                     print(f"[EARLY STOPPING] Parando no epoch {epoch}")
                     early_stopper.restore_best_state(self)
                     break
 
-        # Saiu do bloco 'with' maior: O treino acabou de vez e o tempo global fechou.
         self.decompile_methods()
+
         return {
             "total_training_time": total_timer.duration,
-            "best_epoch": best_epoch,
-            "best_score": early_stopper.best_value,
+            "best_epoch": early_stopper.best_epoch,
+            "best_scores": early_stopper.best_values,
             "training_history": training_history,
         }
-
 
     # ========== MÉTODOS A SEREM IMPLEMENTADOS ==========
 
@@ -184,50 +164,33 @@ class BaseGAECommon(BaseModel, nn.Module):
         raise NotImplementedError("Subclasses must implement the encode method.")
 
     def compute_total_loss(self, z: torch.Tensor, data: Data, edge_index: torch.Tensor):
-        raise NotImplementedError(
-            "Subclasses must implement the compute_total_loss method."
-        )
+        raise NotImplementedError("Subclasses must implement the compute_total_loss method.")
 
     def inference(self, input_data: Data) -> torch.Tensor:
-        """
-        Inferência padrão para modelos determinísticos (GAE).
-        Chama encode() dentro de no_grad() e em modo eval() para garantir comportamento determinístico.
-        """
         device = next(self.parameters()).device
         input_data.to(device)
 
-        # ✅ Garante comportamento determinístico (desliga dropout)
         training_was = self.training
         self.eval()
         try:
             with torch.no_grad():
                 z = self.encode(input_data)
         finally:
-            # Restaura o modo anterior (train ou eval)
             if training_was:
                 self.train()
 
         return z
 
     def evaluate(self, input_data: Data) -> Any:
-        """
-        Implementação mínima de evaluate para satisfazer a interface da BaseModel.
-        Por padrão, retorna os embeddings (resultado de inference).
-        Subclasses podem sobrescrever para retornar métricas específicas.
-        """
         return self.inference(input_data)
 
 
 class BaseGAE(BaseGAECommon):
-    """Versão determinística (GAE)."""
-
     def compute_total_loss(self, z, data, edge_index):
         return self.reconstruction_loss(z, edge_index)
 
 
 class BaseVGAE(BaseGAECommon):
-    """Versão variacional (VGAE), com perda KL."""
-
     conv1: MessagePassing
     conv_mu: MessagePassing
     conv_logstd: MessagePassing
@@ -241,36 +204,23 @@ class BaseVGAE(BaseGAECommon):
             return torch.tensor(0.0)
         return -0.5 * torch.mean(
             torch.sum(
-                1
-                + 2 * self.__logstd__
-                - self.__mu__.pow(2)
-                - self.__logstd__.exp().pow(2),
+                1 + 2 * self.__logstd__ - self.__mu__.pow(2) - self.__logstd__.exp().pow(2),
                 dim=1,
             )
         )
 
     def compute_total_loss(self, z, data, edge_index):
         assert data.num_nodes is not None, "data.num_nodes must be valid."
-        return (
-            self.reconstruction_loss(z, edge_index)
-            + (1.0 / float(data.num_nodes)) * self.kl_loss()
-        )
+        return self.reconstruction_loss(z, edge_index) + (1.0 / float(data.num_nodes)) * self.kl_loss()
 
     def inference(self, input_data: Data) -> Tensor:
-        """
-        Inferência para o VGAE: usa a média (mu) em vez de amostragem.
-        Chama o método `encode` da subclasse em modo de avaliação e retorna a média `__mu__`.
-        """
         device = next(self.parameters()).device
         input_data.to(device)
 
-        # Garante comportamento determinístico (desliga dropout) e restaura estado
         training_was = self.training
         self.eval()
         try:
             with torch.no_grad():
-                # Chama o método encode da subclasse (GCNVGAE, etc.)
-                # que irá popular self.__mu__
                 self.encode(input_data)
         finally:
             if training_was:

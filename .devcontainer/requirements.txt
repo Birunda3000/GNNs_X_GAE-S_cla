@@ -1,17 +1,4 @@
 # requirements.txt
-
-# A linha --index-url da NVIDIA não é mais necessária aqui
-# torch, torchvision, e torchaudio foram removidos
-
-# Bibliotecas essenciais para manipulação de dados em grafos
-torch_geometric
-# As 4 bibliotecas abaixo foram movidas para o Dockerfile para usar wheels pré-compilados:
-# torch-scatter
-# torch-sparse
-# torch-cluster
-# torch-spline-conv
-
-# Análise de Dados e Utilitários
 pandas
 numpy
 matplotlib
@@ -22,14 +9,20 @@ pydantic
 scikit-learn
 xgboost
 plotly
-optuna
+polars
+pyarrow
 
-# Visualização
+optuna
 pyvis
 beautifulsoup4
 
-# Telemetria e Monitoramento
 memory_profiler
 memray
-resource
 psutil
+
+mlflow
+hydra-core
+hydra-optuna-sweeper
+dvc
+safetensors
+ruff
