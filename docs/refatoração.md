@@ -22,5 +22,6 @@
 * [ ] **8. Fábrica de Amostragem Dinâmica (Resolvendo o paradoxo das classes):** Criação de uma inteligência no orquestrador. Tarefas de previsão de conexões (Autoencoder) invocarão automaticamente o `LinkNeighborLoader` (amostrando arestas). Tarefas de classificação (End-to-End) invocarão o `CuGraphNeighborLoader` (amostrando nós com balanceamento estatístico perfeito).
 * [ ] **9. Autoencoder de Reconstrução Dupla (Topologia + Features):** Refatoração da classe `BaseGAECommon`. Adição de uma segunda cabeça de rede neural (Decoder de Features) responsável por pegar os embeddings $Z$ e tentar recriar a matriz $X$ original via erro quadrático médio (MSE). A rede será punida se errar a vizinhança E se errar as características do nó.
 * [ ] **10. Suporte Universal a Atributos de Arestas:** Injeção do argumento `edge_attr=None` na base de todas as propagações matemáticas (`forward` e `encode`). Isso garante que o seu *framework* estará silenciosamente preparado para ingerir grafos transacionais ou temporais no futuro, sem necessidade de reescrever a base do projeto.
+[] tratamento de grafos giantes com batches
 
 ---

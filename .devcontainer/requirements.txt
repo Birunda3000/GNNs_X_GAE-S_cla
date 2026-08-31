@@ -11,6 +11,7 @@ xgboost
 plotly
 polars
 pyarrow
+torch_geometric
 
 optuna
 pyvis

@@ -17,8 +17,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Fixamos na versão 2.4.0 para termos garantia absoluta de compatibilidade com os wheels do PyG
 RUN pip install --no-cache-dir torch==2.4.0+cpu torchvision==0.19.0+cpu torchaudio==2.4.0+cpu --index-url https://download.pytorch.org/whl/cpu
 
-# 4. INSTALAÇÃO DOS WHEELS DO PYTORCH GEOMETRIC (EXTENSÕES C++)
-# O pulo do gato: baixa os binários prontos para o PyTorch 2.4.0 CPU, tempo de build cai para segundos!
+# 4. INSTALAÇÃO DOS WHEELS DO PYG (EXTENSÕES C++)
+# ⚠️ AVISO DE ARQUITETURA: 
+# O uso de torch-scatter e torch-sparse devera está DEPRECATED no nosso código.
+# Estamos usando apenas operações nativas do PyTorch 2.0+. 
+# Eles estão instalados aqui APENAS como "seguro de vida" para funções internas 
+# do PyTorch Geometric não quebrarem por baixo dos panos. NÃO IMPORTAR NO CÓDIGO!
 RUN pip install --no-cache-dir torch-scatter torch-sparse torch-cluster torch-spline-conv -f https://data.pyg.org/whl/torch-2.4.0+cpu.html
 
 # 5. DIRETÓRIO DE TRABALHO E CÓPIA DOS REQUISITOS
