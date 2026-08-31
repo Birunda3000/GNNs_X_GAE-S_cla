@@ -20,10 +20,14 @@ from src.directory_manager import DirectoryManager
 from src.report_manager import ReportManager
 from src.models.embedding_models.autoencoders_models import GraphSageGAE, GCNGAE, GCNVGAE
 from src.models.embedding_models.din_gae import GithubVGAE, FacebookVGAE, RedditVGAE, TwitchVGAE
-from src.early_stopper import EarlyStopper
-from src.embeddings_eval import evaluate_embeddings
-from src.utils import format_bytes, run_isolated_inference, salvar_modelo_pytorch_completo, save_embeddings_to_wsg, DeviceTimer, PeakMemoryProfiler, run_isolated_inference
 
+# ✅ IMPORTAÇÕES ATUALIZADAS: Nova Infraestrutura
+from src.early_stopper import UniversalEarlyStopper
+from src.embeddings_eval import (
+    KNNMetric, LogRegMetric, QDAMetric, CentroidMetric, DTMetric, ReconstructionLossMetric
+)
+
+from src.utils import format_bytes, run_isolated_inference, salvar_modelo_pytorch_completo, save_embeddings_to_wsg, DeviceTimer, PeakMemoryProfiler
 
 
 def run_embedding_generation(WSG_DATASET, emb_dim: int):
@@ -91,17 +95,35 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
 
     directory_manager = DirectoryManager(timestamp=config.TIMESTAMP, run_folder_name="EMBEDDING_RUNS")
     report_manager = ReportManager(directory_manager)
-    early_stopper = EarlyStopper(
-        patience=config.EARLY_STOPPING_PATIENCE,
-        min_delta=config.EARLY_STOPPING_MIN_DELTA,
-        mode="max",
-        metric_name="max_f1",
-        custom_eval=lambda m: evaluate_embeddings(m, pyg_data, config.DEVICE),
+    
+    # =====================================================================
+    # ✅ NOVA INFRAESTRUTURA DE ORQUESTRAÇÃO (Early Stopper & Scheduler)
+    # =====================================================================
+    
+    # 1. Empacota as métricas (Dando uma folga extra de +5 épocas para a Loss se estabilizar)
+    metrica_guia = 0
+    metricas_ativas = [
+        ReconstructionLossMetric(patience=config.EARLY_STOPPING_PATIENCE + 5),
+        KNNMetric(patience=config.EARLY_STOPPING_PATIENCE),
+        LogRegMetric(patience=config.EARLY_STOPPING_PATIENCE),
+        QDAMetric(patience=config.EARLY_STOPPING_PATIENCE),
+        CentroidMetric(patience=config.EARLY_STOPPING_PATIENCE),
+        DTMetric(patience=config.EARLY_STOPPING_PATIENCE)
+    ]
+    
+    # 2. Instancia o Universal Stopper exigindo que TODAS estagnem
+    early_stopper = UniversalEarlyStopper(
+        metrics=metricas_ativas,
+        stop_condition="all",
+        restore_best=True
     )
+    
     optimizer = optim.Adam(model.parameters(), lr=config.LEARNING_RATE, weight_decay=config.WEIGHT_DECAY)
+    
+    # 3. Scheduler amarrado à Validação do KNN (F1-Score: Quanto maior, melhor -> max)
     scheduler = lr_scheduler.ReduceLROnPlateau(
         optimizer,
-        mode="max",
+        mode=metricas_ativas[metrica_guia].mode,
         patience=config.SCHEDULER_PATIENCE,
         factor=config.SCHEDULER_FACTOR,
         min_lr=config.MIN_LR,
@@ -120,6 +142,7 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
             epochs=config.EPOCHS,
             early_stopper=early_stopper,
             scheduler=scheduler,
+            scheduler_metric_name=metricas_ativas[metrica_guia].name
         )
 
     # =====================================================================
@@ -136,7 +159,6 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
     )
     
     print(f"Inferência concluída em {inf_metrics['duration']:.4f}s")
-
 
 
     # --- Relatórios e Salvamentos ---
@@ -210,8 +232,10 @@ def run_embedding_generation(WSG_DATASET, emb_dim: int):
         save_path=directory_manager.get_run_path(),
     )
 
+    # ✅ CORREÇÃO FINAL: Acessa os "best_scores" pelo nome da métrica
+    # Estamos nomeando a pasta com o melhor F1-Score do KNN para fácil identificação visual!
     metrics_to_name = {
-        "score": training_report["best_score"],
+        "knn_f1": training_report["best_scores"]["KNN"], 
         "emb_dim": emb_dim,
     }
     final_path = directory_manager.finalize_run_directory(
