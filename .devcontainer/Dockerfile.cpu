@@ -1,7 +1,6 @@
 # .devcontainer/Dockerfile.cpu
 
 # 1. IMAGEM BASE OFICIAL DO PYTHON
-# Partimos de uma imagem leve e universal do Python. Garantido que funciona em amd64.
 FROM python:3.11-slim-bookworm
 
 # 2. INSTALAÇÃO DE DEPENDÊNCIAS DO SISTEMA
@@ -10,19 +9,32 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     cmake \
     libgl1 \
-    libglib2.0-0 && \
+    libglib2.0-0 \
+    curl && \
     rm -rf /var/lib/apt/lists/*
 
+# 2.5 INSTALAÇÃO DO NODE.JS E PI CODING AGENT NA BUILD
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
+    apt-get install -y nodejs && \
+    npm install -g --ignore-scripts @earendil-works/pi-coding-agent
+
+# 2.6 INSTALAÇÃO DAS EXTENSÕES E SKILLS NA BUILD
+# Instalando o RTK e as 6 extensões oficiais do ecossistema do Pi
+RUN pi install npm:pi-rtk-optimizer && \
+    pi install npm:@dietrichgebert/ponytail && \
+    pi install npm:pi-subagents && \
+    pi install npm:pi-memory && \
+    pi install npm:pi-deepseek-search && \
+    pi install npm:pi-web-access && \
+    pi install npm:@alexanderfortin/pi-deepseek-usage
+
+# Instalando a skill opcional do Matt Pocock
+RUN npx skills add mattpocock/skills --skill=grill-me -y -g
+
 # 3. INSTALAÇÃO DO PYTORCH (VERSÃO CPU)
-# Fixamos na versão 2.4.0 para termos garantia absoluta de compatibilidade com os wheels do PyG
 RUN pip install --no-cache-dir torch==2.4.0+cpu torchvision==0.19.0+cpu torchaudio==2.4.0+cpu --index-url https://download.pytorch.org/whl/cpu
 
 # 4. INSTALAÇÃO DOS WHEELS DO PYG (EXTENSÕES C++)
-# ⚠️ AVISO DE ARQUITETURA: 
-# O uso de torch-scatter e torch-sparse devera está DEPRECATED no nosso código.
-# Estamos usando apenas operações nativas do PyTorch 2.0+. 
-# Eles estão instalados aqui APENAS como "seguro de vida" para funções internas 
-# do PyTorch Geometric não quebrarem por baixo dos panos. NÃO IMPORTAR NO CÓDIGO!
 RUN pip install --no-cache-dir torch-scatter torch-sparse torch-cluster torch-spline-conv -f https://data.pyg.org/whl/torch-2.4.0+cpu.html
 
 # 5. DIRETÓRIO DE TRABALHO E CÓPIA DOS REQUISITOS

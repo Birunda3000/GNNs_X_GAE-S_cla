@@ -1,10 +1,8 @@
 # .devcontainer/Dockerfile.gpu
 FROM nvcr.io/nvidia/pytorch:26.05-py3
 
-# 🔥 Resolução de Conflitos: Libera o pip das restrições da NVIDIA
 RUN [ -f /etc/pip/constraint.txt ] && > /etc/pip/constraint.txt || true
 
-# 🔥 Variáveis Vitais: Mapeamento WDDM e Alocador Anti-Fragmentação
 ENV LD_LIBRARY_PATH="/usr/lib/wsl/lib:${LD_LIBRARY_PATH}"
 ENV PYTORCH_CUDA_ALLOC_CONF="expandable_segments:True,max_split_size_mb:512"
 
@@ -13,7 +11,21 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
     ninja-build \
     cmake \
     libnuma-dev \
+    curl \
     && rm -rf /var/lib/apt/lists/*
+
+# Instalação do Node.js, Pi Agent, Extensões e Skills
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
+    apt-get install -y nodejs && \
+    npm install -g --ignore-scripts @earendil-works/pi-coding-agent && \
+    pi install npm:pi-rtk-optimizer && \
+    pi install npm:@dietrichgebert/ponytail && \
+    pi install npm:pi-subagents && \
+    pi install npm:pi-memory && \
+    pi install npm:pi-deepseek-search && \
+    pi install npm:pi-web-access && \
+    pi install npm:@alexanderfortin/pi-deepseek-usage && \
+    npx skills add mattpocock/skills --skill=grill-me -y -g
 
 RUN pip install --no-cache-dir --upgrade pip wheel setuptools
 
@@ -34,7 +46,6 @@ RUN pip install --no-cache-dir \
 WORKDIR /app/gnn_tcc
 COPY .devcontainer/requirements.txt .
 
-# Nossas Ferramentas de MLOps (com timeout estendido contra falhas de rede)
 RUN pip install --no-cache-dir --default-timeout=100 --ignore-installed Pygments -r requirements.txt
 
 ENV PATH="/usr/local/bin:${PATH}"
