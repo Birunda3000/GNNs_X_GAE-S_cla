@@ -17,8 +17,16 @@ from src.report_manager import ReportManager
 from src.data_format_definition import WSG
 import time
 
+import torch.nn as nn
+import torch.optim as optim
+from torch.optim.lr_scheduler import ReduceLROnPlateau
+
 from src.models.base_model import BaseModel
 from src.models.sklearn_model import SklearnClassifier
+
+from src.trainer import Trainer
+from src.datamodule import GraphDataModule
+from src.early_stopper import EarlyStopper
 
 from src.utils import format_bytes, format_mib
 
@@ -183,9 +191,50 @@ class ExperimentRunner:
         for model in models_to_run:
             print(f"\n--- 📊 Executando: {model.model_name} ---")
 
-            func = model.train_model
-            args = []
-            kwargs = {"data": data}
+            if isinstance(model, SklearnClassifier):
+                # Caminho sklearn inalterado
+                func = model.train_model
+                args = []
+                kwargs = {"data": data}
+            else:
+                # Caminho composto: GraphDataModule + Trainer (injeção total)
+                use_gnn = getattr(model, "use_gnn", False)
+                num_layers = getattr(model, "num_layers", 2) if use_gnn else 0
+
+                datamodule = GraphDataModule(
+                    data,
+                    num_layers=num_layers,
+                    batch_size=1024,
+                    num_neighbors_per_layer=15,
+                )
+                optimizer = optim.Adam(
+                    model.parameters(), lr=self.config.LEARNING_RATE
+                )
+                criterion = nn.CrossEntropyLoss()
+                scheduler = ReduceLROnPlateau(
+                    optimizer,
+                    mode="max",
+                    patience=self.config.SCHEDULER_PATIENCE,
+                    factor=self.config.SCHEDULER_FACTOR,
+                    min_lr=self.config.MIN_LR,
+                )
+                early_stopper = EarlyStopper(
+                    patience=self.config.EARLY_STOPPING_PATIENCE,
+                    min_delta=self.config.EARLY_STOPPING_MIN_DELTA,
+                    mode="max",
+                    metric_name="val_f1",
+                )
+                trainer = Trainer(
+                    model=model,
+                    datamodule=datamodule,
+                    optimizer=optimizer,
+                    criterion=criterion,
+                    scheduler=scheduler,
+                    device=self._device,
+                )
+                func = trainer.fit
+                args = []
+                kwargs = {"epochs": self.config.EPOCHS, "early_stopper": early_stopper}
 
             # memory_usage retorna (float_MiB, retval) com max_usage=True e retval=True
             mem_usage_result, model_report = memory_usage(

@@ -18,8 +18,10 @@ from src.data_loaders import MusaeGithubLoader, MusaeFacebookLoader, MusaeTwitch
 from src.models.embedding_models.din_gae import DynamicGAE, DynamicVGAE
 from src.directory_manager import DirectoryManager
 from src.report_manager import ReportManager
-from src.early_stopper import EarlyStopper
-from src.embeddings_eval import evaluate_embeddings
+from src.early_stopper import UniversalEarlyStopper
+from src.embeddings_eval import LogRegMetric
+from src.trainer import Trainer
+from src.datamodule import GraphDataModule
 import src.data_converters as data_converters
 import src.grid_search.grid_search_params as grids
 
@@ -99,13 +101,15 @@ def objective(trial, pyg_data, config, model_class, dataset_name):
             weight_decay=grids.TRAINING_CONFIG["weight_decay"],
         )
 
-        early_stopper = EarlyStopper(
-            patience=grids.TRAINING_CONFIG["early_stopping_patience"],
-            min_delta=grids.TRAINING_CONFIG["early_stopping_min_delta"],
-            mode="max",
-            metric_name="max_val_f1",
-            custom_eval=lambda m: evaluate_embeddings(m, pyg_data, device),
-            trial=trial
+        early_stopper = UniversalEarlyStopper(
+            metrics=[
+                LogRegMetric(
+                    patience=grids.TRAINING_CONFIG["early_stopping_patience"]
+                )
+            ],
+            stop_condition="all",
+            restore_best=True,
+            trial=trial,
         )
 
         scheduler = lr_scheduler.ReduceLROnPlateau(
@@ -116,15 +120,27 @@ def objective(trial, pyg_data, config, model_class, dataset_name):
             min_lr=grids.TRAINING_CONFIG["min_lr"],
         )
 
-        # --------- 5. TREINAMENTO ---------------------------
-        training_report = model.train_model(
-            data=pyg_data,
+        # --------- 5. TREINAMENTO (Trainer composto) ---------
+        datamodule = GraphDataModule(
+            pyg_data,
+            num_layers=0,
+            batch_size=1024,
+            num_neighbors_per_layer=15,
+        )
+        trainer = Trainer(
+            model=model,
+            datamodule=datamodule,
             optimizer=optimizer,
+            criterion=None,
+            scheduler=scheduler,
+            device=device,
+        )
+        training_report = trainer.fit_gae(
             epochs=grids.TRAINING_CONFIG["epochs"],
             early_stopper=early_stopper,
-            scheduler=scheduler,
+            scheduler_metric_name="LogReg",
         )
-        
+
         best_score = training_report["best_score"]
 
         # --------- 6. SALVAR RELATÓRIO -----------------------

@@ -20,6 +20,8 @@ from src.models.pytorch_classification.dynamic_gnn import DynamicGNNClassifier
 from src.directory_manager import DirectoryManager
 from src.report_manager import ReportManager
 from src.early_stopper import EarlyStopper
+from src.trainer import Trainer
+from src.datamodule import GraphDataModule
 import src.data_converters as data_converters
 import src.grid_search.grid_search_params as grids
 
@@ -115,15 +117,25 @@ def objective(trial, pyg_data, config, input_dim, output_dim, dataset_name):
             min_lr=grids.TRAINING_CONFIG["min_lr"],
         )
 
-        # 5. LOOP DE TREINAMENTO
+        # 5. LOOP DE TREINAMENTO (Trainer composto)
         # ======================
-        training_report = model.train_model(
-            data=pyg_data,
+        datamodule = GraphDataModule(
+            pyg_data,
+            num_layers=model.num_layers,
+            batch_size=1024,
+            num_neighbors_per_layer=15,
+        )
+        trainer = Trainer(
+            model=model,
+            datamodule=datamodule,
             optimizer=optimizer,
+            criterion=nn.CrossEntropyLoss(),
+            scheduler=scheduler,
+            device=device,
+        )
+        training_report = trainer.fit(
             epochs=grids.TRAINING_CONFIG["epochs"],
             early_stopper=early_stopper,
-            scheduler=scheduler,
-            criterion=torch.nn.CrossEntropyLoss()
         )
 
         # Métricas Finais

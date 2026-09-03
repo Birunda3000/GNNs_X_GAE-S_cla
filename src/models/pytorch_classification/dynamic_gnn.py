@@ -96,10 +96,6 @@ class DynamicGNNClassifier(PyTorchClassifier):
         x = self.convs[-1](x, edge_index)
         return x
 
-    def verify_train_input_data(self, data):
-        super().verify_train_input_data(data)
-        assert data.edge_index is not None, "DynamicGNN requer edge_index."
-
 
 class FacebookGNNClassifier(DynamicGNNClassifier):
     def __init__(self, config, input_dim, output_dim):
@@ -133,13 +129,6 @@ class GitHubGNNClassifier(DynamicGNNClassifier):
 # ==============================================================================
 # EMBEDDING BAG + GNN (END-TO-END)
 # ==============================================================================
-
-import time
-from tqdm import tqdm
-from sklearn.metrics import accuracy_score, f1_score, classification_report, confusion_matrix
-from typing import Dict, Any, List, Optional
-from torch_geometric.data import Data
-from src.early_stopper import EarlyStopper
 
 class DynamicEmbeddingGNNClassifier(PyTorchClassifier):
     """
@@ -228,110 +217,6 @@ class DynamicEmbeddingGNNClassifier(PyTorchClassifier):
         x = self.convs[-1](x, edge_index)
         return x
 
-    def internal_train_model(
-        self,
-        data: Data,
-        use_gnn: bool,
-        epochs: int,
-        optimizer,
-        early_stopper: EarlyStopper,
-        scheduler,
-        criterion=nn.CrossEntropyLoss(),
-    ):
-        device = self.device
-        
-        feature_indices = data.feature_indices.to(device)
-        feature_offsets = data.feature_offsets.to(device)
-        feature_weights = data.feature_weights.to(device)
-        
-        y = data.y.to(device)
-        edge_index = data.edge_index.to(device)
-        train_mask = data.train_mask.to(device)
-        val_mask = data.val_mask.to(device)
-        test_mask = data.test_mask.to(device)
-
-        training_history: List[Dict[str, Any]] = []
-        stop_now = False
-        best_epoch = None
-
-        pbar = tqdm(range(1, epochs + 1), desc=f"Treinando {self.model_name} (End-to-End)", leave=False)
-        start_time = time.perf_counter()
-
-        def local_eval(mask):
-            self.eval()
-            with torch.no_grad():
-                out = self(feature_indices, feature_offsets, feature_weights, edge_index)
-                pred = out.argmax(dim=1)
-                
-                y_true = y[mask]
-                y_pred = pred[mask]
-                
-                acc = float(accuracy_score(y_true.cpu(), y_pred.cpu()))
-                f1 = float(f1_score(y_true.cpu(), y_pred.cpu(), average="weighted"))
-                
-                rep = classification_report(
-                    y_true.cpu(), y_pred.cpu(), output_dict=True, zero_division=0
-                )
-                cm = confusion_matrix(y_true.cpu(), y_pred.cpu())
-                
-                return acc, f1, rep, cm
-
-        # 🔥 FASE 1: Aciona a compilação JIT apenas no passe frontal
-        self.compile_methods(["forward"], dynamic=True)
-
-        for epoch in pbar:
-            self.train()
-            optimizer.zero_grad()
-            
-            out = self(feature_indices, feature_offsets, feature_weights, edge_index)
-            
-            train_loss = criterion(out[train_mask], y[train_mask])
-            train_loss.backward()
-            optimizer.step()
-
-            _, val_f1, _, _ = local_eval(val_mask)
-            train_acc, train_f1, _, _ = local_eval(train_mask) 
-
-            stop_now, f1, best_epoch, _ = early_stopper.check(self, epoch=epoch, current_value=val_f1)
-            scheduler.step(f1)
-
-            training_history.append({
-                "epoch": epoch,
-                "train_f1": train_f1,
-                "train_accuracy": train_acc,
-                "train_loss": train_loss.item(),
-                "val_f1": val_f1,
-                "Time_per_epoch": time.perf_counter() - start_time,
-                "learning_rate": scheduler.get_last_lr()[0],
-            })
-
-            pbar.set_postfix({"loss": f"{train_loss.item():.4f}", "val_f1": f"{val_f1:.4f}"})
-
-            if stop_now:
-                early_stopper.restore_best_state(self)
-                break
-
-        train_acc, train_f1, train_rep, train_cm = local_eval(train_mask)
-        val_acc, val_f1, val_rep, val_cm = local_eval(val_mask)
-        test_acc, test_f1, test_rep, test_cm = local_eval(test_mask)
-
-        return {
-            "total_training_time": time.perf_counter() - start_time,
-            "test_accuracy": test_acc,
-            "test_f1": test_f1,
-            "test_report": test_rep,
-            "test_confusion_matrix": test_cm,
-            "val_accuracy": val_acc,
-            "val_f1": val_f1,
-            "val_report": val_rep,
-            "val_confusion_matrix": val_cm,
-            "train_accuracy": train_acc,
-            "train_f1": train_f1,
-            "train_report": train_rep,
-            "train_confusion_matrix": train_cm,
-            "best_epoch": best_epoch,
-            "training_history": training_history,
-        }
 
 class FacebookEmbeddingGNN(DynamicEmbeddingGNNClassifier):
     def __init__(self, config, num_total_features, output_dim):

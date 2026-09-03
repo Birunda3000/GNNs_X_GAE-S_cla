@@ -3,12 +3,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.nn import GCNConv, GATConv
 from src.models.pytorch_classification.base_classifiers import PyTorchClassifier
-from torch_geometric.data import Data
-from typing import Dict, Any
-from src.early_stopper import EarlyStopper
-import torch.optim as optim
-from typing import Optional
-from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 
 class MLPClassifier(PyTorchClassifier):
@@ -41,10 +35,6 @@ class GCNClassifier(PyTorchClassifier):
         x = F.relu(self.conv1(x, edge_index))
         x = F.dropout(x, p=0.5, training=self.training)
         return self.conv2(x, edge_index)
-    
-    def verify_train_input_data(self, data: Data):
-        super().verify_train_input_data(data)
-        assert data.edge_index is not None, "Os dados de entrada devem conter edge_index (data.edge_index)."
 
 
 class GATClassifier(PyTorchClassifier):
@@ -64,7 +54,3 @@ class GATClassifier(PyTorchClassifier):
         x = F.elu(self.conv1(x, edge_index))
         x = F.dropout(x, p=0.6, training=self.training)
         return self.conv2(x, edge_index)
-    
-    def verify_train_input_data(self, data: Data):
-        super().verify_train_input_data(data)
-        assert data.edge_index is not None, "Os dados de entrada devem conter edge_index (data.edge_index)."
