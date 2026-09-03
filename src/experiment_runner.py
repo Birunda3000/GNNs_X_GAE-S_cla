@@ -18,7 +18,7 @@ from src.data_format_definition import WSG
 import time
 
 from src.models.base_model import BaseModel
-from src.models.sklearn_model import SklearnClassifier
+from src.models.sklearn.sklearn_model import SklearnClassifier
 
 from src.utils import format_bytes, format_mib
 

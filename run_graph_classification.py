@@ -13,7 +13,7 @@ import src.data_converters as data_converters
 import src.data_loaders as data_loaders
 from src.config import Config
 from src.experiment_runner import ExperimentRunner
-from src.models.pytorch_classification.dynamic_gnn import (
+from src.models.pytorch.Classifiers.GNN.dynamic_gnn import (
     FacebookGNNClassifier,
     GitHubGNNClassifier,
     FacebookEmbeddingGNN,

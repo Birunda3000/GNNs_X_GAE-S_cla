@@ -14,7 +14,7 @@ import torch.nn as nn
 
 from src.config import Config
 from src.data_loaders import MusaeGithubLoader, MusaeFacebookLoader
-from src.models.embedding_models.din_gae import DynamicGAE, DynamicVGAE
+from src.models.pytorch.GraphAutoencoders.din_gae import DynamicGAE, DynamicVGAE
 from src.directory_manager import DirectoryManager
 from src.report_manager import ReportManager
 from src.early_stopper import EarlyStopper

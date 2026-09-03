@@ -97,7 +97,7 @@ from sklearn.neural_network import MLPClassifier
 from xgboost import XGBClassifier
 
 from src.config import Config
-from src.models.sklearn_model import SklearnClassifier
+from src.models.sklearn.sklearn_model import SklearnClassifier
 
 
 def get_github_models(config: Config = None) -> list:

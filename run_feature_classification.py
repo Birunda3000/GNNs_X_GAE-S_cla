@@ -33,7 +33,7 @@ from xgboost import XGBClassifier
 from src.config import Config
 import src.data_loaders as data_loaders
 import src.data_converters as data_converters
-from src.models.sklearn_model import SklearnClassifier
+from src.models.sklearn.sklearn_model import SklearnClassifier
 from src.experiment_runner import ExperimentRunner
 from src.model_args import get_github_models, get_facebook_models
 

@@ -16,7 +16,7 @@ from typing import Any
 # Imports do projeto
 from src.config import Config
 from src.data_loaders import MusaeGithubLoader, MusaeFacebookLoader
-from src.models.pytorch_classification.dynamic_gnn import DynamicGNNClassifier
+from src.models.pytorch.Classifiers.GNN.dynamic_gnn import DynamicGNNClassifier
 from src.directory_manager import DirectoryManager
 from src.report_manager import ReportManager
 from src.early_stopper import EarlyStopper
