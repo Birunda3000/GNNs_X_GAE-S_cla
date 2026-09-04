@@ -1,11 +1,9 @@
 import torch
 import torch.nn as nn
-import src.models.base_model as basemodel
 import time
 from abc import abstractmethod
 from sklearn.metrics import accuracy_score, f1_score, classification_report, confusion_matrix, ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
-import torch.optim as optim
 from torch_geometric.data import Data
 from tqdm import tqdm
 from src.config import Config
@@ -13,6 +11,9 @@ from typing import List, Dict, Any, Optional, Tuple, cast
 from src.early_stopper import EarlyStopper
 import torch.optim as optim
 from torch.optim.lr_scheduler import ReduceLROnPlateau
+
+# Importe a nova classe base
+from src.models.pytorch.pytorch_base_model import PyTorchBaseModel
 
 # 🔥 FASE 2: DataLoader otimizado da NVIDIA
 try:
@@ -22,7 +23,7 @@ except ImportError:
     from torch_geometric.loader import NeighborLoader as CuGraphNeighborLoader
 
 
-class PyTorchClassifier(basemodel.BaseModel, nn.Module):
+class PyTorchClassifier(PyTorchBaseModel):
     """
     Classe base para classificadores PyTorch. Contém o loop de treino completo.
     """
@@ -30,12 +31,11 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
     def __init__(
         self, config: Config, input_dim: int, hidden_dim: int, output_dim: int
     ):
-        basemodel.BaseModel.__init__(self, config)
-        nn.Module.__init__(self)
+        # Agora chamamos apenas o super() da nova base, que já resolve o nn.Module e o device
+        super().__init__(config)
+        
         self.input_dim = input_dim
         self.model_name = self.__class__.__name__
-        self.device = torch.device(self.config.DEVICE)
-        self.to(self.device)
 
     def verify_train_input_data(self, data: Data):
         assert (
@@ -183,7 +183,7 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
         num_layers = getattr(self, 'num_layers', 2)
         neighbors_sample = [15] * num_layers if use_gnn else []
 
-        print(f"\n🚀 Inicializando CuGraphNeighborLoader (Amostragem em UVM)...")
+        print("\n🚀 Inicializando CuGraphNeighborLoader (Amostragem em UVM)...")
         train_loader = CuGraphNeighborLoader(
             data,
             num_neighbors=neighbors_sample,
@@ -210,12 +210,12 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
         for epoch in pbar:
             self.train()
             total_loss = 0.0
-            
+
             # Iterando sobre os subgrafos ultra-rápidos injetados pelo RAPIDS
             for batch in train_loader:
                 batch = batch.to(device)
                 optimizer.zero_grad()
-                
+
                 if use_gnn and hasattr(batch, 'edge_index'):
                     out = self(batch.x, batch.edge_index)
                 else:
@@ -225,7 +225,7 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
                 # que estão nas primeiras posições (tamanho do batch_size)
                 batch_size = batch.batch_size
                 loss = criterion(out[:batch_size], batch.y[:batch_size])
-                
+
                 loss.backward()
                 optimizer.step()
                 total_loss += loss.item()
@@ -238,7 +238,7 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
             edge_index_full = getattr(data, "edge_index", None)
             if edge_index_full is not None:
                 edge_index_full = edge_index_full.to(device)
-            
+
             train_acc, train_f1, _, _ = self.evaluate(
                 x=x_full, y=y_full, use_gnn=use_gnn, train_or_test_mask=data.train_mask.to(device), edge_index=edge_index_full
             )
@@ -281,7 +281,7 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
         self.decompile_methods()
         return {
             "total_training_time": time.perf_counter() - start_time,
-            
+
             "test_accuracy": test_acc,
             "test_f1": test_f1,
             "test_report": test_report,
@@ -291,12 +291,12 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
             "val_f1": val_f1,
             "val_report": val_report,
             "val_confusion_matrix": val_confusion_matrix,
-            
+
             "train_accuracy": train_acc,
             "train_f1": train_f1,
             "train_report": train_report,
             "train_confusion_matrix": train_confusion_matrix,
-            
+
             "best_epoch": best_epoch,
 
             "training_history": training_history,
@@ -318,11 +318,11 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
             # Garante comportamento determinístico (desliga dropout) e restaura estado anterior
             training_was = self.training
             self.eval()
-            
+
             try:
                 with torch.no_grad():
                     use_gnn = getattr(self, "use_gnn", False)
-                    
+
                     # Seleciona argumentos baseado na arquitetura
                     if use_gnn:
                         # GNN: precisa de X e Arestas
@@ -330,7 +330,7 @@ class PyTorchClassifier(basemodel.BaseModel, nn.Module):
                     else:
                         # MLP: precisa apenas de X
                         out = self(data.x)
-                        
+
             finally:
                 # Restaura o modo anterior (se estava treinando, volta a treinar)
                 if training_was:
