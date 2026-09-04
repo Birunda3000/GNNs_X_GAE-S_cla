@@ -33,26 +33,20 @@ class PyTorchClassifier(PyTorchBaseModel):
     ):
         # Agora chamamos apenas o super() da nova base, que já resolve o nn.Module e o device
         super().__init__(config)
-        
+
         self.input_dim = input_dim
         self.model_name = self.__class__.__name__
 
     def verify_train_input_data(self, data: Data):
-        assert (
-            data.x is not None
-        ), "Os dados de entrada devem conter atributos de nó (data.x)."
-        assert (
-            data.y is not None
-        ), "Os dados de entrada devem conter rótulos de nó (data.y)."
-        assert (
-            data.train_mask is not None
-        ), "Os dados de entrada devem conter uma máscara de treino (data.train_mask)."
-        assert (
-            data.val_mask is not None
-        ), "Os dados de entrada devem conter uma máscara de validação (data.val_mask)."
-        assert (
-            data.test_mask is not None
-        ), "Os dados de entrada devem conter uma máscara de teste (data.test_mask)."
+        assert data.x is not None, "Os dados de entrada devem conter atributos de nó (data.x)."
+        assert data.y is not None, "Os dados de entrada devem conter rótulos de nó (data.y)."
+        assert data.train_mask is not None, "Os dados de entrada devem conter uma máscara de treino."
+        assert data.val_mask is not None, "Os dados de entrada devem conter uma máscara de validação."
+        assert data.test_mask is not None, "Os dados de entrada devem conter uma máscara de teste."
+
+        # HOISTING: Checagem dinâmica de GNN
+        if getattr(self, "use_gnn", False):
+            assert getattr(data, "edge_index", None) is not None, "Modelos GNN requerem data.edge_index."
 
     @abstractmethod
     def forward(self, *args, **kwargs):
@@ -83,15 +77,12 @@ class PyTorchClassifier(PyTorchBaseModel):
     @torch.no_grad()
     def evaluate(
         self, x, y, use_gnn, train_or_test_mask, edge_index=None
-    ) -> Tuple[float, float, Dict[str, Any], Any]:  # <- ajustar tipagem para Any
+    ) -> Tuple[float, float, Dict[str, Any], Any]:
         self.eval()
-
         if use_gnn and edge_index is not None:
             args = [x, edge_index]
         elif not use_gnn and edge_index is not None:
-            print(
-                "[WARNING]: edge_index fornecido, mas use_gnn está definido como False. Ignorando edge_index."
-            )
+            print("[WARNING]: edge_index fornecido, mas use_gnn está definido como False. Ignorando edge_index.")
             args = [x]
         else:
             args = [x]
@@ -102,19 +93,8 @@ class PyTorchClassifier(PyTorchBaseModel):
         y_true = y[train_or_test_mask]
         y_pred = pred[train_or_test_mask]
 
-        acc = float(accuracy_score(y_true.cpu(), y_pred.cpu()))
-        f1 = float(f1_score(y_true.cpu(), y_pred.cpu(), average="weighted"))
-        f1_macro = float(f1_score(y_true.cpu(), y_pred.cpu(), average="macro"))
-        report = cast(
-            Dict[str, Any],
-            classification_report(
-                y_true.cpu(), y_pred.cpu(), output_dict=True, zero_division=0
-            ),
-        )
-
-        conf_mat = confusion_matrix(y_true.cpu(), y_pred.cpu())
-
-        return acc, f1, report, conf_mat
+        # O Hoisting brilha aqui: 8 linhas viraram 1!
+        return self.compute_metrics(y_true, y_pred)
 
     def train_model(
         self,
@@ -302,38 +282,7 @@ class PyTorchClassifier(PyTorchBaseModel):
             "training_history": training_history,
         }
 
-    def inference(self, data: Data) -> torch.Tensor:
-            """
-            Executa a inferência no modelo (GNN ou MLP).
-            Segue estritamente o padrão do modelo de Embedding:
-            1. Recebe 'data'.
-            2. Move para device.
-            3. Configura eval/no_grad.
-            4. Retorna Logits.
-            """
-            # Garante device
-            device = self.device
-            data = data.to(device)
-
-            # Garante comportamento determinístico (desliga dropout) e restaura estado anterior
-            training_was = self.training
-            self.eval()
-
-            try:
-                with torch.no_grad():
-                    use_gnn = getattr(self, "use_gnn", False)
-
-                    # Seleciona argumentos baseado na arquitetura
-                    if use_gnn:
-                        # GNN: precisa de X e Arestas
-                        out = self(data.x, data.edge_index)
-                    else:
-                        # MLP: precisa apenas de X
-                        out = self(data.x)
-
-            finally:
-                # Restaura o modo anterior (se estava treinando, volta a treinar)
-                if training_was:
-                    self.train()
-
-            return out
+    def _predict_step(self, data: Data) -> torch.Tensor:
+        if getattr(self, "use_gnn", False):
+            return self(data.x, data.edge_index)
+        return self(data.x)

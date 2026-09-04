@@ -59,6 +59,8 @@ class BaseGAECommon(PyTorchBaseModel):
         assert data.feature_offsets is not None, "Input data must contain feature_offsets."
         assert data.feature_weights is not None, "Input data must contain feature_weights."
         assert data.num_nodes is not None and data.num_nodes > 0, "data.num_nodes must be valid."
+        assert hasattr(data, 'train_mask') and data.train_mask is not None, "Input data must contain train_mask."
+        assert hasattr(data, 'val_mask') and data.val_mask is not None, "Input data must contain val_mask."
 
     def decode(self, z: torch.Tensor, edge_index: torch.Tensor) -> torch.Tensor:
         """Produto escalar entre embeddings de nós conectados."""
@@ -169,21 +171,8 @@ class BaseGAECommon(PyTorchBaseModel):
     def compute_total_loss(self, z: torch.Tensor, data: Data, edge_index: torch.Tensor):
         raise NotImplementedError("Subclasses must implement the compute_total_loss method.")
 
-    def inference(self, input_data: Data) -> torch.Tensor:
-        # UTILIZANDO self.device FORNECIDO PELA BASE
-        device = self.device
-        input_data.to(device)
-
-        training_was = self.training
-        self.eval()
-        try:
-            with torch.no_grad():
-                z = self.encode(input_data)
-        finally:
-            if training_was:
-                self.train()
-
-        return z
+    def _predict_step(self, data: Data) -> torch.Tensor:
+        return self.encode(data)
 
     def evaluate(self, input_data: Data) -> Any:
         return self.inference(input_data)

@@ -1,6 +1,4 @@
 import torch
-from torch import Tensor
-from torch_geometric.nn import MessagePassing
 from src.models.pytorch.GraphAutoencoders.base_gae_common import BaseGAECommon
 
 class BaseVGAE(BaseGAECommon):
@@ -8,9 +6,6 @@ class BaseVGAE(BaseGAECommon):
     Base para Variational Graph Autoencoders (VGAE).
     Introduz a Divergência KL e a amostragem latente.
     """
-    conv1: MessagePassing
-    conv_mu: MessagePassing
-    conv_logstd: MessagePassing
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -31,17 +26,15 @@ class BaseVGAE(BaseGAECommon):
         # Soma a reconstrução com a divergência KL
         return self.reconstruction_loss(z, edge_index) + (1.0 / float(data.num_nodes)) * self.kl_loss()
 
-    def inference(self, input_data) -> Tensor:
-        device = next(self.parameters()).device
-        input_data.to(device)
-        training_was = self.training
-        self.eval()
-        try:
-            with torch.no_grad():
-                self.encode(input_data)
-        finally:
-            if training_was:
-                self.train()
-        if self.__mu__ is None:
-            raise RuntimeError("O atributo `__mu__` não foi definido pelo método `encode`.")
-        return self.__mu__
+    def reparameterize(self, mu: torch.Tensor, logstd: torch.Tensor) -> torch.Tensor:
+        """
+        Aplica o Reparameterization Trick para permitir a retropropagação.
+        z = mu + epsilon * exp(logstd)
+        """
+        # Se o modelo estiver treinando, injeta o ruído aleatório
+        if self.training:
+            eps = torch.randn_like(mu)
+            return mu + eps * torch.exp(logstd)
+        # Se o modelo estiver em inferência/avaliação, retorna apenas a média (determinístico)
+        else:
+            return mu

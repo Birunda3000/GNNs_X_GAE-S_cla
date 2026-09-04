@@ -32,3 +32,16 @@ def create_layer(layer_type, in_dim, out_dim, **kwargs):
         return layer_type(in_dim, out_dim, aggr=aggr)
     else:
         return layer_type(in_dim, out_dim)
+
+
+@torch.compiler.disable
+def forward_hidden_layers(x, edge_index, conv_list, activation_fn, dropout_prob, is_training):
+    """
+    Executa a propagação padrão nas camadas ocultas de GNNs dinâmicas.
+    Blindado contra quebras do TorchDynamo (JIT).
+    """
+    for conv in conv_list:
+        x = apply_conv(conv, x, edge_index)
+        x = activation_fn(x)
+        x = F.dropout(x, p=dropout_prob, training=is_training)
+    return x

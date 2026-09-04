@@ -1,18 +1,20 @@
+import time
+from tqdm import tqdm
+from typing import Dict, Any, List
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import time
-from tqdm import tqdm
-from sklearn.metrics import accuracy_score, f1_score, classification_report, confusion_matrix
-from typing import Dict, Any, List, Optional
 
 from torch_geometric.data import Data
-from torch_geometric.nn import MessagePassing, GATConv, GINConv, SAGEConv
-from torch_geometric.nn.conv.cugraph import CuGraphSAGEConv, CuGraphGATConv
+from torch_geometric.nn import MessagePassing
 
 from src.models.pytorch.Classifiers.base_classifier import PyTorchClassifier
 from src.models.base_model import get_activation_fn
 from src.early_stopper import EarlyStopper
+
+# HOISTING: Importamos as funções que agora são utilitárias globais
+from src.models.pytorch.layer_utils import create_layer, apply_conv, forward_hidden_layers
 
 # ==============================================================================
 # GNN DINÂMICA PADRÃO
@@ -36,53 +38,26 @@ class DynamicGNNClassifier(PyTorchClassifier):
         self.dropout_rate = dropout
         self.activation_fn = get_activation_fn(activation)
         self.num_layers = num_layers
-        
-        self.is_gat = layer_type.__name__ in ['GATConv', 'CuGraphGATConv'] or (isinstance(layer_type, type) and issubclass(layer_type, (GATConv, CuGraphGATConv)))
-        self.is_gin = layer_type.__name__ == 'GINConv' or (isinstance(layer_type, type) and issubclass(layer_type, GINConv))
-        self.is_sage = layer_type.__name__ in ['SAGEConv', 'CuGraphSAGEConv'] or (isinstance(layer_type, type) and issubclass(layer_type, (SAGEConv, CuGraphSAGEConv)))
-        
-        self.sage_aggr = kwargs.get('aggr', 'mean')
-        self.gin_train_eps = kwargs.get('train_eps', False)
         self.convs = nn.ModuleList()
         
-        def build_layer(in_d, out_d, is_last=False):
-            if self.is_gin:
-                mlp = nn.Sequential(
-                    nn.Linear(in_d, out_d),
-                    nn.ReLU(),
-                    nn.Linear(out_d, out_d)
-                )
-                return layer_type(mlp, train_eps=self.gin_train_eps)
-            elif self.is_gat:
-                if is_last:
-                    return layer_type(in_d, out_d, heads=1, concat=False, dropout=dropout)
-                else:
-                    return layer_type(in_d, out_d, heads=heads, dropout=dropout)
-            elif self.is_sage:
-                return layer_type(in_d, out_d, aggr=self.sage_aggr)
-            else:
-                return layer_type(in_d, out_d)
-
-        self.convs.append(build_layer(input_dim, hidden_dim))
-        current_dim = hidden_dim * heads if self.is_gat else hidden_dim
+        # Constrói a primeira camada usando o utilitário isolado
+        self.convs.append(create_layer(layer_type, input_dim, hidden_dim, heads=heads, **kwargs))
+        current_dim = hidden_dim * heads if 'GAT' in layer_type.__name__ else hidden_dim
         
+        # Constrói camadas ocultas
         for _ in range(num_layers - 2):
-            self.convs.append(build_layer(current_dim, hidden_dim))
-            current_dim = hidden_dim * heads if self.is_gat else hidden_dim
+            self.convs.append(create_layer(layer_type, current_dim, hidden_dim, heads=heads, **kwargs))
+            current_dim = hidden_dim * heads if 'GAT' in layer_type.__name__ else hidden_dim
             
-        self.convs.append(build_layer(current_dim, output_dim, is_last=True))
+        # Constrói camada de saída
+        self.convs.append(create_layer(layer_type, current_dim, output_dim, heads=1, **kwargs))
 
     def forward(self, x, edge_index):
-        for i in range(self.num_layers - 1):
-            x = self.convs[i](x, edge_index)
-            x = self.activation_fn(x)
-            x = F.dropout(x, p=self.dropout_rate, training=self.training)
-        x = self.convs[-1](x, edge_index)
-        return x
-
-    def verify_train_input_data(self, data):
-        super().verify_train_input_data(data)
-        assert data.edge_index is not None, "DynamicGNN requer edge_index."
+        # HOISTING: Usa o laço padronizado e blindado do JIT
+        x = forward_hidden_layers(
+            x, edge_index, self.convs[:-1], self.activation_fn, self.dropout_rate, self.training
+        )
+        return apply_conv(self.convs[-1], x, edge_index)
 
 
 # ==============================================================================
@@ -112,55 +87,34 @@ class DynamicEmbeddingGNNClassifier(PyTorchClassifier):
         self.activation_fn = get_activation_fn(activation)
         self.num_layers = num_layers
         self.heads = heads
-        
+
         self.feature_embedder = nn.EmbeddingBag(
             num_embeddings=num_total_features,
             embedding_dim=embedding_dim,
             mode="sum",
         )
 
-        self.is_gat = layer_type.__name__ in ['GATConv', 'CuGraphGATConv'] or (isinstance(layer_type, type) and issubclass(layer_type, (GATConv, CuGraphGATConv)))
-        self.is_gin = layer_type.__name__ == 'GINConv' or (isinstance(layer_type, type) and issubclass(layer_type, GINConv))
-        self.is_sage = layer_type.__name__ in ['SAGEConv', 'CuGraphSAGEConv'] or (isinstance(layer_type, type) and issubclass(layer_type, (SAGEConv, CuGraphSAGEConv)))
-        self.sage_aggr = kwargs.get('aggr', 'mean')
-        self.gin_train_eps = kwargs.get('train_eps', False)
         self.convs = nn.ModuleList()
 
-        def build_layer(in_d, out_d, is_last=False):
-            if self.is_gin:
-                mlp = nn.Sequential(
-                    nn.Linear(in_d, out_d),
-                    nn.ReLU(),
-                    nn.Linear(out_d, out_d)
-                )
-                return layer_type(mlp, train_eps=self.gin_train_eps)
-            elif self.is_gat:
-                if is_last:
-                    return layer_type(in_d, out_d, heads=1, concat=False, dropout=dropout)
-                else:
-                    return layer_type(in_d, out_d, heads=heads, dropout=dropout)
-            elif self.is_sage:
-                return layer_type(in_d, out_d, aggr=self.sage_aggr)
-            else:
-                return layer_type(in_d, out_d)
-
-        self.convs.append(build_layer(embedding_dim, hidden_dim))
-        current_dim = hidden_dim * heads if self.is_gat else hidden_dim
+        # Constrói a primeira camada (que agora recebe do EmbeddingBag)
+        self.convs.append(create_layer(layer_type, embedding_dim, hidden_dim, heads=heads, **kwargs))
+        current_dim = hidden_dim * heads if 'GAT' in layer_type.__name__ else hidden_dim
         
+        # Constrói camadas ocultas
         for _ in range(num_layers - 2):
-            self.convs.append(build_layer(current_dim, hidden_dim))
-            current_dim = hidden_dim * heads if self.is_gat else hidden_dim
+            self.convs.append(create_layer(layer_type, current_dim, hidden_dim, heads=heads, **kwargs))
+            current_dim = hidden_dim * heads if 'GAT' in layer_type.__name__ else hidden_dim
             
-        self.convs.append(build_layer(current_dim, output_dim, is_last=True))
+        # Constrói camada de saída
+        self.convs.append(create_layer(layer_type, current_dim, output_dim, heads=1, **kwargs))
 
     def forward(self, feature_indices, feature_offsets, feature_weights, edge_index):
         x = self.feature_embedder(feature_indices, feature_offsets, per_sample_weights=feature_weights)
-        for i in range(self.num_layers - 1):
-            x = self.convs[i](x, edge_index)
-            x = self.activation_fn(x)
-            x = F.dropout(x, p=self.dropout_rate, training=self.training)
-        x = self.convs[-1](x, edge_index)
-        return x
+        # HOISTING: Usa o laço padronizado e blindado do JIT
+        x = forward_hidden_layers(
+            x, edge_index, self.convs[:-1], self.activation_fn, self.dropout_rate, self.training
+        )
+        return apply_conv(self.convs[-1], x, edge_index)
 
     def internal_train_model(
         self,
@@ -181,6 +135,7 @@ class DynamicEmbeddingGNNClassifier(PyTorchClassifier):
         train_mask = data.train_mask.to(device)
         val_mask = data.val_mask.to(device)
         test_mask = data.test_mask.to(device)
+        
         training_history: List[Dict[str, Any]] = []
         stop_now = False
         best_epoch = None
@@ -194,13 +149,9 @@ class DynamicEmbeddingGNNClassifier(PyTorchClassifier):
                 pred = out.argmax(dim=1)
                 y_true = y[mask]
                 y_pred = pred[mask]
-                acc = float(accuracy_score(y_true.cpu(), y_pred.cpu()))
-                f1 = float(f1_score(y_true.cpu(), y_pred.cpu(), average="weighted"))
-                rep = classification_report(
-                    y_true.cpu(), y_pred.cpu(), output_dict=True, zero_division=0
-                )
-                cm = confusion_matrix(y_true.cpu(), y_pred.cpu())
-                return acc, f1, rep, cm
+                
+                # HOISTING: Toda a extração manual saiu daqui e virou uma chamada à base
+                return self.compute_metrics(y_true, y_pred)
 
         self.compile_methods(["forward"], dynamic=True)
         for epoch in pbar:
@@ -210,10 +161,12 @@ class DynamicEmbeddingGNNClassifier(PyTorchClassifier):
             train_loss = criterion(out[train_mask], y[train_mask])
             train_loss.backward()
             optimizer.step()
+            
             _, val_f1, _, _ = local_eval(val_mask)
             train_acc, train_f1, _, _ = local_eval(train_mask)
             stop_now, f1, best_epoch, _ = early_stopper.check(self, epoch=epoch, current_value=val_f1)
             scheduler.step(f1)
+            
             training_history.append({
                 "epoch": epoch,
                 "train_f1": train_f1,
@@ -224,6 +177,7 @@ class DynamicEmbeddingGNNClassifier(PyTorchClassifier):
                 "learning_rate": scheduler.get_last_lr()[0],
             })
             pbar.set_postfix({"loss": f"{train_loss.item():.4f}", "val_f1": f"{val_f1:.4f}"})
+            
             if stop_now:
                 early_stopper.restore_best_state(self)
                 break
@@ -231,6 +185,7 @@ class DynamicEmbeddingGNNClassifier(PyTorchClassifier):
         train_acc, train_f1, train_rep, train_cm = local_eval(train_mask)
         val_acc, val_f1, val_rep, val_cm = local_eval(val_mask)
         test_acc, test_f1, test_rep, test_cm = local_eval(test_mask)
+        
         return {
             "total_training_time": time.perf_counter() - start_time,
             "test_accuracy": test_acc,

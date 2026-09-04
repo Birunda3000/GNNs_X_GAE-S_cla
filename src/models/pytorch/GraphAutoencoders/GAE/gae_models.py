@@ -5,7 +5,14 @@ from torch_geometric.nn import GCNConv, SAGEConv
 from torch_geometric.nn.conv.cugraph import CuGraphGATConv
 from src.models.base_model import get_activation_fn
 from src.models.pytorch.GraphAutoencoders.GAE.base_gae import BaseGAE
-from src.models.pytorch.GraphAutoencoders.layer_utils import prepare_edge_index, apply_conv, create_layer
+
+# Importação atualizada com a nova função forward_hidden_layers
+from src.models.pytorch.layer_utils import (
+    prepare_edge_index, 
+    apply_conv, 
+    create_layer, 
+    forward_hidden_layers
+)
 
 try:
     from torch.nn.attention.flex_attention import flex_attention, create_block_mask
@@ -13,29 +20,39 @@ try:
 except ImportError:
     HAS_FLEX = False
 
-class GCNGAE(BaseGAE):
+class GCNGAE(DynamicGAE):
+    """Implementação Clássica do GCN-GAE usando o motor dinâmico."""
     def __init__(self, config, num_total_features, embedding_dim, hidden_dim, out_embedding_dim):
-        super().__init__(config, num_total_features, embedding_dim, hidden_dim, out_embedding_dim)
-        self.conv1 = GCNConv(embedding_dim, hidden_dim)
-        self.conv2 = GCNConv(hidden_dim, out_embedding_dim)
+        super().__init__(
+            config=config, 
+            num_total_features=num_total_features, 
+            embedding_dim=embedding_dim, 
+            hidden_dim=hidden_dim, 
+            out_embedding_dim=out_embedding_dim,
+            layer_type=GCNConv,       # Injeta o GCNConv
+            num_layers=2,             # 1 Oculta + 1 Saída
+            activation=nn.ReLU,
+            dropout=0.5,
+            normalize_embeddings=True
+        )
+        self.model_name = "GCNGAE"
 
-    def encode(self, data):
-        x = self.feature_embedder(data.feature_indices, data.feature_offsets, per_sample_weights=data.feature_weights)
-        x = F.dropout(F.relu(self.conv1(x, data.edge_index)), p=0.5, training=self.training)
-        z = self.conv2(x, data.edge_index)
-        return F.normalize(z, p=2, dim=-1)
-
-class GraphSageGAE(BaseGAE):
+class GraphSageGAE(DynamicGAE):
+    """Implementação Clássica do GraphSAGE-GAE usando o motor dinâmico."""
     def __init__(self, config, num_total_features, embedding_dim, hidden_dim, out_embedding_dim):
-        super().__init__(config, num_total_features, embedding_dim, hidden_dim, out_embedding_dim)
-        self.conv1 = SAGEConv(embedding_dim, hidden_dim)
-        self.conv2 = SAGEConv(hidden_dim, out_embedding_dim)
-
-    def encode(self, data):
-        x = self.feature_embedder(data.feature_indices, data.feature_offsets, per_sample_weights=data.feature_weights)
-        x = F.dropout(F.relu(self.conv1(x, data.edge_index)), p=0.5, training=self.training)
-        z = self.conv2(x, data.edge_index)
-        return F.normalize(z, p=2, dim=-1)
+        super().__init__(
+            config=config, 
+            num_total_features=num_total_features, 
+            embedding_dim=embedding_dim, 
+            hidden_dim=hidden_dim, 
+            out_embedding_dim=out_embedding_dim,
+            layer_type=SAGEConv,      # Injeta o SAGEConv
+            num_layers=2,             # 1 Oculta + 1 Saída
+            activation=nn.ReLU,
+            dropout=0.5,
+            normalize_embeddings=True
+        )
+        self.model_name = "GraphSageGAE"
 
 class DynamicGAE(BaseGAE):
     def __init__(self, config, num_total_features, embedding_dim, hidden_dim, out_embedding_dim, layer_type, num_layers, activation=nn.ReLU, dropout=0.5, normalize_embeddings=True, **kwargs):
@@ -52,12 +69,17 @@ class DynamicGAE(BaseGAE):
     def encode(self, data):
         x = self.feature_embedder(data.feature_indices, data.feature_offsets, per_sample_weights=data.feature_weights)
         x = F.dropout(x, p=self.dropout, training=self.training)
+        
         edge_index = prepare_edge_index(data.edge_index, x.size(0))
-        for i, conv in enumerate(self.convs):
-            x = apply_conv(conv, x, edge_index)
-            if i < len(self.convs) - 1:
-                x = self.activation_fn(x)
-                x = F.dropout(x, p=self.dropout, training=self.training)
+        
+        # Propaga as camadas ocultas utilizando a função unificada
+        x = forward_hidden_layers(
+            x, edge_index, self.convs[:-1], self.activation_fn, self.dropout, self.training
+        )
+        
+        # Aplica a camada final
+        x = apply_conv(self.convs[-1], x, edge_index)
+        
         if self.normalize_embeddings:
             return F.normalize(x, p=2, dim=-1)
         return x

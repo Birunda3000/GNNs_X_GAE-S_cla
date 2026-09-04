@@ -18,10 +18,7 @@ class GCNClassifier(PyTorchClassifier):
         x = F.relu(self.conv1(x, edge_index))
         x = F.dropout(x, p=0.5, training=self.training)
         return self.conv2(x, edge_index)
-        
-    def verify_train_input_data(self, data: Data):
-        super().verify_train_input_data(data)
-        assert data.edge_index is not None, "Os dados de entrada devem conter edge_index."
+
 
 class GATClassifier(PyTorchClassifier):
     use_gnn = True
@@ -35,10 +32,6 @@ class GATClassifier(PyTorchClassifier):
         x = F.elu(self.conv1(x, edge_index))
         x = F.dropout(x, p=0.6, training=self.training)
         return self.conv2(x, edge_index)
-        
-    def verify_train_input_data(self, data: Data):
-        super().verify_train_input_data(data)
-        assert data.edge_index is not None, "Os dados de entrada devem conter edge_index."
 
 class FacebookGNNClassifier(DynamicGNNClassifier):
     def __init__(self, config, input_dim, output_dim):
