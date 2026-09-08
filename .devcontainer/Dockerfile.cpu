@@ -3,6 +3,7 @@
 # 1. IMAGEM BASE OFICIAL DO PYTHON
 FROM python:3.11-slim-bookworm
 
+
 # 2. INSTALAÇÃO DE DEPENDÊNCIAS DO SISTEMA
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \

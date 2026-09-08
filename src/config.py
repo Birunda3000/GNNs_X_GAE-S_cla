@@ -42,6 +42,22 @@ class Config:
     SCHEDULER_FACTOR = 0.6
     MIN_LR = 1e-8
 
+
+
+# --- NOVO: Configurações de Mini-Batch para Grafos Massivos ---
+    # Define quantas arestas o modelo vai tentar reconstruir por passo
+    GAE_BATCH_SIZE = 1024
+
+    # Controla a amostragem de vizinhos por camada (ex: 15 vizinhos na 1ª camada, 10 na 2ª)
+    # Isso impede a "explosão de vizinhança" e o estouro de RAM
+    GAE_NUM_NEIGHBORS = [15, 10]
+
+    # Tamanho do lote de nós focado exclusivamente na extração final dos embeddings
+    # Pode ser maior que o batch de treino, pois não armazena grafos computacionais (gradientes)
+    INFERENCE_BATCH_SIZE = 4096
+
+
+
     # --- Visualização ---
     VIS_SAMPLES = 1500
 
