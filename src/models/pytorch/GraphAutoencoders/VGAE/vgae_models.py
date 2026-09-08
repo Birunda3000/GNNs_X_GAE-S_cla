@@ -35,7 +35,7 @@ class DynamicVGAE(BaseVGAE):
         self.conv_logstd = create_layer(layer_type, hidden_dim, out_embedding_dim, **kwargs)
 
 
-def encode(self, data):
+    def encode(self, data):
         x = self.feature_embedder(data.feature_indices, data.feature_offsets, per_sample_weights=data.feature_weights)
         x = F.dropout(x, p=self.dropout, training=self.training)
 

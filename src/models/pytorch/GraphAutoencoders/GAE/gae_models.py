@@ -20,6 +20,37 @@ try:
 except ImportError:
     HAS_FLEX = False
 
+class DynamicGAE(BaseGAE):
+    def __init__(self, config, num_total_features, embedding_dim, hidden_dim, out_embedding_dim, layer_type, num_layers, activation=nn.ReLU, dropout=0.5, normalize_embeddings=True, **kwargs):
+        super().__init__(config, num_total_features, embedding_dim, hidden_dim, out_embedding_dim)
+        self.activation_fn = get_activation_fn(activation)
+        self.dropout = dropout
+        self.normalize_embeddings = normalize_embeddings
+        layers = [create_layer(layer_type, embedding_dim, hidden_dim, **kwargs)]
+        for _ in range(num_layers - 2):
+            layers.append(create_layer(layer_type, hidden_dim, hidden_dim, **kwargs))
+        layers.append(create_layer(layer_type, hidden_dim, out_embedding_dim, **kwargs))
+        self.convs = nn.ModuleList(layers)
+
+    def encode(self, data):
+        x = self.feature_embedder(data.feature_indices, data.feature_offsets, per_sample_weights=data.feature_weights)
+        x = F.dropout(x, p=self.dropout, training=self.training)
+
+        edge_index = prepare_edge_index(data.edge_index, x.size(0))
+
+        # Propaga as camadas ocultas utilizando a função unificada
+        x = forward_hidden_layers(
+            x, edge_index, self.convs[:-1], self.activation_fn, self.dropout, self.training
+        )
+
+        # Aplica a camada final
+        x = apply_conv(self.convs[-1], x, edge_index)
+
+        if self.normalize_embeddings:
+            return F.normalize(x, p=2, dim=-1)
+        return x
+
+
 class GCNGAE(DynamicGAE):
     """Implementação Clássica do GCN-GAE usando o motor dinâmico."""
     def __init__(self, config, num_total_features, embedding_dim, hidden_dim, out_embedding_dim):
@@ -54,35 +85,6 @@ class GraphSageGAE(DynamicGAE):
         )
         self.model_name = "GraphSageGAE"
 
-class DynamicGAE(BaseGAE):
-    def __init__(self, config, num_total_features, embedding_dim, hidden_dim, out_embedding_dim, layer_type, num_layers, activation=nn.ReLU, dropout=0.5, normalize_embeddings=True, **kwargs):
-        super().__init__(config, num_total_features, embedding_dim, hidden_dim, out_embedding_dim)
-        self.activation_fn = get_activation_fn(activation)
-        self.dropout = dropout
-        self.normalize_embeddings = normalize_embeddings
-        layers = [create_layer(layer_type, embedding_dim, hidden_dim, **kwargs)]
-        for _ in range(num_layers - 2):
-            layers.append(create_layer(layer_type, hidden_dim, hidden_dim, **kwargs))
-        layers.append(create_layer(layer_type, hidden_dim, out_embedding_dim, **kwargs))
-        self.convs = nn.ModuleList(layers)
-
-    def encode(self, data):
-        x = self.feature_embedder(data.feature_indices, data.feature_offsets, per_sample_weights=data.feature_weights)
-        x = F.dropout(x, p=self.dropout, training=self.training)
-        
-        edge_index = prepare_edge_index(data.edge_index, x.size(0))
-        
-        # Propaga as camadas ocultas utilizando a função unificada
-        x = forward_hidden_layers(
-            x, edge_index, self.convs[:-1], self.activation_fn, self.dropout, self.training
-        )
-        
-        # Aplica a camada final
-        x = apply_conv(self.convs[-1], x, edge_index)
-        
-        if self.normalize_embeddings:
-            return F.normalize(x, p=2, dim=-1)
-        return x
 
 class FacebookGAE(DynamicGAE):
     def __init__(self, config, num_total_features: int, out_embedding_dim):

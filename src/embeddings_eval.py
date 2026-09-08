@@ -104,6 +104,6 @@ class ReconstructionLossMetric(Metric):
     def __init__(self, patience: int = 10):
         super().__init__(name="Recon_Loss", mode="min", patience=patience)
 
-    def evaluate(self, model: torch.nn.Module, z: torch.Tensor, data: Any) -> float:
+    def evaluate(self, model: torch.nn.Module, z: torch.Tensor, data: Any, **kwargs) -> float:
         # Requer que o modelo implemente 'compute_total_loss'
         return float(model.compute_total_loss(z, data, data.edge_index).item())

@@ -18,8 +18,9 @@ import src.data_converters as data_converters
 import src.data_loaders as data_loaders
 from src.directory_manager import DirectoryManager
 from src.report_manager import ReportManager
-from src.models.embedding_models.autoencoders_models import GraphSageGAE, GCNGAE, GCNVGAE
-from src.models.pytorch.GraphAutoencoders.din_gae import GithubVGAE, FacebookVGAE, RedditVGAE, TwitchVGAE
+from src.models.pytorch.GraphAutoencoders.GAE.gae_models import GraphSageGAE, GCNGAE
+from src.models.pytorch.GraphAutoencoders.VGAE.vgae_models import GCNVGAE
+from src.models.pytorch.GraphAutoencoders.VGAE.vgae_models import GithubVGAE, FacebookVGAE, RedditVGAE, TwitchVGAE
 
 # ✅ IMPORTAÇÕES ATUALIZADAS: Nova Infraestrutura
 from src.early_stopper import UniversalEarlyStopper
